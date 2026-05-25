@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef } from "react";
 import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { useAuth } from "../lib/AuthContext";
-import TabBar from "../components/TabBar";
-import Toast from "../components/Toast";
+import TabBar from "../Components/TabBar";
+import Toast from "../Components/Toast";
 
 const OCCASIONS = ["Casual","Work / Office","Date Night","Brunch","Formal","Travel","Workout"];
 const EMOJIS = { tops:"👕", bottoms:"👖", dresses:"👗", shoes:"👟", accessories:"👜", outerwear:"🧥" };

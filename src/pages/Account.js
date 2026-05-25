@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../lib/AuthContext";
-import TabBar from "../components/TabBar";
+import TabBar from "../Components/TabBar";
 
 export default function Account() {
   const nav = useNavigate();

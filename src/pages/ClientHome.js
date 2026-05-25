@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../lib/AuthContext";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "../lib/firebase";
-import TabBar from "../components/TabBar";
+import TabBar from "../Components/TabBar";
 
 export default function ClientHome() {
   const nav = useNavigate();

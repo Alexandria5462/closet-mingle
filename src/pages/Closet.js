@@ -3,9 +3,9 @@ import { collection, query, where, getDocs, addDoc, deleteDoc, doc } from "fireb
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { db, storage } from "../lib/firebase";
 import { useAuth } from "../lib/AuthContext";
-import TabBar from "../components/TabBar";
-import CameraModal from "../components/CameraModal";
-import Toast from "../components/Toast";
+import TabBar from "../Components/TabBar";
+import CameraModal from "../Components/CameraModal";
+import Toast from "../Components/Toast";
 
 const CATEGORIES = ["All","Tops","Bottoms","Dresses","Shoes","Accessories","Outerwear"];
 const EMOJIS = { tops:"👕", bottoms:"👖", dresses:"👗", shoes:"👟", accessories:"👜", outerwear:"🧥" };

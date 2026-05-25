@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { collection, addDoc, query, where, orderBy, onSnapshot, getDocs } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { useAuth } from "../lib/AuthContext";
-import CameraModal from "../components/CameraModal";
+import CameraModal from "../Components/CameraModal";
 
 const CLOUD_NAME = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME;
 const UPLOAD_PRESET = process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET;

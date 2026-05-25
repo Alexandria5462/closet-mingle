@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { collection, query, where, getDocs, orderBy, limit } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { useAuth } from "../lib/AuthContext";
-import TabBar from "../components/TabBar";
+import TabBar from "../Components/TabBar";
 
 export default function StylistHome() {
   const nav = useNavigate();
