@@ -11,8 +11,8 @@ const EMOJIS = { tops:"👕", bottoms:"👖", dresses:"👗", shoes:"👟", acce
 
 // ─── Cloudinary config ───────────────────────────────────────
 // Replace these two values with YOUR values from my-keys.txt
-const CLOUD_NAME = process.env.divge2akr;
-const UPLOAD_PRESET = process.env.closet-mingle;
+const CLOUD_NAME = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME;
+const UPLOAD_PRESET = process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET;
 // ─────────────────────────────────────────────────────────────
 
 function guessCategory(name) {
