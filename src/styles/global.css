@@ -19,11 +19,11 @@
 html, body, #root { height: 100%; width: 100%; overflow: hidden; }
 body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
 .app-shell { display: flex; flex-direction: column; height: 100vh; max-width: 430px; margin: 0 auto; background: var(--bg); position: relative; overflow: hidden; }
-.screen { flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; padding-bottom: 100px; }
+.screen { flex: 1; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; padding-bottom: 160px; }
 .header { background: var(--bg-card); border-bottom: 0.5px solid var(--border); padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; padding-top: max(14px, env(safe-area-inset-top)); }
 .logo { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 600; color: var(--text); }
 .logo span { color: var(--pink); }
-.tab-bar { display: flex; background: var(--bg-card); border-top: 0.5px solid var(--border); padding: 8px 0; padding-bottom: max(8px, env(safe-area-inset-bottom)); flex-shrink: 0; }
+.tab-bar { display: flex; background: var(--bg-card); border-top: 0.5px solid var(--border); padding: 8px 0; padding-bottom: max(16px, env(safe-area-inset-bottom)); flex-shrink: 0; }
 .tab-btn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; padding: 4px; border: none; background: transparent; color: var(--text-tertiary); font-size: 10px; font-family: 'DM Sans', sans-serif; transition: color 0.15s; }
 .tab-btn.active { color: var(--pink); }
 .tab-btn i { font-size: 22px; }
