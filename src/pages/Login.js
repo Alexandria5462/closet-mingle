@@ -14,8 +14,7 @@ export default function Login() {
     if (!email || !password) { setError("Please fill in all fields."); return; }
     setLoading(true); setError("");
     try {
-      const result = await login(email, password);
-      // Navigation handled by App.js redirect
+      await login(email, password);
     } catch(e) {
       setError("Invalid email or password.");
     }
