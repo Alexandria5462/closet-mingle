@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { useAuth } from "../lib/AuthContext";
-import TabBar from "../Components/TabBar";
+import TabBar from "../components/TabBar";
 
 const BG_COLORS = ["#E1F5EE","#FBEAF0","#E6F1FB","#FAEEDA","#F0E6FB"];
 const TEXT_COLORS = ["#085041","#72243E","#0C447C","#633806","#3D0C63"];
