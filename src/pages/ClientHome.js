@@ -20,8 +20,13 @@ export default function ClientHome() {
     async function fetchStats() {
       const cSnap = await getDocs(query(collection(db, "closetItems"), where("userId", "==", userProfile.uid)));
       setClosetCount(cSnap.size);
+      const now = new Date();
       const oSnap = await getDocs(query(collection(db, "savedOutfits"), where("userId", "==", userProfile.uid)));
-      setSavedCount(oSnap.size);
+      const validOutfits = oSnap.docs.filter(d => {
+        const data = d.data();
+        return !data.expiresAt || new Date(data.expiresAt) > now;
+      });
+      setSavedCount(validOutfits.length);
     }
     fetchStats();
   }, [userProfile]);
@@ -69,6 +74,18 @@ export default function ClientHome() {
             </div>
           </div>
 
+          <div className="card" style={{ cursor: "pointer" }} onClick={() => nav("/saved")}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 500 }}>Saved Outfits</div>
+                <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 2 }}>
+                  {savedCount > 0 ? `${savedCount} outfit${savedCount !== 1 ? "s" : ""} saved · Expires in 24hrs` : "No saved outfits yet"}
+                </div>
+              </div>
+              <i className="ti ti-heart" style={{ fontSize: 22, color: "var(--pink)" }} aria-hidden="true"></i>
+            </div>
+          </div>
+
           <div className="card" style={{ cursor: "pointer" }} onClick={() => isPremium ? nav("/stylists") : nav("/plans")}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <div>
@@ -78,17 +95,13 @@ export default function ClientHome() {
                 </div>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                {isPremium
-                  ? <><span className="online-dot"></span><span style={{ fontSize: 11, color: "var(--success)" }}>Live</span></>
-                  : <span className="badge badge-pink">Upgrade</span>
-                }
+                {isPremium ? <><span className="online-dot"></span><span style={{ fontSize: 11, color: "var(--success)" }}>Live</span></> : <span className="badge badge-pink">Upgrade</span>}
                 <i className="ti ti-arrow-right" style={{ color: "var(--text-tertiary)", marginLeft: 4 }} aria-hidden="true"></i>
               </div>
             </div>
           </div>
         </div>
       </div>
-
       <TabBar active="home" type="client" />
     </>
   );

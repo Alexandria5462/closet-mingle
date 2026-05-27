@@ -7,6 +7,7 @@ export default function TabBar({ active, type = "client" }) {
     { id:"home", icon:"ti-home", label:"Home", path:"/home" },
     { id:"closet", icon:"ti-hanger", label:"Closet", path:"/closet" },
     { id:"outfits", icon:"ti-sparkles", label:"Outfits", path:"/outfits" },
+    { id:"saved", icon:"ti-heart", label:"Saved", path:"/saved" },
     { id:"stylists", icon:"ti-message-circle", label:"Stylists", path:"/stylists" },
     { id:"account", icon:"ti-user", label:"Account", path:"/account" },
   ];

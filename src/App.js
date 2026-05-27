@@ -9,6 +9,7 @@ import Plans from "./pages/Plans";
 import ClientHome from "./pages/ClientHome";
 import Closet from "./pages/Closet";
 import SwipeOutfits from "./pages/SwipeOutfits";
+import SavedOutfits from "./pages/SavedOutfits";
 import StylistList from "./pages/StylistList";
 import Chat from "./pages/Chat";
 import Account from "./pages/Account";
@@ -34,6 +35,7 @@ function AppRoutes() {
       <Route path="/home" element={<PrivateRoute><ClientHome /></PrivateRoute>} />
       <Route path="/closet" element={<PrivateRoute><Closet /></PrivateRoute>} />
       <Route path="/outfits" element={<PrivateRoute><SwipeOutfits /></PrivateRoute>} />
+      <Route path="/saved" element={<PrivateRoute><SavedOutfits /></PrivateRoute>} />
       <Route path="/stylists" element={<PrivateRoute><StylistList /></PrivateRoute>} />
       <Route path="/chat/:stylistId" element={<PrivateRoute><Chat /></PrivateRoute>} />
       <Route path="/account" element={<PrivateRoute><Account /></PrivateRoute>} />
