@@ -1,4 +1,4 @@
 .env.local
 my-keys.txt
-node_modules
+node_modules/
 build
