@@ -58,33 +58,20 @@ async function uploadToCloudinary(file) {
 // Use Claude AI to analyze clothing from image
 async function analyzeClothing(imageUrl, category, name) {
   try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
+    // Call our secure server-side API route instead of Anthropic directly
+    const response = await fetch("/api/analyze-clothing", {
       method: "POST",
-      headers: { "Content-Type": "application/json",
-   "x-api-key": process.env.REACT_APP_ANTHROPIC_API_KEY,
-   "anthropic-version": "2023-06-01",
-   "anthropic-dangerous-direct-browser-access": "true"
- },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 200,
-        messages: [{
-          role: "user",
-          content: [
-            { type: "image", source: { type: "url", url: imageUrl } },
-            { type: "text", text: `Analyze this ${category} item called "${name}". Return ONLY JSON:
-{"primaryColor":"color name","pattern":"solid/striped/plaid/floral/graphic/other","material":"cotton/denim/silk/wool/polyester/leather/unknown","style":"casual/formal/business/sporty/classic"}` }
-          ]
-        }]
-      })
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ imageUrl, category, name }),
     });
+    if (!response.ok) return { primaryColor: "unknown", pattern: "solid", material: "unknown", style: "casual", fit: "standard" };
     const data = await response.json();
-    const text = data.content?.[0]?.text || "{}";
-    return JSON.parse(text.replace(/```json|```/g, "").trim());
+    return data.attributes || { primaryColor: "unknown", pattern: "solid", material: "unknown", style: "casual", fit: "standard" };
   } catch (e) {
-    return { primaryColor: "unknown", pattern: "solid", material: "unknown", style: "casual" };
+    return { primaryColor: "unknown", pattern: "solid", material: "unknown", style: "casual", fit: "standard" };
   }
 }
+
 
 export default function Closet() {
   const { userProfile } = useAuth();
