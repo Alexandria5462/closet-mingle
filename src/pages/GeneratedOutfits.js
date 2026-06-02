@@ -14,23 +14,34 @@ async function generateOutfitsFromLiked(likedItems, occasion) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ items: likedItems, occasion }),
     });
+
     if (!response.ok) {
-      console.error("API route error:", await response.text());
+      const errText = await response.text();
+      console.error("API route error:", errText);
       return [];
     }
+
     const data = await response.json();
-    const outfits = data.outfits || [];
-    return outfits.map(outfit => ({
-      ...outfit,
+    const apiOutfits = data.outfits || [];
+
+    // Map selectedIds back to full item objects from likedItems
+    return apiOutfits.map(outfit => ({
+      outfitName: outfit.outfitName,
+      colorStory: outfit.colorStory,
+      patternNote: outfit.patternNote,
+      styleNote: outfit.styleNote,
+      colorHarmony: outfit.colorHarmony,
       items: (outfit.selectedIds || [])
-        .map(id => likedItems.find(i => (i.id === id || i.itemId === id)))
-        .filter(Boolean)
+        .map(id => likedItems.find(i => i.id === id || i.itemId === id))
+        .filter(Boolean),
     })).filter(o => o.items.length >= 2);
+
   } catch (e) {
-    console.error("AI generation error:", e);
+    console.error("Generation error:", e);
     return [];
   }
 }
+
 
 export default function GeneratedOutfits() {
   const nav = useNavigate();
