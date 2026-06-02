@@ -153,16 +153,24 @@ function generateWithRules(items, occasion) {
     pink: ["white","black","grey","navy","cream"],
   };
 
+  // Shuffle all arrays so every regenerate gives different combinations
+  const shuffle = arr => [...arr].sort(() => Math.random() - 0.5);
+  const sTops = shuffle(tops);
+  const sBottoms = shuffle(bottoms);
+  const sDresses = shuffle(dresses);
+
   for (let i = 0; i < 3; i++) {
     const outfit = [];
-    const useDress = dresses.length > 0 && (tops.length === 0 || i === 2);
+    const useDress = sDresses.length > 0 && (sTops.length === 0 || i === 2);
 
     if (useDress) {
-      const d = pick(dresses);
+      // Pick a different dress each time
+      const d = sDresses[i % sDresses.length];
       if (d) outfit.push(d);
     } else {
-      const top = tops.length > i ? tops[i % tops.length] : pick(tops);
-      const bottom = bottoms.length > i ? bottoms[i % bottoms.length] : pick(bottoms);
+      // Pick different top and bottom each iteration after shuffling
+      const top = sTops[i % sTops.length] || pick(sTops);
+      const bottom = sBottoms[i % sBottoms.length] || pick(sBottoms);
       if (top) outfit.push(top);
       if (bottom) outfit.push(bottom);
     }
