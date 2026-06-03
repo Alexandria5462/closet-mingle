@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../lib/AuthContext";
-import { doc, updateDoc } from "firebase/firestore";
-import { db } from "../lib/firebase";
+
 
 const PLANS = [
   {
@@ -36,6 +35,7 @@ const PLANS = [
       "Unlimited stylist chat (text only)",
       "Photo sharing with stylist",
       "View stylist profiles and ratings",
+      "Style profile quiz for better stylist matching",
       "AI randomly assigns your stylist",
       "Early access to new features",
     ],
@@ -75,6 +75,7 @@ const PLANS = [
       "Session lasts 24 hours from first message",
       "Photo sharing included",
       "Video call included",
+      "Style profile quiz included",
       "No commitment",
       "Can upgrade to a monthly plan mid-session with credit",
     ],
@@ -87,7 +88,7 @@ const PLANS = [
 
 export default function Plans() {
   const nav = useNavigate();
-  const { currentUser, userProfile } = useAuth();
+  const { currentUser, userProfile, updateSubscription } = useAuth();
   const [selected, setSelected] = useState("monthly");
   const [loading, setLoading] = useState(false);
 
@@ -95,10 +96,9 @@ export default function Plans() {
     setLoading(true);
     try {
       if (currentUser) {
-        await updateDoc(doc(db, "users", currentUser.uid), {
-          subscriptionTier: selected,
-          subscriptionUpdatedAt: new Date().toISOString(),
-        });
+        // updateSubscription uses real-time listener
+        // so the change is reflected instantly everywhere in the app
+        await updateSubscription(selected);
       }
       // After selecting a plan — route appropriately
       if (selected === "monthly" || selected === "premium_plus" || selected === "session") {

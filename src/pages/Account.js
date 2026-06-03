@@ -20,12 +20,57 @@ async function uploadPhoto(file) {
   return data.secure_url;
 }
 
-const TIER_LABELS = { free: "Free", monthly: "Premium AI — $9.99/mo", premium_plus: "Premium Plus — $19.99/mo", session: "Pay Per Session", stylist_monthly: "Stylist — $20/mo", stylist_annual: "Stylist — $200/yr" };
-const TIER_COLORS = { free: "var(--bg)", monthly: "var(--pink-light)", premium_plus: "#ede9fe", session: "#f0fdf4" };
+const TIER_LABELS = {
+  free: "Free",
+  monthly: "Premium AI — $9.99/mo",
+  premium_plus: "Premium Plus — $19.99/mo",
+  session: "Pay Per Session",
+  stylist_monthly: "Stylist — $20/mo",
+  stylist_annual: "Stylist — $200/yr"
+};
+
+const TIER_COLORS = {
+  free: "var(--bg)",
+  monthly: "var(--pink-light)",
+  premium_plus: "#ede9fe",
+  session: "#f0fdf4"
+};
+
+// ── Cancel Subscription Confirmation Modal ────────────────────
+function CancelModal({ tierLabel, onConfirm, onCancel }) {
+  return (
+    <div className="modal-overlay" onClick={onCancel}>
+      <div className="modal-sheet" onClick={e => e.stopPropagation()}>
+        <div style={{ textAlign: "center", marginBottom: 16 }}>
+          <div style={{ fontSize: 36, marginBottom: 8 }}>⚠️</div>
+          <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 6 }}>Cancel subscription?</div>
+          <div style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.5 }}>
+            You are about to cancel your <strong>{tierLabel}</strong> subscription.
+            You will lose access to all premium features immediately and be moved to the Free plan.
+          </div>
+        </div>
+        <div style={{ background: "#fff8e7", border: "1px solid #fcd34d", borderRadius: "var(--radius)", padding: "10px 14px", marginBottom: 16, fontSize: 12, color: "#92400e" }}>
+          ⚠️ This action cannot be undone. You would need to resubscribe to regain access.
+        </div>
+        <div style={{ display: "flex", gap: 10 }}>
+          <button className="btn-outline btn-sm" onClick={onCancel} style={{ flex: 1, marginTop: 0 }}>
+            Keep my plan
+          </button>
+          <button
+            onClick={onConfirm}
+            style={{ flex: 1, background: "var(--danger)", color: "white", border: "none", borderRadius: "var(--radius-sm)", padding: "10px 14px", fontSize: 14, fontWeight: 500, cursor: "pointer" }}
+          >
+            Yes, cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function Account() {
   const nav = useNavigate();
-  const { userProfile, currentUser, logout } = useAuth();
+  const { userProfile, currentUser, logout, updateSubscription } = useAuth();
   const fileRef = useRef();
   const isStylist = userProfile?.accountType === "stylist";
 
@@ -44,6 +89,22 @@ export default function Account() {
   const [availability, setAvailability] = useState(userProfile?.availabilityEnabled || false);
   const [availHours, setAvailHours] = useState(userProfile?.availabilityHours || "9am - 5pm");
   const [quizResult, setQuizResult] = useState(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+
+  // Update local state when userProfile changes in real time
+  useEffect(() => {
+    if (userProfile) {
+      setName(userProfile.name || "");
+      setAbout(userProfile.about || "");
+      setCity(userProfile.city || "");
+      setSpecialty(userProfile.specialty || "");
+      setPhone(userProfile.phone || "");
+      setPhotoPreview(userProfile.photoUrl || null);
+      setAvailability(userProfile.availabilityEnabled || false);
+      setAvailHours(userProfile.availabilityHours || "9am - 5pm");
+    }
+  }, [userProfile]);
 
   useEffect(() => {
     if (isStylist) loadAnalytics();
@@ -52,7 +113,6 @@ export default function Account() {
 
   async function loadAnalytics() {
     if (!currentUser?.uid) return;
-    const msgSnap = await getDocs(query(collection(db, "messages"), where("conversationId", ">=", currentUser.uid)));
     const reviewSnap = await getDocs(query(collection(db, "reviews"), where("targetUserId", "==", currentUser.uid)));
     const reviews = reviewSnap.docs.map(d => d.data());
     const avgRating = reviews.length > 0 ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1) : 0;
@@ -95,6 +155,19 @@ export default function Account() {
     setSaving(false);
   }
 
+  async function confirmCancelSubscription() {
+    setCancelling(true);
+    try {
+      // Use updateSubscription so real-time listener catches it instantly
+      await updateSubscription("free");
+      setShowCancelModal(false);
+      setToast("Subscription cancelled. You are now on the Free plan.");
+    } catch (e) {
+      setToast("Failed to cancel. Please try again.");
+    }
+    setCancelling(false);
+  }
+
   async function toggleAvailability() {
     const newVal = !availability;
     setAvailability(newVal);
@@ -109,14 +182,17 @@ export default function Account() {
   const initials = userProfile?.name?.split(" ").map(n => n[0]).join("").slice(0, 2) || "?";
   const tierLabel = TIER_LABELS[userProfile?.subscriptionTier] || "Free";
   const tierBg = TIER_COLORS[userProfile?.subscriptionTier] || "var(--bg)";
+  const hasPaidPlan = userProfile?.subscriptionTier && userProfile?.subscriptionTier !== "free";
 
   return (
     <>
       <div className="header">
-        <div className="logo" style={{ cursor: "pointer" }} onClick={() => nav("/home")}>Closet<span>Mingle</span></div>
+        <div className="logo" style={{ cursor: "pointer" }} onClick={() => nav("/home")}>
+          Closet<span>Mingle</span>
+        </div>
         {editing
           ? <button className="btn-pink btn-sm" onClick={saveProfile} disabled={saving}>{saving ? <span className="spinner"></span> : "Save"}</button>
-          : <button className="btn-outline btn-sm" onClick={() => setEditing(true)}>Edit</button>
+          : <button className="btn-outline btn-sm" onClick={() => setEditing(true)}>Edit profile</button>
         }
       </div>
 
@@ -125,7 +201,10 @@ export default function Account() {
 
           {/* Profile header */}
           <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 20 }}>
-            <div onClick={() => editing && fileRef.current.click()} style={{ width: 72, height: 72, borderRadius: "50%", overflow: "hidden", background: "var(--pink-light)", border: editing ? "2px dashed var(--pink)" : "2px solid var(--border)", cursor: editing ? "pointer" : "default", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div
+              onClick={() => editing && fileRef.current.click()}
+              style={{ width: 72, height: 72, borderRadius: "50%", overflow: "hidden", background: "var(--pink-light)", border: editing ? "2px dashed var(--pink)" : "2px solid var(--border)", cursor: editing ? "pointer" : "default", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}
+            >
               {photoPreview
                 ? <img src={photoPreview} alt="profile" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 : <span style={{ fontSize: 22, fontWeight: 600, color: "var(--pink-dark)" }}>{initials}</span>
@@ -146,7 +225,7 @@ export default function Account() {
             </div>
           </div>
 
-          {/* Tabs for stylist */}
+          {/* Stylist tabs */}
           {isStylist && (
             <div style={{ display: "flex", gap: 6, marginBottom: 16, borderBottom: "0.5px solid var(--border)", paddingBottom: 8 }}>
               {["profile", "analytics", "availability", "portfolio"].map(tab => (
@@ -165,13 +244,15 @@ export default function Account() {
                 <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 4 }}>📍 Location</div>
                 {editing
                   ? <input className="input-field" value={city} onChange={e => setCity(e.target.value)} placeholder="City / Location" style={{ marginBottom: 0 }} />
-                  : <div style={{ fontSize: 14, color: "var(--text-primary)" }}>{userProfile?.city || "Not set"}</div>
+                  : <div style={{ fontSize: 14 }}>{userProfile?.city || "Not set"}</div>
                 }
               </div>
 
               {/* About me */}
               <div className="card">
-                <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 4 }}>About me {isStylist && <span style={{ color: "var(--danger)" }}>*</span>}</div>
+                <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 4 }}>
+                  About me {isStylist && <span style={{ color: "var(--danger)" }}>*</span>}
+                </div>
                 {editing
                   ? <textarea className="input-field" value={about} onChange={e => setAbout(e.target.value)} placeholder={`Tell people about yourself${isStylist ? " (required)" : " (optional)"}`} rows={3} style={{ resize: "none", fontFamily: "inherit", marginBottom: 0 }} />
                   : <div style={{ fontSize: 14, color: userProfile?.about ? "var(--text-primary)" : "var(--text-tertiary)" }}>{userProfile?.about || "No description added yet."}</div>
@@ -183,7 +264,7 @@ export default function Account() {
                 <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 4 }}>📱 Phone</div>
                 {editing
                   ? <input className="input-field" type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="Phone number" style={{ marginBottom: 0 }} />
-                  : <div style={{ fontSize: 14, color: "var(--text-primary)" }}>{userProfile?.phone || "Not set"}</div>
+                  : <div style={{ fontSize: 14 }}>{userProfile?.phone || "Not set"}</div>
                 }
               </div>
 
@@ -193,19 +274,19 @@ export default function Account() {
                   <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 4 }}>✂️ Specialty</div>
                   {editing
                     ? <input className="input-field" value={specialty} onChange={e => setSpecialty(e.target.value)} placeholder="Your styling specialty" style={{ marginBottom: 0 }} />
-                    : <div style={{ fontSize: 14, color: "var(--text-primary)" }}>{userProfile?.specialty || "Not set"}</div>
+                    : <div style={{ fontSize: 14 }}>{userProfile?.specialty || "Not set"}</div>
                   }
                 </div>
               )}
 
-              {/* Style quiz for premium plus */}
-              {userProfile?.subscriptionTier === "premium_plus" && (
+              {/* Style quiz for all paid tiers */}
+              {userProfile?.subscriptionTier && userProfile?.subscriptionTier !== "free" && (
                 <div className="card" style={{ cursor: "pointer" }} onClick={() => nav("/quiz")}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                     <div>
                       <div style={{ fontSize: 14, fontWeight: 500 }}>Style Profile Quiz</div>
                       <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 2 }}>
-                        {quizResult ? "View your style profile →" : "Take the quiz to match with the right stylist →"}
+                        {quizResult ? "Retake or view your style profile →" : "Take the quiz to match with the right stylist →"}
                       </div>
                     </div>
                     <i className="ti ti-arrow-right" style={{ color: "var(--text-tertiary)" }} aria-hidden="true"></i>
@@ -213,15 +294,30 @@ export default function Account() {
                 </div>
               )}
 
-              {/* Subscription */}
-              <div className="card" style={{ cursor: "pointer" }} onClick={() => nav("/plans")}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              {/* Subscription management */}
+              <div className="card">
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: hasPaidPlan ? 12 : 0 }}>
                   <div>
                     <div style={{ fontSize: 14, fontWeight: 500 }}>Subscription</div>
                     <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 2 }}>{tierLabel}</div>
                   </div>
-                  <i className="ti ti-arrow-right" style={{ color: "var(--text-tertiary)" }} aria-hidden="true"></i>
+                  <button
+                    className="btn-outline btn-sm"
+                    onClick={() => nav("/plans")}
+                    style={{ marginTop: 0 }}
+                  >
+                    {hasPaidPlan ? "Change plan" : "Upgrade"}
+                  </button>
                 </div>
+                {/* Cancel button — only shown for paid subscribers */}
+                {hasPaidPlan && (
+                  <button
+                    onClick={() => setShowCancelModal(true)}
+                    style={{ background: "none", border: "1px solid var(--danger)", borderRadius: "var(--radius-sm)", padding: "8px 14px", color: "var(--danger)", cursor: "pointer", fontSize: 13, width: "100%", fontFamily: "inherit" }}
+                  >
+                    Cancel subscription
+                  </button>
+                )}
               </div>
 
               {/* Reviews */}
@@ -230,19 +326,23 @@ export default function Account() {
                 <Reviews targetUserId={currentUser?.uid} targetUserName={userProfile?.name} />
               </div>
 
-              <button className="btn-outline" onClick={async () => { await logout(); nav("/"); }} style={{ color: "var(--danger)", borderColor: "var(--danger)", marginTop: 8 }}>
+              <button
+                className="btn-outline"
+                onClick={async () => { await logout(); nav("/"); }}
+                style={{ color: "var(--danger)", borderColor: "var(--danger)", marginTop: 8 }}
+              >
                 <i className="ti ti-logout" aria-hidden="true"></i> Sign out
               </button>
             </>
           )}
 
-          {/* Analytics tab - stylists only */}
+          {/* Analytics tab */}
           {isStylist && activeTab === "analytics" && (
             <>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
                 {[
                   { label: "Total Sessions", value: analytics.sessions },
-                  { label: "Total Earnings", value: `$${analytics.earnings.toFixed(2)}` },
+                  { label: "Total Earnings", value: `$${Number(analytics.earnings).toFixed(2)}` },
                   { label: "Avg Rating", value: analytics.rating || "—" },
                   { label: "Total Reviews", value: analytics.reviews },
                 ].map(s => (
@@ -254,24 +354,24 @@ export default function Account() {
               </div>
               <div className="card">
                 <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>
-                  Your revenue split: you keep <strong style={{ color: "var(--success)" }}>70%</strong> of every session. Closet Mingle keeps 30%.
+                  You keep <strong style={{ color: "var(--success)" }}>70%</strong> of every session. Closet Mingle keeps 30%.
                 </div>
               </div>
             </>
           )}
 
-          {/* Availability tab - stylists only */}
+          {/* Availability tab */}
           {isStylist && activeTab === "availability" && (
             <>
               <div className="card">
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
                   <div style={{ fontSize: 14, fontWeight: 500 }}>Available for sessions</div>
-                  <button onClick={toggleAvailability} style={{ background: availability ? "var(--success)" : "var(--border)", border: "none", borderRadius: 20, width: 44, height: 24, cursor: "pointer", position: "relative", transition: "background 0.2s" }}>
+                  <button onClick={toggleAvailability} style={{ background: availability ? "var(--success)" : "#d1d5db", border: "none", borderRadius: 20, width: 44, height: 24, cursor: "pointer", position: "relative", transition: "background 0.2s" }}>
                     <div style={{ position: "absolute", top: 2, left: availability ? 22 : 2, width: 20, height: 20, borderRadius: "50%", background: "white", transition: "left 0.2s" }} />
                   </button>
                 </div>
                 <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>
-                  {availability ? "You are visible to clients and can receive session requests." : "You are hidden from clients and will not receive session requests."}
+                  {availability ? "Visible to clients — can receive session requests." : "Hidden from clients — not receiving requests."}
                 </div>
               </div>
               <div className="card">
@@ -282,7 +382,7 @@ export default function Account() {
             </>
           )}
 
-          {/* Portfolio tab - stylists only */}
+          {/* Portfolio tab */}
           {isStylist && activeTab === "portfolio" && (
             <div className="card">
               <div style={{ fontSize: 14, fontWeight: 500, marginBottom: 8 }}>Portfolio</div>
@@ -296,6 +396,16 @@ export default function Account() {
       </div>
 
       <TabBar active="account" type={isStylist ? "stylist" : "client"} />
+
+      {/* Cancel subscription confirmation modal */}
+      {showCancelModal && (
+        <CancelModal
+          tierLabel={tierLabel}
+          onConfirm={confirmCancelSubscription}
+          onCancel={() => setShowCancelModal(false)}
+        />
+      )}
+
       {toast && <Toast message={toast} onDone={() => setToast("")} />}
     </>
   );
