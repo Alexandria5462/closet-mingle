@@ -14,6 +14,7 @@ export default function TabBar({ active, type = "client" }) {
   const stylistTabs = [
     { id:"home", icon:"ti-home", label:"Home", path:"/stylist" },
     { id:"messages", icon:"ti-message-circle", label:"Messages", path:"/stylist" },
+    { id:"analytics", icon:"ti-chart-bar", label:"Analytics", path:"/account" },
     { id:"account", icon:"ti-user", label:"Profile", path:"/account" },
   ];
   const tabs = type === "stylist" ? stylistTabs : clientTabs;

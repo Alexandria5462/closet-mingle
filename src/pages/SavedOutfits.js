@@ -14,40 +14,53 @@ export default function SavedOutfits() {
   const [toast, setToast] = useState("");
 
   useEffect(() => {
-    async function fetchOutfits() {
-      if (!userProfile?.uid) return;
-      setLoading(true);
-      const q = query(
-        collection(db, "savedOutfits"),
-        where("userId", "==", userProfile.uid)
-      );
-      const snap = await getDocs(q);
-      const now = new Date();
-      const all = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-      // Filter out expired outfits and delete them from Firebase
-      const valid = [];
-      for (const outfit of all) {
-        if (outfit.expiresAt && new Date(outfit.expiresAt) < now) {
-          // Delete expired outfit
-          await deleteDoc(doc(db, "savedOutfits", outfit.id)).catch(() => {});
-        } else {
-          valid.push(outfit);
-        }
-      }
-
-      // Sort newest first
-      valid.sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt));
-      setOutfits(valid);
-      setLoading(false);
-    }
-    fetchOutfits();
+    if (userProfile?.uid) fetchOutfits();
   }, [userProfile]);
 
-  async function deleteOutfit(outfitId) {
+  async function fetchOutfits() {
+    setLoading(true);
     try {
-      await deleteDoc(doc(db, "savedOutfits", outfitId));
-      setOutfits(prev => prev.filter(o => o.id !== outfitId));
+      const q = query(collection(db, "savedOutfits"), where("userId", "==", userProfile.uid));
+      const snap = await getDocs(q);
+      const now = new Date();
+      const valid = [];
+      for (const d of snap.docs) {
+        const data = { id: d.id, ...d.data() };
+        if (data.expiresAt && new Date(data.expiresAt) < now) {
+          await deleteDoc(doc(db, "savedOutfits", d.id)).catch(() => {});
+        } else {
+          valid.push(data);
+        }
+      }
+      // Sort by savedAt newest first, then sort outfit numbers within same name
+      valid.sort((a, b) => {
+        // Extract number from outfit name e.g. "Dinner Night Look 2" → 2
+        const getNum = name => {
+          const match = (name || "").match(/(\d+)$/);
+          return match ? parseInt(match[1]) : 0;
+        };
+        // First sort by base name (without trailing number)
+        const baseName = name => (name || "").replace(/\s*\d+$/, "").trim();
+        const baseA = baseName(a.outfitName);
+        const baseB = baseName(b.outfitName);
+        if (baseA === baseB) {
+          // Same base name — sort by number ascending (1, 2, 3)
+          return getNum(a.outfitName) - getNum(b.outfitName);
+        }
+        // Different base names — sort by savedAt newest first
+        return new Date(b.savedAt) - new Date(a.savedAt);
+      });
+      setOutfits(valid);
+    } catch (err) {
+      console.error(err);
+    }
+    setLoading(false);
+  }
+
+  async function deleteOutfit(id) {
+    try {
+      await deleteDoc(doc(db, "savedOutfits", id));
+      setOutfits(prev => prev.filter(o => o.id !== id));
       setToast("Outfit removed.");
     } catch (e) { console.error(e); }
   }
@@ -56,16 +69,15 @@ export default function SavedOutfits() {
     if (!expiresAt) return "";
     const diff = new Date(expiresAt) - new Date();
     if (diff <= 0) return "Expired";
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    if (hours > 0) return `Expires in ${hours}h ${minutes}m`;
-    return `Expires in ${minutes}m`;
+    const h = Math.floor(diff / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    if (h > 0) return `Expires in ${h}h ${m}m`;
+    return `Expires in ${m}m`;
   }
 
   function getExpiryColor(expiresAt) {
     if (!expiresAt) return "var(--text-tertiary)";
-    const diff = new Date(expiresAt) - new Date();
-    const hours = diff / (1000 * 60 * 60);
+    const hours = (new Date(expiresAt) - new Date()) / 3600000;
     if (hours < 2) return "#dc2626";
     if (hours < 6) return "#d97706";
     return "var(--success)";
@@ -78,18 +90,16 @@ export default function SavedOutfits() {
           <button onClick={() => nav(-1)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-secondary)" }}>
             <i className="ti ti-arrow-left" style={{ fontSize: 20 }} aria-hidden="true"></i>
           </button>
-          <div className="logo">Saved <span>Outfits</span></div>
+          <div className="logo" style={{ cursor: "pointer" }} onClick={() => nav("/home")}>Closet<span>Mingle</span></div>
         </div>
         <span className="badge badge-pink">{outfits.length} saved</span>
       </div>
 
       <div className="screen">
         <div className="body">
-
-          {/* 24 hour warning */}
-          <div style={{ background: "#fff8e7", border: "1px solid #fcd34d", borderRadius: "var(--radius)", padding: "10px 14px", marginBottom: 16, fontSize: 12, color: "#92400e", display: "flex", gap: 8, alignItems: "center" }}>
+          <div style={{ background: "#fff8e7", border: "1px solid #fcd34d", borderRadius: "var(--radius)", padding: "10px 14px", marginBottom: 16, fontSize: 12, color: "#92400e", display: "flex", gap: 8 }}>
             <span>⏰</span>
-            <span>Outfits expire after <strong>24 hours</strong>. Screenshot your favorites to keep them forever!</span>
+            <span>Outfits expire after <strong>24 hours</strong>. Screenshot your favorites to keep them!</span>
           </div>
 
           {loading ? (
@@ -98,91 +108,51 @@ export default function SavedOutfits() {
             <div style={{ textAlign: "center", padding: "48px 20px" }}>
               <div style={{ fontSize: 48, marginBottom: 12 }}>💗</div>
               <div style={{ fontSize: 16, fontWeight: 500, marginBottom: 8 }}>No saved outfits yet</div>
-              <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 24 }}>
-                Go to the AI Outfit Builder and swipe right on outfits you love
-              </div>
+              <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 20 }}>Generate outfits from your liked items and save your favorites</div>
               <button className="btn-pink" onClick={() => nav("/outfits")} style={{ width: "auto", padding: "10px 24px" }}>
-                <i className="ti ti-sparkles" aria-hidden="true"></i> Build Outfits
+                Start Swiping →
               </button>
             </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {outfits.map(outfit => (
-                <div key={outfit.id} className="card" style={{ padding: 0, overflow: "hidden" }}>
-
-                  {/* Outfit header */}
-                  <div style={{ padding: "12px 14px 8px", borderBottom: "0.5px solid var(--border)" }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-                      <div style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)" }}>
-                        {outfit.outfitName || "Saved Outfit"}
-                      </div>
-                      <button onClick={() => deleteOutfit(outfit.id)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-tertiary)", fontSize: 16 }}>×</button>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      {outfit.occasion && (
-                        <span className="badge badge-blue" style={{ fontSize: 10 }}>{outfit.occasion}</span>
-                      )}
-                      <span style={{ fontSize: 11, color: getExpiryColor(outfit.expiresAt), fontWeight: 500 }}>
-                        {getTimeLeft(outfit.expiresAt)}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Outfit items photos */}
-                  <div style={{ padding: "10px 14px" }}>
-                    <div style={{ display: "flex", gap: 8, marginBottom: 10, overflowX: "auto", scrollbarWidth: "none" }}>
-                      {(outfit.itemImages || []).map((img, i) => (
-                        <div key={i} style={{ flexShrink: 0 }}>
-                          {img ? (
-                            <img
-                              src={img}
-                              alt={outfit.itemNames?.[i] || "item"}
-                              style={{ width: 72, height: 72, borderRadius: 10, objectFit: "cover", border: "0.5px solid var(--border)", background: "repeating-conic-gradient(#f0f0f0 0% 25%, white 0% 50%) 0 0 / 8px 8px" }}
-                            />
-                          ) : (
-                            <div style={{ width: 72, height: 72, borderRadius: 10, background: "var(--bg)", border: "0.5px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>👗</div>
-                          )}
-                          <div style={{ fontSize: 9, color: "var(--text-tertiary)", textAlign: "center", marginTop: 3, textTransform: "capitalize", maxWidth: 72, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                            {outfit.categories?.[i] || ""}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Item names */}
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: outfit.colorStory ? 8 : 0 }}>
-                      {(outfit.itemNames || []).map((name, i) => (
-                        <span key={i} style={{ fontSize: 11, background: "var(--bg)", borderRadius: 20, padding: "2px 8px", color: "var(--text-secondary)", border: "0.5px solid var(--border)" }}>
-                          {name}
-                        </span>
-                      ))}
-                    </div>
-
-                    {/* Color story */}
-                    {outfit.colorStory && (
-                      <div style={{ fontSize: 12, color: "var(--pink-dark)", background: "var(--pink-light)", borderRadius: 8, padding: "6px 10px", marginTop: 8 }}>
-                        🎨 {outfit.colorStory}
-                      </div>
-                    )}
-
-                    {/* Style note */}
-                    {outfit.styleNote && (
-                      <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 6 }}>
-                        ✨ {outfit.styleNote}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Saved date */}
-                  <div style={{ padding: "6px 14px 10px" }}>
-                    <span style={{ fontSize: 10, color: "var(--text-tertiary)" }}>
-                      Saved {new Date(outfit.savedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
-                    </span>
-                  </div>
+          ) : outfits.map(outfit => (
+            <div key={outfit.id} className="card" style={{ padding: 0, overflow: "hidden", marginBottom: 14 }}>
+              <div style={{ padding: "12px 14px 8px", borderBottom: "0.5px solid var(--border)" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+                  <div style={{ fontSize: 15, fontWeight: 600 }}>{outfit.outfitName || "Saved Outfit"}</div>
+                  <button onClick={() => deleteOutfit(outfit.id)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-tertiary)", fontSize: 18 }}>×</button>
                 </div>
-              ))}
+                <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                  {outfit.occasion && <span className="badge badge-pink" style={{ fontSize: 10 }}>{outfit.occasion}</span>}
+                  <span style={{ fontSize: 11, color: getExpiryColor(outfit.expiresAt), fontWeight: 500 }}>{getTimeLeft(outfit.expiresAt)}</span>
+                </div>
+              </div>
+
+              <div style={{ padding: "10px 14px" }}>
+                <div style={{ display: "flex", gap: 8, overflowX: "auto", scrollbarWidth: "none", marginBottom: 10 }}>
+                  {(outfit.itemImages || []).map((img, i) => (
+                    <div key={i} style={{ flexShrink: 0 }}>
+                      {img
+                        ? <img src={img} alt={outfit.itemNames?.[i]} style={{ width: 72, height: 72, borderRadius: 10, objectFit: "cover", border: "0.5px solid var(--border)", background: "repeating-conic-gradient(#f0f0f0 0% 25%, white 0% 50%) 0 0 / 8px 8px" }} />
+                        : <div style={{ width: 72, height: 72, borderRadius: 10, background: "var(--bg)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>👗</div>
+                      }
+                      <div style={{ fontSize: 9, color: "var(--text-tertiary)", textAlign: "center", marginTop: 2, textTransform: "capitalize" }}>{outfit.categories?.[i]}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {outfit.colorStory && (
+                  <div style={{ background: "var(--pink-light)", borderRadius: 8, padding: "6px 10px", marginBottom: 6, fontSize: 12, color: "var(--pink-dark)" }}>
+                    🎨 {outfit.colorStory}
+                  </div>
+                )}
+                {outfit.styleNote && (
+                  <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>✨ {outfit.styleNote}</div>
+                )}
+                <div style={{ fontSize: 10, color: "var(--text-tertiary)", marginTop: 6 }}>
+                  Saved {new Date(outfit.savedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                </div>
+              </div>
             </div>
-          )}
+          ))}
         </div>
       </div>
 
