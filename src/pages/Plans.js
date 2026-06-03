@@ -16,14 +16,12 @@ const PLANS = [
       "Upload unlimited clothing items",
       "AI outfit suggestions",
       "Swipe and liked items",
-      "3 outfit generations per day",
-      "Max 20 liked items at a time",
       "Watermark on saved outfit screenshots",
     ],
     locked: [
+      "Time constraints on swiping and generating",
       "No stylist chat or recommendations",
       "Cannot view stylist profiles or reviews",
-      "Time limits on swiping and generating",
     ],
   },
   {
@@ -34,8 +32,7 @@ const PLANS = [
     badge: "Most Popular",
     color: "#fce7f3",
     features: [
-      "Everything in Free",
-      "No time constraints — anything in the app",
+      "Everything in Free — no time constraints",
       "Unlimited stylist chat (text only)",
       "Photo sharing with stylist",
       "View stylist profiles and ratings",
@@ -88,7 +85,7 @@ const PLANS = [
 
 export default function Plans() {
   const nav = useNavigate();
-  const { currentUser, userProfile } = useAuth();
+  const { currentUser } = useAuth();
   const [selected, setSelected] = useState("monthly");
   const [loading, setLoading] = useState(false);
 
@@ -101,7 +98,12 @@ export default function Plans() {
           subscriptionUpdatedAt: new Date().toISOString(),
         });
       }
-      nav("/home");
+      // After selecting a paid plan that includes stylists — go to stylist page
+      if (selected === "monthly" || selected === "premium_plus" || selected === "session") {
+        nav("/stylists");
+      } else {
+        nav("/home");
+      }
     } catch (e) { console.error(e); }
     setLoading(false);
   }
@@ -132,9 +134,7 @@ export default function Plans() {
               </div>
             )}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
-              <div>
-                <div style={{ fontSize: 15, fontWeight: 600 }}>{p.name}</div>
-              </div>
+              <div style={{ fontSize: 15, fontWeight: 600 }}>{p.name}</div>
               <div>
                 <span style={{ fontSize: 20, fontWeight: 600 }}>{p.price}</span>
                 <span style={{ fontSize: 11, color: "var(--text-tertiary)" }}>{p.period}</span>
@@ -159,7 +159,7 @@ export default function Plans() {
         ))}
 
         <button className="btn-pink" onClick={handleSelect} disabled={loading} style={{ marginTop: 8 }}>
-          {loading ? <span className="spinner"></span> : "Get started"}
+          {loading ? <span className="spinner"></span> : selected === "free" ? "Get started free" : "Continue to stylists →"}
         </button>
         <p style={{ textAlign: "center", fontSize: 11, color: "var(--text-tertiary)", marginTop: 10 }}>
           Payments processed securely by Stripe. Cancel anytime.
