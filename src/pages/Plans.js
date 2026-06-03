@@ -64,28 +64,30 @@ const PLANS = [
   },
   {
     id: "session",
-    name: "Pay Per Session",
-    price: "$7.99",
+    name: "Try a Session",
+    price: "$9.99",
     period: "/session",
-    badge: null,
+    badge: "Free Plan Add-On",
     color: "#f0fdf4",
     features: [
-      "One live stylist chat session",
+      "Available to free accounts only",
+      "One live stylist chat + video session",
       "Session lasts 24 hours from first message",
       "Photo sharing included",
+      "Video call included",
       "No commitment",
-      "Can upgrade to monthly mid-session with credit",
+      "Can upgrade to a monthly plan mid-session with credit",
     ],
     locked: [
       "AI randomly assigns your stylist",
-      "No video calls",
+      "Not available to existing paid subscribers",
     ],
   },
 ];
 
 export default function Plans() {
   const nav = useNavigate();
-  const { currentUser } = useAuth();
+  const { currentUser, userProfile } = useAuth();
   const [selected, setSelected] = useState("monthly");
   const [loading, setLoading] = useState(false);
 
@@ -98,7 +100,7 @@ export default function Plans() {
           subscriptionUpdatedAt: new Date().toISOString(),
         });
       }
-      // After selecting a paid plan that includes stylists — go to stylist page
+      // After selecting a plan — route appropriately
       if (selected === "monthly" || selected === "premium_plus" || selected === "session") {
         nav("/stylists");
       } else {
@@ -121,7 +123,12 @@ export default function Plans() {
           <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>Upgrade anytime. Cancel anytime.</div>
         </div>
 
-        {PLANS.map(p => (
+        {PLANS.filter(p => {
+          // Hide the session add-on if user already has a paid plan
+          const hasPaidPlan = userProfile?.subscriptionTier === "monthly" || userProfile?.subscriptionTier === "premium_plus";
+          if (p.id === "session" && hasPaidPlan) return false;
+          return true;
+        }).map(p => (
           <div
             key={p.id}
             className={`plan-card${selected === p.id ? " selected" : ""}`}

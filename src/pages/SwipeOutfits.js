@@ -117,6 +117,8 @@ function SwipeCard({ item, onSwipe, isTop, position }) {
 // ─── Main SwipeOutfits Page ───────────────────────────────────
 export default function SwipeOutfits() {
   const { userProfile } = useAuth();
+  // Only free accounts have time constraints
+  const isFreeAccount = !userProfile?.subscriptionTier || userProfile?.subscriptionTier === "free";
   const nav = useNavigate();
   const [deck, setDeck] = useState([]);
   const [likedCount, setLikedCount] = useState(0);
@@ -164,33 +166,36 @@ export default function SwipeOutfits() {
       );
       const allItems = itemsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-      // ── 2. Load swipe session ─────────────────────────────
-      const sessionSnap = await getDocs(
-        query(collection(db, "swipeSessions"), where("userId", "==", userProfile.uid))
-      );
+      // ── 2. Load swipe session (free accounts only) ──────────
       const now = new Date();
-      let sessionId = null;
       let alreadySwiped = new Set();
       let sessionResetsAt = null;
 
-      if (!sessionSnap.empty) {
-        const sDoc = sessionSnap.docs[0];
-        const sData = sDoc.data();
-        if (new Date(sData.resetsAt) > now) {
-          // Session still active — use existing swiped list
-          sessionId = sDoc.id;
-          alreadySwiped = new Set(sData.swipedItemIds || []);
-          sessionResetsAt = sData.resetsAt;
+      if (isFreeAccount) {
+        // Only free accounts track swiped items with 6hr reset
+        const sessionSnap = await getDocs(
+          query(collection(db, "swipeSessions"), where("userId", "==", userProfile.uid))
+        );
+        let sessionId = null;
+        if (!sessionSnap.empty) {
+          const sDoc = sessionSnap.docs[0];
+          const sData = sDoc.data();
+          if (new Date(sData.resetsAt) > now) {
+            sessionId = sDoc.id;
+            alreadySwiped = new Set(sData.swipedItemIds || []);
+            sessionResetsAt = sData.resetsAt;
+          }
         }
-        // If expired — ignore it, start fresh
+        setSessionDocId(sessionId);
+        if (sessionResetsAt) setResetsAt(sessionResetsAt);
       }
-
-      setSessionDocId(sessionId);
+      // Paid accounts — no tracking, all items always available
       setSwipedIds(alreadySwiped);
-      if (sessionResetsAt) setResetsAt(sessionResetsAt);
 
       // ── 3. Build deck from unswiped items ─────────────────
-      const remaining = allItems.filter(item => !alreadySwiped.has(item.id));
+      const remaining = isFreeAccount
+        ? allItems.filter(item => !alreadySwiped.has(item.id))
+        : [...allItems]; // paid accounts always see all items
       const shuffled = [...remaining].sort(() => Math.random() - 0.5);
       setDeck(shuffled);
       setAllDone(shuffled.length === 0 && allItems.length > 0);
@@ -241,36 +246,36 @@ export default function SwipeOutfits() {
     const newSwipedIds = new Set([...swipedIds, item.id]);
     setSwipedIds(newSwipedIds);
 
-    // ── Save/update swipe session ─────────────────────────
-    try {
-      let currentResetsAt = resetsAt;
-      if (!currentResetsAt || new Date(currentResetsAt) <= now) {
-        // Create new session expiring in 6 hours
-        const newResetsAt = new Date();
-        newResetsAt.setHours(newResetsAt.getHours() + SESSION_HOURS);
-        currentResetsAt = newResetsAt.toISOString();
-        setResetsAt(currentResetsAt);
+    // ── Save/update swipe session (free accounts only) ──────
+    if (isFreeAccount) {
+      try {
+        let currentResetsAt = resetsAt;
+        if (!currentResetsAt || new Date(currentResetsAt) <= now) {
+          const newResetsAt = new Date();
+          newResetsAt.setHours(newResetsAt.getHours() + SESSION_HOURS);
+          currentResetsAt = newResetsAt.toISOString();
+          setResetsAt(currentResetsAt);
+        }
+        const sessionData = {
+          userId: userProfile.uid,
+          swipedItemIds: [...newSwipedIds],
+          resetsAt: currentResetsAt,
+          updatedAt: now.toISOString(),
+        };
+        if (sessionDocId) {
+          await updateDoc(doc(db, "swipeSessions", sessionDocId), sessionData);
+        } else {
+          const newDoc = await addDoc(collection(db, "swipeSessions"), {
+            ...sessionData,
+            createdAt: now.toISOString(),
+          });
+          setSessionDocId(newDoc.id);
+        }
+      } catch (err) {
+        console.error("Session save error:", err);
       }
-
-      const sessionData = {
-        userId: userProfile.uid,
-        swipedItemIds: [...newSwipedIds],
-        resetsAt: currentResetsAt,
-        updatedAt: now.toISOString(),
-      };
-
-      if (sessionDocId) {
-        await updateDoc(doc(db, "swipeSessions", sessionDocId), sessionData);
-      } else {
-        const newDoc = await addDoc(collection(db, "swipeSessions"), {
-          ...sessionData,
-          createdAt: now.toISOString(),
-        });
-        setSessionDocId(newDoc.id);
-      }
-    } catch (err) {
-      console.error("Session save error:", err);
     }
+    // Paid accounts — no session tracking needed
 
     // ── If liked, save to likedItems collection ───────────
     if (dir === "like") {
@@ -343,7 +348,7 @@ export default function SwipeOutfits() {
 
           {/* Instruction banner */}
           <div style={{ background:"#f0f4ff", border:"1px solid #c7d2fe", borderRadius:"var(--radius)", padding:"10px 14px", marginBottom:12, fontSize:12, color:"#3730a3" }}>
-            💡 Swipe 💗 on items you like. Like a <strong>top + bottom</strong> or a <strong>dress</strong> to unlock AI outfit generation. Each item can only be swiped <strong>once every 6 hours</strong>.
+            💡 Swipe 💗 on items you like. Like a <strong>top + bottom</strong> or a <strong>dress</strong> to unlock AI outfit generation.{isFreeAccount && " Each item can only be swiped once every 6 hours."}
           </div>
 
           {/* Ready to generate */}
@@ -369,9 +374,9 @@ export default function SwipeOutfits() {
             <div style={{ textAlign:"center", padding:"32px 20px" }}>
               <div style={{ fontSize:40, marginBottom:12 }}>✅</div>
               <div style={{ fontSize:15, fontWeight:500, marginBottom:8 }}>You have swiped all items!</div>
-              {timeUntilReset && (
+              {isFreeAccount && timeUntilReset && (
                 <div style={{ background:"#fff8e7", border:"1px solid #fcd34d", borderRadius:"var(--radius)", padding:"10px 14px", fontSize:13, color:"#92400e", marginBottom:16 }}>
-                  ⏰ New swipe session available in <strong>{timeUntilReset}</strong>
+                  ⏰ Free plan — new swipe session available in <strong>{timeUntilReset}</strong>. <span style={{color:"var(--pink)", cursor:"pointer", textDecoration:"underline"}} onClick={() => nav("/plans")}>Upgrade to remove limits</span>
                 </div>
               )}
               {likedCount > 0 && (
