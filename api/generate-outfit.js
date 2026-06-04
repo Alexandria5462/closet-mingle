@@ -142,16 +142,68 @@ function generateWithRules(items, occasion) {
   const pick = arr => arr.length ? arr[Math.floor(Math.random() * arr.length)] : null;
   const outfits = [];
 
-  // Color pairing rules
+  // 2026 Color pairing rules
   const colorPairs = {
-    black: ["white","cream","grey","red","pink","gold"],
-    white: ["black","navy","blue","grey","brown","pink"],
-    navy: ["white","cream","grey","light blue","gold"],
-    grey: ["white","black","navy","pink","red"],
-    brown: ["white","cream","tan","olive","gold"],
-    red: ["black","white","grey","navy"],
-    pink: ["white","black","grey","navy","cream"],
-  };
+    // Classic Neutrals
+ black: ["white","cream","ecru","grey","red","pink","cobalt","gold","butter yellow","lavender"],
+ white: ["black","navy","cobalt","grey","brown","pink","forest green","rust","lavender"],
+ grey: ["white","black","navy","pink","red","lavender","cobalt","butter yellow","coral"],
+ cream: ["brown","chocolate","camel","rust","forest green","navy","black","mocha","terracotta"],
+ ecru: ["chocolate","mocha","camel","forest green","rust","navy","black","terracotta"],
+ // 2026 Trending Neutrals
+ "mocha mousse": ["cream","ecru","camel","butter yellow","forest green","rust","white","gold"],
+ mocha: ["cream","ecru","white","butter yellow","camel","forest green","coral","gold"],
+ chocolate: ["cream","ecru","camel","butter yellow","rust","coral","white","gold"],
+ camel: ["white","black","chocolate","mocha","navy","forest green","rust","burgundy"],
+ beige: ["white","black","brown","navy","rust","forest green","camel","mocha"],
+ tan: ["white","brown","navy","rust","forest green","chocolate","burgundy"],
+ // Blues
+ navy: ["white","cream","ecru","camel","grey","gold","coral","butter yellow"],
+ cobalt: ["white","cream","black","grey","gold","coral","butter yellow"],
+ "powder blue": ["white","cream","navy","chocolate","camel","lavender","blush"],
+ "light blue": ["white","navy","camel","chocolate","grey","cream","lavender"],
+ blue: ["white","cream","grey","camel","gold","coral","butter yellow","rust"],
+ // Greens
+ "forest green": ["cream","ecru","camel","white","chocolate","rust","gold","butter yellow"],
+ olive: ["white","cream","camel","rust","chocolate","beige","tan","gold"],
+ green: ["white","cream","camel","chocolate","rust","beige","gold"],
+ sage: ["white","cream","lavender","blush","chocolate","camel","ecru"],
+ // Warm Tones
+ rust: ["cream","ecru","white","chocolate","forest green","navy","camel","gold"],
+ terracotta: ["cream","ecru","white","forest green","navy","chocolate","camel"],
+ coral: ["white","cream","navy","cobalt","chocolate","gold","grey"],
+ peach: ["white","cream","chocolate","navy","forest green","camel","sage"],
+ orange: ["white","navy","black","chocolate","cream","cobalt"],
+ // Pinks and Purples
+ pink: ["white","black","grey","navy","cream","chocolate","cobalt"],
+ blush: ["white","cream","chocolate","camel","navy","sage","lavender"],
+ lavender: ["white","cream","grey","chocolate","forest green","navy","blush"],
+ lilac: ["white","cream","grey","chocolate","navy","forest green","blush"],
+ purple: ["white","cream","grey","black","gold","cobalt"],
+ mauve: ["white","cream","chocolate","camel","forest green","navy"],
+ // Reds and Burgundy
+ red: ["black","white","grey","navy","cream","gold"],
+ burgundy: ["cream","ecru","camel","white","grey","gold","forest green"],
+ wine: ["cream","ecru","camel","white","grey","gold"],
+ // Yellows and Golds
+ "butter yellow": ["white","chocolate","navy","cobalt","forest green","black","mocha"],
+ yellow: ["white","black","navy","grey","chocolate","forest green"],
+ gold: ["black","white","navy","chocolate","burgundy","forest green","cream"],
+ mustard: ["white","black","chocolate","forest green","navy","rust","cream"],
+ // Off Whites
+ "off white": ["chocolate","mocha","camel","navy","forest green","rust","black"],
+ ivory: ["chocolate","mocha","camel","navy","rust","black","forest green"],
+};
+// ── 2026 Pattern Mixing Rules ─────────────────────────────────
+const patternRules = {
+ solid: ["solid","striped","plaid","floral","graphic","animal print","geometric"],
+ striped: ["solid","geometric"],
+ plaid: ["solid"],
+ floral: ["solid","geometric"],
+ graphic: ["solid"],
+ "animal print": ["solid"],
+ geometric: ["solid","floral","striped"],
+};
 
   // Shuffle all arrays so every regenerate gives different combinations
   const shuffle = arr => [...arr].sort(() => Math.random() - 0.5);
