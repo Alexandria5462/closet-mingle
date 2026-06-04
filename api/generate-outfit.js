@@ -142,68 +142,102 @@ function generateWithRules(items, occasion) {
   const pick = arr => arr.length ? arr[Math.floor(Math.random() * arr.length)] : null;
   const outfits = [];
 
-  // 2026 Color pairing rules
+  // Color pairing rules
+  // ── 2026 Complete Color Matching Rules ───────────────────────
+  // Every color Claude can detect is mapped here for full accuracy
   const colorPairs = {
-    // Classic Neutrals
- black: ["white","cream","ecru","grey","red","pink","cobalt","gold","butter yellow","lavender"],
- white: ["black","navy","cobalt","grey","brown","pink","forest green","rust","lavender"],
- grey: ["white","black","navy","pink","red","lavender","cobalt","butter yellow","coral"],
- cream: ["brown","chocolate","camel","rust","forest green","navy","black","mocha","terracotta"],
- ecru: ["chocolate","mocha","camel","forest green","rust","navy","black","terracotta"],
- // 2026 Trending Neutrals
- "mocha mousse": ["cream","ecru","camel","butter yellow","forest green","rust","white","gold"],
- mocha: ["cream","ecru","white","butter yellow","camel","forest green","coral","gold"],
- chocolate: ["cream","ecru","camel","butter yellow","rust","coral","white","gold"],
- camel: ["white","black","chocolate","mocha","navy","forest green","rust","burgundy"],
- beige: ["white","black","brown","navy","rust","forest green","camel","mocha"],
- tan: ["white","brown","navy","rust","forest green","chocolate","burgundy"],
- // Blues
- navy: ["white","cream","ecru","camel","grey","gold","coral","butter yellow"],
- cobalt: ["white","cream","black","grey","gold","coral","butter yellow"],
- "powder blue": ["white","cream","navy","chocolate","camel","lavender","blush"],
- "light blue": ["white","navy","camel","chocolate","grey","cream","lavender"],
- blue: ["white","cream","grey","camel","gold","coral","butter yellow","rust"],
- // Greens
- "forest green": ["cream","ecru","camel","white","chocolate","rust","gold","butter yellow"],
- olive: ["white","cream","camel","rust","chocolate","beige","tan","gold"],
- green: ["white","cream","camel","chocolate","rust","beige","gold"],
- sage: ["white","cream","lavender","blush","chocolate","camel","ecru"],
- // Warm Tones
- rust: ["cream","ecru","white","chocolate","forest green","navy","camel","gold"],
- terracotta: ["cream","ecru","white","forest green","navy","chocolate","camel"],
- coral: ["white","cream","navy","cobalt","chocolate","gold","grey"],
- peach: ["white","cream","chocolate","navy","forest green","camel","sage"],
- orange: ["white","navy","black","chocolate","cream","cobalt"],
- // Pinks and Purples
- pink: ["white","black","grey","navy","cream","chocolate","cobalt"],
- blush: ["white","cream","chocolate","camel","navy","sage","lavender"],
- lavender: ["white","cream","grey","chocolate","forest green","navy","blush"],
- lilac: ["white","cream","grey","chocolate","navy","forest green","blush"],
- purple: ["white","cream","grey","black","gold","cobalt"],
- mauve: ["white","cream","chocolate","camel","forest green","navy"],
- // Reds and Burgundy
- red: ["black","white","grey","navy","cream","gold"],
- burgundy: ["cream","ecru","camel","white","grey","gold","forest green"],
- wine: ["cream","ecru","camel","white","grey","gold"],
- // Yellows and Golds
- "butter yellow": ["white","chocolate","navy","cobalt","forest green","black","mocha"],
- yellow: ["white","black","navy","grey","chocolate","forest green"],
- gold: ["black","white","navy","chocolate","burgundy","forest green","cream"],
- mustard: ["white","black","chocolate","forest green","navy","rust","cream"],
- // Off Whites
- "off white": ["chocolate","mocha","camel","navy","forest green","rust","black"],
- ivory: ["chocolate","mocha","camel","navy","rust","black","forest green"],
-};
-// ── 2026 Pattern Mixing Rules ─────────────────────────────────
-const patternRules = {
- solid: ["solid","striped","plaid","floral","graphic","animal print","geometric"],
- striped: ["solid","geometric"],
- plaid: ["solid"],
- floral: ["solid","geometric"],
- graphic: ["solid"],
- "animal print": ["solid"],
- geometric: ["solid","floral","striped"],
-};
+
+    // ── True Neutrals ─────────────────────────────────────────
+    black: ["white","cream","ecru","ivory","off white","grey","charcoal","red","pink","hot pink","cobalt","gold","butter yellow","lavender","silver","rose gold","champagne"],
+    white: ["black","navy","cobalt","grey","charcoal","brown","chocolate","pink","forest green","rust","lavender","teal","red","olive","burgundy"],
+    grey: ["white","black","navy","pink","red","lavender","cobalt","butter yellow","coral","silver","charcoal","blush","mauve"],
+    charcoal: ["white","cream","ecru","silver","pink","blush","lavender","cobalt","red","gold","champagne"],
+    silver: ["black","white","grey","charcoal","navy","cobalt","pink","blush","lavender","burgundy"],
+
+    // ── Creams and Off Whites ─────────────────────────────────
+    cream: ["brown","chocolate","camel","rust","forest green","navy","black","mocha","terracotta","cognac","burgundy","olive"],
+    ecru: ["chocolate","mocha","camel","forest green","rust","navy","black","terracotta","cognac","burgundy"],
+    "off white": ["chocolate","mocha","camel","navy","forest green","rust","black","cognac","burgundy"],
+    ivory: ["chocolate","mocha","camel","navy","rust","black","forest green","cognac","burgundy","gold"],
+    nude: ["black","chocolate","camel","navy","forest green","burgundy","cognac","gold"],
+    champagne: ["black","charcoal","navy","chocolate","burgundy","forest green","gold","silver"],
+
+    // ── Browns and Tans ───────────────────────────────────────
+    brown: ["white","cream","ecru","ivory","beige","tan","rust","forest green","navy","gold","butter yellow"],
+    chocolate: ["cream","ecru","ivory","off white","camel","butter yellow","rust","coral","white","gold","champagne","blush"],
+    mocha: ["cream","ecru","ivory","white","butter yellow","camel","forest green","coral","gold","champagne"],
+    "mocha mousse": ["cream","ecru","camel","butter yellow","forest green","rust","white","gold","champagne"],
+    caramel: ["white","cream","chocolate","navy","forest green","rust","gold","champagne","black"],
+    cognac: ["cream","ecru","ivory","white","forest green","navy","black","gold","champagne"],
+    camel: ["white","black","chocolate","mocha","navy","forest green","rust","burgundy","gold"],
+    beige: ["white","black","brown","navy","rust","forest green","camel","mocha","chocolate"],
+    tan: ["white","brown","navy","rust","forest green","chocolate","burgundy","gold"],
+    sand: ["white","chocolate","navy","forest green","rust","camel","black","gold"],
+
+    // ── Blues ─────────────────────────────────────────────────
+    navy: ["white","cream","ecru","ivory","camel","grey","gold","coral","butter yellow","champagne","silver"],
+    blue: ["white","cream","grey","camel","gold","coral","butter yellow","rust","silver"],
+    cobalt: ["white","cream","black","grey","gold","coral","butter yellow","silver","champagne"],
+    "powder blue": ["white","cream","navy","chocolate","camel","lavender","blush","silver"],
+    "light blue": ["white","navy","camel","chocolate","grey","cream","lavender","blush"],
+    teal: ["white","cream","black","grey","gold","coral","champagne","silver","navy"],
+    turquoise: ["white","cream","black","grey","gold","coral","navy","chocolate"],
+    slate: ["white","cream","navy","blush","lavender","gold","silver","champagne"],
+
+    // ── Greens ────────────────────────────────────────────────
+    "forest green": ["cream","ecru","ivory","camel","white","chocolate","rust","gold","butter yellow","champagne"],
+    green: ["white","cream","camel","chocolate","rust","beige","gold","butter yellow"],
+    olive: ["white","cream","camel","rust","chocolate","beige","tan","gold","butter yellow"],
+    sage: ["white","cream","lavender","blush","chocolate","camel","ecru","silver"],
+    mint: ["white","cream","chocolate","navy","black","grey","silver","gold"],
+
+    // ── Warm Tones ────────────────────────────────────────────
+    rust: ["cream","ecru","ivory","white","chocolate","forest green","navy","camel","gold","champagne"],
+    terracotta: ["cream","ecru","ivory","white","forest green","navy","chocolate","camel","gold"],
+    "burnt orange": ["cream","ivory","white","chocolate","forest green","navy","camel","gold"],
+    coral: ["white","cream","navy","cobalt","chocolate","gold","grey","champagne","silver"],
+    peach: ["white","cream","chocolate","navy","forest green","camel","sage","champagne","silver"],
+    orange: ["white","navy","black","chocolate","cream","cobalt","grey"],
+
+    // ── Pinks ─────────────────────────────────────────────────
+    pink: ["white","black","grey","navy","cream","chocolate","cobalt","silver","champagne"],
+    blush: ["white","cream","chocolate","camel","navy","sage","lavender","silver","champagne","grey"],
+    "hot pink": ["white","black","grey","navy","cobalt","silver","gold"],
+    fuchsia: ["white","black","grey","navy","cobalt","silver","gold"],
+    "rose gold": ["white","cream","black","grey","navy","chocolate","champagne","silver"],
+    coral: ["white","cream","navy","cobalt","chocolate","gold","grey"],
+
+    // ── Purples and Lavenders ─────────────────────────────────
+    lavender: ["white","cream","grey","chocolate","forest green","navy","blush","silver","champagne"],
+    lilac: ["white","cream","grey","chocolate","navy","forest green","blush","silver","champagne"],
+    purple: ["white","cream","grey","black","gold","cobalt","silver","champagne"],
+    mauve: ["white","cream","chocolate","camel","forest green","navy","silver","champagne"],
+
+    // ── Reds and Burgundy ─────────────────────────────────────
+    red: ["black","white","grey","navy","cream","gold","silver","champagne"],
+    burgundy: ["cream","ecru","ivory","camel","white","grey","gold","forest green","champagne","silver"],
+    wine: ["cream","ecru","camel","white","grey","gold","champagne","silver"],
+    maroon: ["cream","ivory","camel","white","grey","gold","forest green","champagne"],
+
+    // ── Yellows and Golds ─────────────────────────────────────
+    "butter yellow": ["white","chocolate","navy","cobalt","forest green","black","mocha","champagne"],
+    yellow: ["white","black","navy","grey","chocolate","forest green","cobalt"],
+    gold: ["black","white","navy","chocolate","burgundy","forest green","cream","champagne"],
+    mustard: ["white","black","chocolate","forest green","navy","rust","cream","camel"],
+    champagne: ["black","charcoal","navy","chocolate","burgundy","forest green","gold","silver","blush"],
+  };
+
+  // ── 2026 Pattern Mixing Rules ─────────────────────────────
+  const patternRules = {
+    solid: ["solid","striped","plaid","floral","graphic","animal print","geometric","other"],
+    striped: ["solid","geometric"],
+    plaid: ["solid"],
+    floral: ["solid","geometric"],
+    graphic: ["solid"],
+    "animal print": ["solid"],
+    geometric: ["solid","floral","striped"],
+    other: ["solid"],
+  };
 
   // Shuffle all arrays so every regenerate gives different combinations
   const shuffle = arr => [...arr].sort(() => Math.random() - 0.5);

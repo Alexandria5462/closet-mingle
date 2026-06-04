@@ -132,6 +132,9 @@ export default function Closet() {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState("");
   const [selectedItem, setSelectedItem] = useState(null);
+  const [reanalyzing, setReanalyzing] = useState(false);
+  const [reanalyzeProgress, setReanalyzeProgress] = useState("");
+  const [showReanalyzeBtn, setShowReanalyzeBtn] = useState(false);
 
   useEffect(() => {
     async function fetchItems() {
@@ -139,7 +142,11 @@ export default function Closet() {
       setLoading(true);
       const q = query(collection(db, "closetItems"), where("userId", "==", userProfile.uid));
       const snap = await getDocs(q);
-      setItems(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      const fetched = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      setItems(fetched);
+      // Show re-analyze button if any items have unknown colors
+      const hasUnknowns = fetched.some(i => !i.attributes?.primaryColor || i.attributes?.primaryColor === "unknown");
+      setShowReanalyzeBtn(hasUnknowns);
       setLoading(false);
     }
     fetchItems();
@@ -201,6 +208,43 @@ export default function Closet() {
     return catMatch && occMatch;
   });
 
+  async function reanalyzeAll() {
+    setReanalyzing(true);
+    let updated = 0;
+    const toUpdate = items.filter(i => !i.attributes?.primaryColor || i.attributes?.primaryColor === "unknown");
+    
+    for (const item of toUpdate) {
+      try {
+        setReanalyzeProgress(`Analyzing ${updated + 1} of ${toUpdate.length} — ${item.name}...`);
+        const response = await fetch("/api/analyze-clothing", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            imageUrl: item.fallbackUrl || item.imageUrl,
+            category: item.category,
+            name: item.name,
+          }),
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const attributes = data.attributes;
+          if (attributes?.primaryColor && attributes.primaryColor !== "unknown") {
+            await updateDoc(doc(db, "closetItems", item.id), { attributes });
+            setItems(prev => prev.map(i => i.id === item.id ? { ...i, attributes } : i));
+            updated++;
+          }
+        }
+      } catch (e) {
+        console.error("Reanalyze error:", e);
+      }
+    }
+
+    setReanalyzeProgress("");
+    setReanalyzing(false);
+    setShowReanalyzeBtn(false);
+    setToast(`✅ Updated ${updated} item${updated !== 1 ? "s" : ""} with color detection!`);
+  }
+
   return (
     <>
       <div className="header">
@@ -253,6 +297,27 @@ export default function Closet() {
               }}>{o}</button>
             ))}
           </div>
+
+          {/* Re-analyze banner — shows when unknown colors exist */}
+          {showReanalyzeBtn && !reanalyzing && (
+            <div style={{ background: "#fff8e7", border: "1px solid #fcd34d", borderRadius: "var(--radius)", padding: "10px 14px", marginBottom: 12, fontSize: 13, color: "#92400e", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+              <span>🎨 Some items have unknown colors. Fix them with AI?</span>
+              <button
+                onClick={reanalyzeAll}
+                style={{ background: "#d97706", border: "none", borderRadius: 20, padding: "5px 14px", color: "white", cursor: "pointer", fontSize: 12, fontWeight: 500, whiteSpace: "nowrap" }}
+              >
+                Fix now
+              </button>
+            </div>
+          )}
+
+          {/* Re-analyze progress */}
+          {reanalyzing && reanalyzeProgress && (
+            <div style={{ background: "#f0f4ff", border: "1px solid #c7d2fe", borderRadius: "var(--radius)", padding: "12px 14px", marginBottom: 12, fontSize: 13, color: "#3730a3", fontWeight: 500, display: "flex", alignItems: "center", gap: 8 }}>
+              <span className="spinner" style={{ borderTopColor: "#3730a3", borderColor: "rgba(55,48,163,0.2)", width: 16, height: 16 }}></span>
+              {reanalyzeProgress}
+            </div>
+          )}
 
           {filter === "All" && occasionFilter === "All" && (
             <div style={{ background: "#f0f4ff", border: "1px solid #c7d2fe", borderRadius: "var(--radius)", padding: "10px 14px", marginBottom: 14, fontSize: 13, color: "#3730a3", display: "flex", gap: 8 }}>

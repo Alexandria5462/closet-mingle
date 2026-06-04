@@ -20,15 +20,25 @@ export default async function handler(req, res) {
           role: "user",
           content: [
             { type: "image", source: { type: "url", url: imageUrl } },
-            { type: "text", text: `Analyze this ${category} clothing item called "${name}". Return ONLY JSON with no other text:
-{"primaryColor":"main color name","pattern":"solid/striped/plaid/floral/graphic/other","material":"cotton/denim/silk/wool/polyester/leather/unknown","style":"casual/formal/business/sporty/classic","fit":"fitted/loose/oversized/standard"}` }
+            {
+              type: "text",
+              text: `Analyze this ${category} clothing item called "${name}".
+
+For primaryColor you MUST pick the single closest match from ONLY this exact list:
+black, white, grey, cream, ecru, beige, tan, camel, brown, chocolate, mocha, navy, blue, cobalt, "powder blue", "light blue", "forest green", green, olive, sage, red, burgundy, wine, maroon, pink, blush, coral, peach, orange, rust, terracotta, "burnt orange", lavender, lilac, purple, mauve, yellow, mustard, gold, "butter yellow", "off white", ivory, silver, "rose gold", teal, turquoise, mint, "hot pink", fuchsia, "champagne", "caramel", "cognac", "slate", "charcoal", "nude", "sand"
+
+Return ONLY this JSON with no other text:
+{"primaryColor":"exact name from list above","secondaryColor":"exact name from list or null","pattern":"solid/striped/plaid/floral/graphic/animal print/geometric/other","material":"cotton/denim/silk/wool/polyester/leather/linen/velvet/satin/knit/unknown","style":"casual/formal/business/sporty/classic/streetwear/bohemian","fit":"fitted/loose/oversized/standard"}`
+            }
           ]
         }]
       }),
     });
 
     if (!response.ok) {
-      return res.status(500).json({ error: "Analysis failed" });
+      return res.status(500).json({
+        attributes: { primaryColor: "unknown", pattern: "solid", material: "unknown", style: "casual", fit: "standard" }
+      });
     }
 
     const data = await response.json();
@@ -38,7 +48,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ attributes });
 
   } catch (err) {
-    console.error("Analyze error:", err);
+    console.error("Analyze error:", err.message);
     return res.status(500).json({
       attributes: { primaryColor: "unknown", pattern: "solid", material: "unknown", style: "casual", fit: "standard" }
     });
