@@ -9,6 +9,7 @@ import Toast from "../components/Toast";
 export default function LikedItems() {
   const nav = useNavigate();
   const { userProfile } = useAuth();
+  const isFreeAccount = !userProfile?.subscriptionTier || userProfile?.subscriptionTier === "free";
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState("");
@@ -28,7 +29,8 @@ export default function LikedItems() {
       const valid = [];
       for (const d of snap.docs) {
         const data = { id: d.id, ...d.data() };
-        if (data.expiresAt && new Date(data.expiresAt) < now) {
+        // Only expire items for free accounts
+        if (isFreeAccount && data.expiresAt && new Date(data.expiresAt) < now) {
           await deleteDoc(doc(db, "likedItems", d.id)).catch(() => {});
         } else {
           valid.push(data);
@@ -105,10 +107,13 @@ export default function LikedItems() {
       <div className="screen">
         <div className="body">
 
-          <div style={{ background:"#fff8e7", border:"1px solid #fcd34d", borderRadius:"var(--radius)", padding:"10px 14px", marginBottom:14, fontSize:12, color:"#92400e", display:"flex", gap:8, alignItems:"center" }}>
-            <span>⏰</span>
-            <span>Liked items expire after <strong>24 hours</strong>. Generate your outfits before they disappear!</span>
-          </div>
+          {/* 24hr warning — free accounts only */}
+          {isFreeAccount && (
+            <div style={{ background:"#fff8e7", border:"1px solid #fcd34d", borderRadius:"var(--radius)", padding:"10px 14px", marginBottom:14, fontSize:12, color:"#92400e", display:"flex", gap:8, alignItems:"center" }}>
+              <span>⏰</span>
+              <span>Liked items expire after <strong>24 hours</strong>. Generate your outfits before they disappear!</span>
+            </div>
+          )}
 
           {canGenerate ? (
             <button className="btn-pink" onClick={() => nav("/generated")} style={{ marginBottom:16 }}>
@@ -165,9 +170,11 @@ export default function LikedItems() {
                       {item.attributes?.primaryColor && (
                         <div style={{ fontSize:10, color:"var(--text-tertiary)", textTransform:"capitalize" }}>{item.attributes.primaryColor} · {item.attributes.pattern}</div>
                       )}
-                      <div style={{ fontSize:10, color:getExpiryColor(item.expiresAt), marginTop:3, fontWeight:500 }}>
-                        ⏰ {getTimeLeft(item.expiresAt)}
-                      </div>
+                      {isFreeAccount && (
+                        <div style={{ fontSize:10, color:getExpiryColor(item.expiresAt), marginTop:3, fontWeight:500 }}>
+                          ⏰ {getTimeLeft(item.expiresAt)}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}

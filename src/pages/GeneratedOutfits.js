@@ -46,6 +46,7 @@ async function generateOutfitsFromLiked(likedItems, occasion) {
 export default function GeneratedOutfits() {
   const nav = useNavigate();
   const { userProfile } = useAuth();
+  const isFreeAccount = !userProfile?.subscriptionTier || userProfile?.subscriptionTier === "free";
   const [outfits, setOutfits] = useState([]);
   const [likedItems, setLikedItems] = useState([]);
   const [occasion, setOccasion] = useState("Casual");
@@ -89,8 +90,11 @@ export default function GeneratedOutfits() {
 
   async function saveOutfit(outfit, index) {
     try {
-      const expiresAt = new Date();
-      expiresAt.setHours(expiresAt.getHours() + 24);
+      // Only set 24hr expiry for free accounts
+      const expiresAtDate = isFreeAccount
+        ? new Date(Date.now() + 24 * 60 * 60 * 1000)
+        : null;
+      const expiresAt = expiresAtDate;
       await addDoc(collection(db, "savedOutfits"), {
         userId: userProfile.uid,
         itemIds: outfit.items.map(i => i.id || i.itemId),
@@ -104,7 +108,7 @@ export default function GeneratedOutfits() {
         colorHarmony: outfit.colorHarmony,
         occasion,
         savedAt: new Date().toISOString(),
-        expiresAt: expiresAt.toISOString(),
+        expiresAt: expiresAt ? expiresAt.toISOString() : null,
       });
       setSavedIds(prev => new Set([...prev, index]));
       setToast("💗 Outfit saved! View it on the Saved page.");

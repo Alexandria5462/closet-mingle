@@ -280,8 +280,10 @@ export default function SwipeOutfits() {
     // ── If liked, save to likedItems collection ───────────
     if (dir === "like") {
       try {
-        const expiresAt = new Date();
-        expiresAt.setHours(expiresAt.getHours() + 24);
+        // Only set 24hr expiry for free accounts — paid accounts keep liked items forever
+        const expiresAt = isFreeAccount
+          ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+          : null;
         await addDoc(collection(db, "likedItems"), {
           userId: userProfile.uid,
           itemId: item.id,
@@ -291,7 +293,7 @@ export default function SwipeOutfits() {
           fallbackUrl: item.fallbackUrl || "",
           attributes: item.attributes || {},
           likedAt: now.toISOString(),
-          expiresAt: expiresAt.toISOString(),
+          expiresAt: expiresAt,
         });
         const newCount = likedCount + 1;
         setLikedCount(newCount);

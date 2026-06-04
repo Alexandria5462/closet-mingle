@@ -9,6 +9,7 @@ import Toast from "../components/Toast";
 export default function SavedOutfits() {
   const nav = useNavigate();
   const { userProfile } = useAuth();
+  const isFreeAccount = !userProfile?.subscriptionTier || userProfile?.subscriptionTier === "free";
   const [outfits, setOutfits] = useState([]);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState("");
@@ -26,7 +27,8 @@ export default function SavedOutfits() {
       const valid = [];
       for (const d of snap.docs) {
         const data = { id: d.id, ...d.data() };
-        if (data.expiresAt && new Date(data.expiresAt) < now) {
+        // Only expire saved outfits for free accounts
+        if (isFreeAccount && data.expiresAt && new Date(data.expiresAt) < now) {
           await deleteDoc(doc(db, "savedOutfits", d.id)).catch(() => {});
         } else {
           valid.push(data);
@@ -97,10 +99,13 @@ export default function SavedOutfits() {
 
       <div className="screen">
         <div className="body">
-          <div style={{ background: "#fff8e7", border: "1px solid #fcd34d", borderRadius: "var(--radius)", padding: "10px 14px", marginBottom: 16, fontSize: 12, color: "#92400e", display: "flex", gap: 8 }}>
-            <span>⏰</span>
-            <span>Outfits expire after <strong>24 hours</strong>. Screenshot your favorites to keep them!</span>
-          </div>
+          {/* 24hr warning — free accounts only */}
+          {isFreeAccount && (
+            <div style={{ background: "#fff8e7", border: "1px solid #fcd34d", borderRadius: "var(--radius)", padding: "10px 14px", marginBottom: 16, fontSize: 12, color: "#92400e", display: "flex", gap: 8 }}>
+              <span>⏰</span>
+              <span>Outfits expire after <strong>24 hours</strong>. Screenshot your favorites to keep them!</span>
+            </div>
+          )}
 
           {loading ? (
             <div style={{ textAlign: "center", padding: 40, color: "var(--text-tertiary)" }}>Loading saved outfits...</div>
@@ -122,7 +127,9 @@ export default function SavedOutfits() {
                 </div>
                 <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                   {outfit.occasion && <span className="badge badge-pink" style={{ fontSize: 10 }}>{outfit.occasion}</span>}
-                  <span style={{ fontSize: 11, color: getExpiryColor(outfit.expiresAt), fontWeight: 500 }}>{getTimeLeft(outfit.expiresAt)}</span>
+                  {isFreeAccount && (
+                    <span style={{ fontSize: 11, color: getExpiryColor(outfit.expiresAt), fontWeight: 500 }}>{getTimeLeft(outfit.expiresAt)}</span>
+                  )}
                 </div>
               </div>
 
