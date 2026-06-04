@@ -165,7 +165,9 @@ export default function Closet() {
         const category = guessCategory(file.name, filter);
         const name = file.name.replace(/\.[^.]+$/, "").replace(/[-_]/g, " ").replace(/\b\w/g, c => c.toUpperCase()).slice(0, 30);
         setUploadProgress(`Analyzing item ${uploaded + 1} of ${fileArray.length}...`);
-        const attributes = await analyzeClothing(fallbackUrl, category, name);
+        // Use fallbackUrl (original) not background-removed URL for analysis
+        const urlForAnalysis = fallbackUrl || imageUrl;
+        const attributes = await analyzeClothing(urlForAnalysis, category, name);
         const newItem = {
           userId: userProfile.uid,
           name, category, imageUrl, fallbackUrl, publicId, attributes,
@@ -216,11 +218,16 @@ export default function Closet() {
     for (const item of toUpdate) {
       try {
         setReanalyzeProgress(`Analyzing ${updated + 1} of ${toUpdate.length} — ${item.name}...`);
+        // Always use fallbackUrl (original without background removal)
+        // Background removal URLs cause 400 errors with Anthropic
+        const urlToAnalyze = item.fallbackUrl || item.originalUrl || item.imageUrl || "";
+        const cleanUrl = urlToAnalyze.replace("/upload/e_background_removal/", "/upload/");
+
         const response = await fetch("/api/analyze-clothing", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            imageUrl: item.fallbackUrl || item.imageUrl,
+            imageUrl: cleanUrl,
             category: item.category,
             name: item.name,
           }),
