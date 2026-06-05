@@ -77,7 +77,6 @@ function AppRoutes() {
       <Route path="/referral" element={<PrivateRoute><Referral /></PrivateRoute>} />
       <Route path="/gift" element={<PrivateRoute><GiftSubscription /></PrivateRoute>} />
       <Route path="/my-sessions" element={<PrivateRoute><ClientSessions /></PrivateRoute>} />
-      <Route path="/my-stylists" element={<PrivateRoute><ClientStylistHistory /></PrivateRoute>} />
 
       {/* Stylist */}
       <Route path="/stylist" element={<PrivateRoute accountType="stylist"><StylistHome /></PrivateRoute>} />
