@@ -161,20 +161,24 @@ export default function StylistHome() {
           {/* Quick nav cards */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
             {[
-              { label: "Messages", sub: `${todayStats.unread} unread`, icon: "ti-message-circle", path: "/stylist/messages", color: "var(--pink-light)", badge: todayStats.unread },
-              { label: "My Clients", sub: "View all", icon: "ti-users", path: "/stylist/clients", color: "#dbeafe" },
-              { label: "Analytics", sub: "Earnings & stats", icon: "ti-chart-bar", path: "/stylist/analytics", color: "#d1fae5" },
-              { label: "My Profile", sub: "Edit & settings", icon: "ti-user", path: "/account", color: "#ede9fe" },
+              { label: "Messages", sub: `${todayStats.unread} unread`, icon: "ti-message-circle", path: "/stylist/messages", color: "var(--card-pink)", badge: todayStats.unread },
+              { label: "My Clients", sub: "View all", icon: "ti-users", path: "/stylist/clients", color: "var(--card-blue)" },
+              { label: "Analytics", sub: "Earnings & stats", icon: "ti-chart-bar", path: "/stylist/analytics", color: "var(--card-green)" },
+              { label: "My Profile", sub: "Edit & settings", icon: "ti-user", path: "/account", color: "var(--card-purple)" },
             ].map(card => (
-              <div key={card.label} onClick={() => nav(card.path)} style={{ background: card.color, borderRadius: "var(--radius)", padding: 14, cursor: "pointer", position: "relative" }}>
+              <div key={card.label} onClick={() => nav(card.path)} style={{
+                background: card.color, borderRadius: "var(--radius)", padding: 14,
+                cursor: "pointer", position: "relative",
+                border: "0.5px solid var(--border)",
+              }}>
                 {card.badge > 0 && (
                   <div style={{ position: "absolute", top: 8, right: 8, background: "var(--pink)", borderRadius: "50%", width: 18, height: 18, fontSize: 10, color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 600 }}>
                     {card.badge}
                   </div>
                 )}
-                <i className={`ti ${card.icon}`} style={{ fontSize: 22, color: "var(--pink-dark)", marginBottom: 6, display: "block" }} aria-hidden="true"></i>
-                <div style={{ fontSize: 13, fontWeight: 500 }}>{card.label}</div>
-                <div style={{ fontSize: 11, color: "var(--text-secondary)" }}>{card.sub}</div>
+                <i className={`ti ${card.icon}`} style={{ fontSize: 22, color: card.accent || "var(--pink)", marginBottom: 6, display: "block" }} aria-hidden="true"></i>
+                <div style={{ fontSize: 13, fontWeight: 600, color: card.textColor || "var(--text-primary)" }}>{card.label}</div>
+                <div style={{ fontSize: 11, color: "var(--text-secondary)", marginTop: 2 }}>{card.sub}</div>
               </div>
             ))}
           </div>

@@ -50,6 +50,8 @@ async function generateOutfitsFromLiked(likedItems, occasion) {
 // ── Name outfit modal ─────────────────────────────────────────
 function NameOutfitModal({ outfit, onSave, onCancel }) {
   const [outfitName, setOutfitName] = useState(outfit.outfitName || "");
+  const [dayOfWeek, setDayOfWeek] = useState("");
+
   return (
     <div className="modal-overlay" onClick={onCancel}>
       <div className="modal-sheet" onClick={e => e.stopPropagation()}>
@@ -57,9 +59,26 @@ function NameOutfitModal({ outfit, onSave, onCancel }) {
         <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 14 }}>Give this outfit a custom name or keep the AI suggestion</div>
         <input className="input-field" value={outfitName} onChange={e => setOutfitName(e.target.value)} placeholder="e.g. Monday Work Look, Date Night Vibes..." maxLength={50} />
         <div style={{ fontSize: 10, color: "var(--text-tertiary)", textAlign: "right", marginTop: -8, marginBottom: 12 }}>{outfitName.length}/50</div>
+
+        {/* Day of week — optional */}
+        <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 6 }}>
+          📅 Plan to wear this on... <span style={{ color: "var(--text-tertiary)", fontSize: 11 }}>(optional)</span>
+        </div>
+        <select
+          className="input-field"
+          value={dayOfWeek}
+          onChange={e => setDayOfWeek(e.target.value)}
+          style={{ marginBottom: 14, cursor: "pointer" }}
+        >
+          <option value="">No specific day</option>
+          {["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"].map(d => (
+            <option key={d} value={d}>{d}</option>
+          ))}
+        </select>
+
         <div style={{ display: "flex", gap: 10 }}>
           <button className="btn-outline btn-sm" onClick={onCancel} style={{ flex: 1, marginTop: 0 }}>Cancel</button>
-          <button className="btn-pink btn-sm" onClick={() => onSave(outfitName || outfit.outfitName)} disabled={!outfitName.trim()} style={{ flex: 1 }}>
+          <button className="btn-pink btn-sm" onClick={() => onSave(outfitName || outfit.outfitName, dayOfWeek)} disabled={!outfitName.trim()} style={{ flex: 1 }}>
             Save outfit 💗
           </button>
         </div>
@@ -134,7 +153,7 @@ export default function GeneratedOutfits() {
     setGenerating(false);
   }
 
-  async function saveOutfit(outfit, index, customName) {
+  async function saveOutfit(outfit, index, customName, dayOfWeek = "") {
     try {
       const expiryDate = getExpiryDate();
       await addDoc(collection(db, "savedOutfits"), {
@@ -147,7 +166,9 @@ export default function GeneratedOutfits() {
         patternNote: outfit.patternNote || "",
         styleNote: outfit.styleNote || "",
         outfitName: customName || outfit.outfitName || "Saved Outfit",
+        dayOfWeek: dayOfWeek || null,
         colorHarmony: outfit.colorHarmony || "",
+        dayOfWeek: dayOfWeek || "",
         occasion,
         savedAt: new Date().toISOString(),
         expiresAt: expiryDate ? expiryDate.toISOString() : null,
@@ -335,7 +356,7 @@ export default function GeneratedOutfits() {
       {namingOutfit && (
         <NameOutfitModal
           outfit={namingOutfit.outfit}
-          onSave={name => { saveOutfit(namingOutfit.outfit, namingOutfit.index, name); setNamingOutfit(null); }}
+          onSave={(name, day) => { saveOutfit(namingOutfit.outfit, namingOutfit.index, name, day); setNamingOutfit(null); }}
           onCancel={() => setNamingOutfit(null)}
         />
       )}

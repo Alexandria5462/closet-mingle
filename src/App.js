@@ -27,10 +27,13 @@ import GiftSubscription from "./pages/GiftSubscription";
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import StylistHome from "./pages/StylistHome";
+import ClientSessions from "./pages/ClientSessions";
 import StylistChat from "./pages/StylistChat";
 import StylistMessages from "./pages/StylistMessages";
 import StylistAnalytics from "./pages/StylistAnalytics";
 import StylistClients from "./pages/StylistClients";
+import StylistPortfolio from "./pages/StylistPortfolio";
+import ClientStylistHistory from "./pages/ClientStylistHistory";
 
 function PrivateRoute({ children, accountType }) {
   const { currentUser, userProfile, loading } = useAuth();
@@ -75,6 +78,9 @@ function AppRoutes() {
       <Route path="/quiz" element={<PrivateRoute><StyleQuiz /></PrivateRoute>} />
       <Route path="/referral" element={<PrivateRoute><Referral /></PrivateRoute>} />
       <Route path="/gift" element={<PrivateRoute><GiftSubscription /></PrivateRoute>} />
+      <Route path="/my-sessions" element={<PrivateRoute><ClientSessions /></PrivateRoute>} />
+      <Route path="/my-stylists" element={<PrivateRoute><ClientStylistHistory /></PrivateRoute>} />
+      <Route path="/stylist/portfolio" element={<PrivateRoute accountType="stylist"><StylistPortfolio /></PrivateRoute>} />
 
       {/* Stylist */}
       <Route path="/stylist" element={<PrivateRoute accountType="stylist"><StylistHome /></PrivateRoute>} />

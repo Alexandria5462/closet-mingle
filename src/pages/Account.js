@@ -179,6 +179,9 @@ export default function Account() {
   const [cancelling, setCancelling] = useState(false);
   const [notifPrefs, setNotifPrefs] = useState({ messages: true, sessions: true, tips: true, promotions: false });
   const [activeSection, setActiveSection] = useState("profile");
+  const [portfolio, setPortfolio] = useState([]);
+  const [portfolioLoading, setPortfolioLoading] = useState(false);
+  const portfolioRef = useRef();
 
   const BIO_LIMIT = 300;
   const tierLabel = TIER_LABELS[userProfile?.subscriptionTier] || "Free";
@@ -197,6 +200,7 @@ export default function Account() {
       if (userProfile.notifPrefs) setNotifPrefs(userProfile.notifPrefs);
     }
     loadQuizResult();
+    if (isStylist) loadPortfolio();
   }, [userProfile]);
 
   async function loadQuizResult() {
@@ -210,6 +214,48 @@ export default function Account() {
     if (!file) return;
     setPhotoFile(file);
     setPhotoPreview(URL.createObjectURL(file));
+  }
+
+  async function loadPortfolio() {
+    if (!currentUser?.uid) return;
+    try {
+      const snap = await getDocs(
+        query(collection(db, "savedOutfits"),
+          where("userId", "==", currentUser.uid),
+          where("isPortfolio", "==", true)
+        )
+      );
+      setPortfolio(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    } catch (e) { console.error(e); }
+  }
+
+  async function uploadPortfolioPhoto(file) {
+    setPortfolioLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET);
+      formData.append("folder", "closet-mingle-portfolio");
+      const res = await fetch(
+        `https://api.cloudinary.com/v1_1/${process.env.REACT_APP_CLOUDINARY_CLOUD_NAME}/image/upload`,
+        { method: "POST", body: formData }
+      );
+      const data = await res.json();
+      const photoUrl = data.secure_url;
+      await addDoc(collection(db, "savedOutfits"), {
+        userId: currentUser.uid,
+        isPortfolio: true,
+        itemImages: [photoUrl],
+        outfitName: "Portfolio piece",
+        savedAt: new Date().toISOString(),
+        expiresAt: null,
+      });
+      setToast("Portfolio photo added!");
+      await loadPortfolio();
+    } catch (e) {
+      setToast("Failed to upload. Try again.");
+    }
+    setPortfolioLoading(false);
   }
 
   async function saveProfile() {
@@ -244,7 +290,7 @@ export default function Account() {
   }
 
   const sections = isStylist
-    ? ["profile", "settings", "billing", "reviews"]
+    ? ["profile", "portfolio", "settings", "billing", "reviews"]
     : ["profile", "settings", "billing", "reviews"];
 
   return (
@@ -352,6 +398,21 @@ export default function Account() {
                 </div>
               )}
 
+              {/* Portfolio — stylist only */}
+              {isStylist && (
+                <div className="card" style={{ cursor: "pointer" }} onClick={() => nav("/stylist/portfolio")}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 500 }}>🖼️ My Portfolio</div>
+                      <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 2 }}>
+                        Upload outfit photos for clients to see →
+                      </div>
+                    </div>
+                    <i className="ti ti-arrow-right" style={{ color: "var(--text-tertiary)" }} aria-hidden="true"></i>
+                  </div>
+                </div>
+              )}
+
               {/* Style quiz */}
               {userProfile?.subscriptionTier && userProfile?.subscriptionTier !== "free" && (
                 <div className="card" style={{ cursor: "pointer" }} onClick={() => nav("/quiz")}>
@@ -447,22 +508,72 @@ export default function Account() {
           {/* ── Billing section ── */}
           {activeSection === "billing" && (
             <>
-              <div className="card">
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: hasPaidPlan ? 12 : 0 }}>
-                  <div>
-                    <div style={{ fontSize: 14, fontWeight: 500 }}>Current plan</div>
-                    <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 2 }}>{tierLabel}</div>
+              {isStylist ? (
+                <>
+                  {/* Stylist billing — show their plan options clearly */}
+                  <div className="card" style={{ background: "var(--pink-light)", border: "1px solid #f4c0d1" }}>
+                    <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 4 }}>Your current stylist plan</div>
+                    <div style={{ fontSize: 16, fontWeight: 600, color: "var(--pink-dark)", marginBottom: 4 }}>{tierLabel}</div>
+                    <div style={{ fontSize: 12, color: "var(--pink-dark)", opacity: 0.8 }}>
+                      {userProfile?.subscriptionTier === "stylist_annual" ? "Billed $200/year · Saving $40 vs monthly" : "Billed $20/month"}
+                    </div>
                   </div>
-                  <button className="btn-outline btn-sm" onClick={() => nav("/plans")} style={{ marginTop: 0 }}>
-                    {hasPaidPlan ? "Change plan" : "Upgrade"}
-                  </button>
-                </div>
-                {hasPaidPlan && (
-                  <button onClick={() => setShowCancelModal(true)} style={{ background: "none", border: "1px solid var(--danger)", borderRadius: "var(--radius-sm)", padding: "8px 14px", color: "var(--danger)", cursor: "pointer", fontSize: 13, width: "100%", fontFamily: "inherit" }}>
-                    Cancel subscription
-                  </button>
-                )}
-              </div>
+
+                  {/* Plan comparison for stylists */}
+                  <div className="section-label" style={{ marginTop: 8 }}>Stylist plan options</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
+                    <div style={{ background: userProfile?.subscriptionTier === "stylist_monthly" ? "var(--pink-light)" : "var(--bg-card)", border: `2px solid ${userProfile?.subscriptionTier === "stylist_monthly" ? "var(--pink)" : "var(--border)"}`, borderRadius: "var(--radius)", padding: 14, textAlign: "center" }}>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: "var(--text-tertiary)", marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.5 }}>Monthly</div>
+                      <div style={{ fontSize: 24, fontWeight: 700, color: "var(--pink-dark)" }}>$20</div>
+                      <div style={{ fontSize: 11, color: "var(--text-tertiary)" }}>per month</div>
+                      {userProfile?.subscriptionTier === "stylist_monthly" && (
+                        <div style={{ marginTop: 8, fontSize: 10, background: "var(--pink)", color: "white", borderRadius: 10, padding: "2px 8px" }}>Current plan</div>
+                      )}
+                    </div>
+                    <div style={{ background: userProfile?.subscriptionTier === "stylist_annual" ? "#d1fae5" : "var(--bg-card)", border: `2px solid ${userProfile?.subscriptionTier === "stylist_annual" ? "#059669" : "var(--border)"}`, borderRadius: "var(--radius)", padding: 14, textAlign: "center" }}>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: "var(--text-tertiary)", marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.5 }}>Annual</div>
+                      <div style={{ fontSize: 24, fontWeight: 700, color: "#059669" }}>$200</div>
+                      <div style={{ fontSize: 11, color: "var(--text-tertiary)" }}>per year</div>
+                      <div style={{ fontSize: 10, background: "#d1fae5", color: "#065f46", borderRadius: 10, padding: "2px 8px", marginTop: 4, fontWeight: 500 }}>Save $40/yr</div>
+                      {userProfile?.subscriptionTier === "stylist_annual" && (
+                        <div style={{ marginTop: 4, fontSize: 10, background: "#059669", color: "white", borderRadius: 10, padding: "2px 8px" }}>Current plan</div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="card" style={{ background: "#f0fdf4", border: "1px solid #6ee7b7" }}>
+                    <div style={{ fontSize: 13, color: "#065f46" }}>
+                      💰 You keep <strong>70%</strong> of every session fee and tip. Closet Mingle keeps 30%.
+                    </div>
+                  </div>
+
+                  {hasPaidPlan && (
+                    <button onClick={() => setShowCancelModal(true)} style={{ background: "none", border: "1px solid var(--danger)", borderRadius: "var(--radius-sm)", padding: "10px 14px", color: "var(--danger)", cursor: "pointer", fontSize: 13, width: "100%", fontFamily: "inherit", marginTop: 4 }}>
+                      Cancel stylist subscription
+                    </button>
+                  )}
+                </>
+              ) : (
+                <>
+                  {/* Client billing */}
+                  <div className="card">
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: hasPaidPlan ? 12 : 0 }}>
+                      <div>
+                        <div style={{ fontSize: 14, fontWeight: 500 }}>Current plan</div>
+                        <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 2 }}>{tierLabel}</div>
+                      </div>
+                      <button className="btn-outline btn-sm" onClick={() => nav("/plans")} style={{ marginTop: 0 }}>
+                        {hasPaidPlan ? "Change plan" : "Upgrade"}
+                      </button>
+                    </div>
+                    {hasPaidPlan && (
+                      <button onClick={() => setShowCancelModal(true)} style={{ background: "none", border: "1px solid var(--danger)", borderRadius: "var(--radius-sm)", padding: "8px 14px", color: "var(--danger)", cursor: "pointer", fontSize: 13, width: "100%", fontFamily: "inherit" }}>
+                        Cancel subscription
+                      </button>
+                    )}
+                  </div>
+                </>
+              )}
 
               <div className="card">
                 <div style={{ fontSize: 14, fontWeight: 500, marginBottom: 8 }}>Payment history</div>
@@ -474,6 +585,41 @@ export default function Account() {
                   to view all transactions.
                 </div>
               </div>
+            </>
+          )}
+
+          {/* ── Portfolio section — stylists only ── */}
+          {activeSection === "portfolio" && isStylist && (
+            <>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>Upload photos of outfits you have built. Only visible to clients.</div>
+                <button
+                  onClick={() => portfolioRef.current.click()}
+                  className="btn-pink btn-sm"
+                  disabled={portfolioLoading}
+                  style={{ flexShrink: 0 }}
+                >
+                  {portfolioLoading ? <span className="spinner"></span> : <><i className="ti ti-plus" aria-hidden="true"></i> Add</>}
+                </button>
+              </div>
+              <input ref={portfolioRef} type="file" accept="image/*" style={{ display: "none" }} onChange={e => e.target.files[0] && uploadPortfolioPhoto(e.target.files[0])} />
+              {portfolio.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "40px 20px", background: "var(--bg)", borderRadius: "var(--radius)" }}>
+                  <div style={{ fontSize: 32, marginBottom: 8 }}>🖼️</div>
+                  <div style={{ fontSize: 14, color: "var(--text-secondary)" }}>No portfolio photos yet</div>
+                  <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginTop: 4 }}>Tap + Add to upload your first outfit photo</div>
+                </div>
+              ) : (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }}>
+                  {portfolio.map((item, i) => (
+                    <div key={item.id || i} style={{ borderRadius: "var(--radius)", overflow: "hidden", border: "0.5px solid var(--border)", aspectRatio: "1", background: "var(--bg)" }}>
+                      {(item.itemImages || [])[0] && (
+                        <img src={item.itemImages[0]} alt="Portfolio" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </>
           )}
 

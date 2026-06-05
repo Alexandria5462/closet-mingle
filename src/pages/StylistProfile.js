@@ -46,7 +46,7 @@ export default function StylistProfile() {
     return (
       <>
         <div className="header">
-          <div className="logo" style={{ cursor: "pointer" }} onClick={() => nav("/home")}>Closet<span>Mingle</span></div>
+          <div className="logo" style={{ cursor: "pointer" }} onClick={() => nav("/stylist")}>Closet<span>Mingle</span></div>
         </div>
         <div className="screen"><div className="body"><SkeletonList count={3} /></div></div>
         <TabBar active="stylists" type="client" />
@@ -83,7 +83,7 @@ export default function StylistProfile() {
           <button onClick={() => nav(-1)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-secondary)" }}>
             <i className="ti ti-arrow-left" style={{ fontSize: 20 }} aria-hidden="true"></i>
           </button>
-          <div className="logo" style={{ cursor: "pointer" }} onClick={() => nav("/home")}>Closet<span>Mingle</span></div>
+          <div className="logo" style={{ cursor: "pointer" }} onClick={() => nav("/stylist")}>Closet<span>Mingle</span></div>
         </div>
       </div>
 

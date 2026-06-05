@@ -104,7 +104,11 @@ export default function ClientHome() {
           <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
             <div className="stat-card"><div className="stat-label">Closet items</div><div className="stat-val">{closetCount}</div></div>
             <div className="stat-card"><div className="stat-label">Saved outfits</div><div className="stat-val">{savedCount}</div></div>
-            <div className="stat-card"><div className="stat-label">Sessions</div><div className="stat-val">{tier.hasStylist ? "∞" : "0"}</div></div>
+            <div className="stat-card" onClick={() => nav("/my-sessions")} style={{ cursor: "pointer", border: "0.5px solid var(--border)", borderRadius: "var(--radius)" }}>
+              <div className="stat-label">Sessions</div>
+              <div className="stat-val">{tier.hasStylist ? "∞" : "0"}</div>
+              <div style={{ fontSize: 9, color: "var(--pink)", marginTop: 2 }}>View all →</div>
+            </div>
           </div>
 
           {/* ── Find a Stylist — prominent card ── */}
