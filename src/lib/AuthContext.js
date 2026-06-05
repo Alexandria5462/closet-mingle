@@ -10,42 +10,64 @@ import {
   EmailAuthProvider,
   reauthenticateWithCredential,
 } from "firebase/auth";
-import { doc, setDoc, getDoc, onSnapshot, updateDoc, deleteDoc } from "firebase/firestore";
+import { doc, setDoc, onSnapshot, updateDoc, deleteDoc } from "firebase/firestore";
 import { auth, db } from "./firebase";
 
-const AuthContext = createContext();
-const DarkModeContext = createContext();
+const AuthContext = createContext({});
+const DarkModeContext = createContext({ darkMode: false, toggleDarkMode: () => {} });
 
-export function useAuth() { return useContext(AuthContext); }
-export function useDarkMode() { return useContext(DarkModeContext); }
+export function useAuth() {
+  return useContext(AuthContext);
+}
+
+export function useDarkMode() {
+  return useContext(DarkModeContext);
+}
 
 export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [darkMode, setDarkMode] = useState(() => {
-    return localStorage.getItem("cm_darkmode") === "true" ||
-      window.matchMedia?.("(prefers-color-scheme: dark)").matches;
-  });
   const profileUnsubRef = useRef(null);
 
-  // Apply dark mode to document
+  // ── Dark mode ─────────────────────────────────────────────
+  const [darkMode, setDarkMode] = useState(() => {
+    try {
+      if (typeof window === "undefined") return false;
+      if (localStorage.getItem("cm_darkmode") === "true") return true;
+      if (window.matchMedia) return window.matchMedia("(prefers-color-scheme: dark)").matches;
+    } catch (e) {}
+    return false;
+  });
+
   useEffect(() => {
-    document.documentElement.setAttribute("data-theme", darkMode ? "dark" : "light");
-    localStorage.setItem("cm_darkmode", darkMode);
+    try {
+      document.documentElement.setAttribute("data-theme", darkMode ? "dark" : "light");
+      localStorage.setItem("cm_darkmode", String(darkMode));
+    } catch (e) {}
   }, [darkMode]);
 
-  function toggleDarkMode() { setDarkMode(d => !d); }
+  function toggleDarkMode() {
+    setDarkMode(d => !d);
+  }
 
+  // ── Real-time profile listener ────────────────────────────
   function subscribeToProfile(uid) {
-    if (profileUnsubRef.current) { profileUnsubRef.current(); profileUnsubRef.current = null; }
-    const unsub = onSnapshot(doc(db, "users", uid), snap => {
-      if (snap.exists()) {
-        const profile = { uid, ...snap.data() };
-        setUserProfile(profile);
-        localStorage.setItem("cm_profile", JSON.stringify(profile));
-      }
-    }, err => console.error("Profile listener error:", err));
+    if (profileUnsubRef.current) {
+      profileUnsubRef.current();
+      profileUnsubRef.current = null;
+    }
+    const unsub = onSnapshot(
+      doc(db, "users", uid),
+      (snap) => {
+        if (snap.exists()) {
+          const profile = { uid, ...snap.data() };
+          setUserProfile(profile);
+          try { localStorage.setItem("cm_profile", JSON.stringify(profile)); } catch(e) {}
+        }
+      },
+      (err) => console.error("Profile listener error:", err)
+    );
     profileUnsubRef.current = unsub;
     return unsub;
   }
@@ -89,35 +111,59 @@ export function AuthProvider({ children }) {
     await reauthenticateWithCredential(currentUser, credential);
     await deleteDoc(doc(db, "users", currentUser.uid));
     await deleteUser(currentUser);
-    localStorage.removeItem("cm_profile");
-    localStorage.removeItem("cm_darkmode");
+    try {
+      localStorage.removeItem("cm_profile");
+      localStorage.removeItem("cm_darkmode");
+    } catch(e) {}
   }
 
   function logout() {
-    if (profileUnsubRef.current) { profileUnsubRef.current(); profileUnsubRef.current = null; }
+    if (profileUnsubRef.current) {
+      profileUnsubRef.current();
+      profileUnsubRef.current = null;
+    }
     setUserProfile(null);
-    localStorage.removeItem("cm_profile");
+    try { localStorage.removeItem("cm_profile"); } catch(e) {}
     return signOut(auth);
   }
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async user => {
+    const unsub = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
-      if (user) { subscribeToProfile(user.uid); }
-      else {
-        if (profileUnsubRef.current) { profileUnsubRef.current(); profileUnsubRef.current = null; }
+      if (user) {
+        subscribeToProfile(user.uid);
+      } else {
+        if (profileUnsubRef.current) {
+          profileUnsubRef.current();
+          profileUnsubRef.current = null;
+        }
         setUserProfile(null);
       }
       setLoading(false);
     });
-    return () => { unsub(); if (profileUnsubRef.current) profileUnsubRef.current(); };
+    return () => {
+      unsub();
+      if (profileUnsubRef.current) profileUnsubRef.current();
+    };
   }, []);
 
-  const value = { currentUser, userProfile, signup, login, logout, updateSubscription, changePassword, deleteAccount, loading };
+  const authValue = {
+    currentUser,
+    userProfile,
+    signup,
+    login,
+    logout,
+    updateSubscription,
+    changePassword,
+    deleteAccount,
+    loading,
+  };
+
+  const darkValue = { darkMode, toggleDarkMode };
 
   return (
-    <DarkModeContext.Provider value={{ darkMode, toggleDarkMode }}>
-      <AuthContext.Provider value={value}>
+    <DarkModeContext.Provider value={darkValue}>
+      <AuthContext.Provider value={authValue}>
         {!loading && children}
       </AuthContext.Provider>
     </DarkModeContext.Provider>
