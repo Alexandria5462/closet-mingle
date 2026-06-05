@@ -98,9 +98,9 @@ function SwipeCard({ item, onSwipe, isTop, position }) {
       <div style={{ padding:"10px 14px 4px" }}>
         <div style={{ fontSize:14, fontWeight:600, color:"var(--text-primary)", marginBottom:2 }}>{item.name}</div>
         <div style={{ display:"flex", gap:6, alignItems:"center" }}>
-          <span style={{ fontSize:11, background:"var(--bg)", borderRadius:20, padding:"2px 10px", border:"0.5px solid var(--border)", textTransform:"capitalize", color:"var(--text-secondary)" }}>{item.category}</span>
-          {item.attributes?.primaryColor && (
-            <span style={{ fontSize:11, color:"var(--text-tertiary)", textTransform:"capitalize" }}>{item.attributes.primaryColor} · {item.attributes.pattern}</span>
+          <span style={{ fontSize:11, background:"var(--bg-card)", borderRadius:20, padding:"3px 12px", border:"1px solid var(--border)", textTransform:"capitalize", color:"var(--text-primary)", fontWeight:500 }}>{item.category}</span>
+          {item.attributes?.primaryColor && item.attributes.primaryColor !== "unknown" && (
+            <span style={{ fontSize:11, background:"var(--bg-card)", borderRadius:20, padding:"3px 12px", border:"1px solid var(--border)", textTransform:"capitalize", color:"var(--text-secondary)" }}>{item.attributes.primaryColor} · {item.attributes.pattern}</span>
           )}
         </div>
       </div>

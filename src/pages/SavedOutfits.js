@@ -12,6 +12,7 @@ export default function SavedOutfits() {
   const isFreeAccount = !userProfile?.subscriptionTier || userProfile?.subscriptionTier === "free";
   const [outfits, setOutfits] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [dayFilter, setDayFilter] = useState("All");
   const [toast, setToast] = useState("");
 
   useEffect(() => {
@@ -99,6 +100,14 @@ export default function SavedOutfits() {
 
       <div className="screen">
         <div className="body">
+          {/* Watermark notice for free accounts */}
+          {isFreeAccount && (
+            <div style={{ background: "var(--pink-light)", border: "1px solid #f4c0d1", borderRadius: "var(--radius)", padding: "6px 12px", marginBottom: 10, fontSize: 11, color: "var(--pink-dark)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span>📸 Screenshots include a ClosetMingle watermark on Free plan</span>
+              <span style={{ cursor: "pointer", textDecoration: "underline" }} onClick={() => window.location.href="/plans"}>Upgrade</span>
+            </div>
+          )}
+
           {/* 24hr warning — free accounts only */}
           {isFreeAccount && (
             <div style={{ background: "#fff8e7", border: "1px solid #fcd34d", borderRadius: "var(--radius)", padding: "10px 14px", marginBottom: 16, fontSize: 12, color: "#92400e", display: "flex", gap: 8 }}>
@@ -118,7 +127,32 @@ export default function SavedOutfits() {
                 Start Swiping →
               </button>
             </div>
-          ) : outfits.map(outfit => (
+          ) : (
+            <>
+              {/* Plan your week */}
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ fontSize: 11, color: "var(--text-tertiary)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>📅 Plan your week</div>
+                <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 4, scrollbarWidth: "none" }}>
+                  {[["All","All"],["Mon","Monday"],["Tue","Tuesday"],["Wed","Wednesday"],["Thu","Thursday"],["Fri","Friday"],["Sat","Saturday"],["Sun","Sunday"]].map(([short, full]) => (
+                    <button key={short} onClick={() => setDayFilter(full)} style={{
+                      padding: "8px 12px", borderRadius: 10, fontSize: 12, fontWeight: 600,
+                      border: `1.5px solid ${dayFilter === full ? "var(--pink)" : "var(--border)"}`,
+                      cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
+                      background: dayFilter === full ? "var(--pink)" : "var(--bg-card)",
+                      color: dayFilter === full ? "white" : "var(--text-secondary)",
+                      transition: "all 0.15s",
+                    }}>{short}</button>
+                  ))}
+                </div>
+              </div>
+              {outfits.filter(o => dayFilter === "All" || (o.dayOfWeek || "") === dayFilter).length === 0 && dayFilter !== "All" && (
+                <div style={{ textAlign: "center", padding: "24px 0" }}>
+                  <div style={{ fontSize: 28, marginBottom: 6 }}>📅</div>
+                  <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>No outfits planned for {dayFilter}</div>
+                  <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 2 }}>Assign an outfit to {dayFilter} when saving it</div>
+                </div>
+              )}
+              {outfits.filter(o => dayFilter === "All" || (o.dayOfWeek || "") === dayFilter).map(outfit => (
             <div key={outfit.id} className="card" style={{ padding: 0, overflow: "hidden", marginBottom: 14 }}>
               <div style={{ padding: "12px 14px 8px", borderBottom: "0.5px solid var(--border)" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
@@ -159,10 +193,39 @@ export default function SavedOutfits() {
                 </div>
               </div>
             </div>
-          ))}
+              ))}
+            </>
+          )}
         </div>
       </div>
 
+
+          {/* Watermark for free accounts — shows on screenshots */}
+          {isFreeAccount && (
+            <div style={{
+              position: "fixed", inset: 0, zIndex: 50,
+              pointerEvents: "none", overflow: "hidden",
+            }}>
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} style={{
+                  position: "absolute",
+                  top: `${10 + i * 13}%`,
+                  left: "-20%",
+                  width: "140%",
+                  textAlign: "center",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: "rgba(212,83,126,0.07)",
+                  transform: "rotate(-30deg)",
+                  letterSpacing: 2,
+                  whiteSpace: "nowrap",
+                  userSelect: "none",
+                }}>
+                  ClosetMingle Free Plan · Upgrade to remove watermark ·&nbsp;
+                </div>
+              ))}
+            </div>
+          )}
       <TabBar active="saved" type="client" />
       {toast && <Toast message={toast} onDone={() => setToast("")} />}
     </>

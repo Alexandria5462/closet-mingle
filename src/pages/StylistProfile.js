@@ -179,7 +179,10 @@ export default function StylistProfile() {
             portfolio.length === 0 ? (
               <div style={{ textAlign: "center", padding: "32px 20px" }}>
                 <div style={{ fontSize: 32, marginBottom: 8 }}>🖼️</div>
-                <div style={{ fontSize: 14, color: "var(--text-secondary)" }}>No portfolio items yet</div>
+                <div style={{ fontSize: 14, fontWeight: 500, marginBottom: 6 }}>No uploads yet</div>
+                <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>
+                  This stylist hasn't added portfolio photos yet. Check back soon!
+                </div>
               </div>
             ) : (
               <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }}>

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../lib/AuthContext";
 import { useDarkMode } from "../lib/AuthContext";
-import { doc, updateDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { doc, updateDoc, collection, query, where, getDocs, addDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import TabBar from "../components/TabBar";
 import Reviews from "../components/Reviews";
@@ -185,6 +185,8 @@ export default function Account() {
 
   const BIO_LIMIT = 300;
   const tierLabel = TIER_LABELS[userProfile?.subscriptionTier] || "Free";
+  // Stylists always have a paid plan - show their actual plan not "Free"
+  const stylistPlanLabel = userProfile?.stylistPlan === "annual" ? "Annual — $200/year" : "Monthly — $20/month";
   const tierBg = TIER_COLORS[userProfile?.subscriptionTier] || "var(--bg)";
   const initials = userProfile?.name?.split(" ").map(n => n[0]).join("").slice(0, 2) || "?";
 
@@ -290,13 +292,13 @@ export default function Account() {
   }
 
   const sections = isStylist
-    ? ["profile", "portfolio", "settings", "billing", "reviews"]
-    : ["profile", "settings", "billing", "reviews"];
+    ? ["profile", "portfolio", "reviews", "billing", "settings"]
+    : ["profile", "reviews", "billing", "settings"];
 
   return (
     <>
       <div className="header">
-        <div className="logo" style={{ cursor: "pointer" }} onClick={() => nav("/home")}>Closet<span>Mingle</span></div>
+        <div className="logo" style={{ cursor: "pointer" }} onClick={() => nav(isStylist ? "/stylist" : "/home")}>Closet<span>Mingle</span></div>
         {editing
           ? <button className="btn-pink btn-sm" onClick={saveProfile} disabled={saving}>{saving ? <span className="spinner"></span> : "Save"}</button>
           : <button className="btn-outline btn-sm" onClick={() => setEditing(true)}>Edit profile</button>
@@ -349,9 +351,17 @@ export default function Account() {
           </div>
 
           {/* Section tabs */}
-          <div style={{ display: "flex", gap: 6, marginBottom: 16, borderBottom: "0.5px solid var(--border)", paddingBottom: 8, overflowX: "auto", scrollbarWidth: "none" }}>
+          <div style={{ display: "flex", gap: 0, marginBottom: 16, borderBottom: "2px solid var(--border)", overflowX: "auto", scrollbarWidth: "none" }}>
             {sections.map(s => (
-              <button key={s} onClick={() => setActiveSection(s)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 500, color: activeSection === s ? "var(--pink)" : "var(--text-secondary)", borderBottom: activeSection === s ? "2px solid var(--pink)" : "none", paddingBottom: 4, textTransform: "capitalize", whiteSpace: "nowrap" }}>
+              <button key={s} onClick={() => setActiveSection(s)} style={{
+                background: "none", border: "none", cursor: "pointer",
+                fontSize: 13, fontWeight: activeSection === s ? 600 : 400,
+                color: activeSection === s ? "var(--pink)" : "var(--text-secondary)",
+                borderBottom: activeSection === s ? "2px solid var(--pink)" : "2px solid transparent",
+                paddingBottom: 10, paddingTop: 4, paddingLeft: 12, paddingRight: 12,
+                textTransform: "capitalize", whiteSpace: "nowrap",
+                marginBottom: -2, transition: "all 0.15s",
+              }}>
                 {s}
               </button>
             ))}
@@ -513,7 +523,7 @@ export default function Account() {
                   {/* Stylist billing — show their plan options clearly */}
                   <div className="card" style={{ background: "var(--pink-light)", border: "1px solid #f4c0d1" }}>
                     <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 4 }}>Your current stylist plan</div>
-                    <div style={{ fontSize: 16, fontWeight: 600, color: "var(--pink-dark)", marginBottom: 4 }}>{tierLabel}</div>
+                    <div style={{ fontSize: 16, fontWeight: 600, color: "var(--pink-dark)", marginBottom: 4 }}>{stylistPlanLabel}</div>
                     <div style={{ fontSize: 12, color: "var(--pink-dark)", opacity: 0.8 }}>
                       {userProfile?.subscriptionTier === "stylist_annual" ? "Billed $200/year · Saving $40 vs monthly" : "Billed $20/month"}
                     </div>
