@@ -32,7 +32,6 @@ import StylistChat from "./pages/StylistChat";
 import StylistMessages from "./pages/StylistMessages";
 import StylistAnalytics from "./pages/StylistAnalytics";
 import StylistClients from "./pages/StylistClients";
-import ClientStylistHistory from "./pages/ClientStylistHistory";
 
 function PrivateRoute({ children, accountType }) {
   const { currentUser, userProfile, loading } = useAuth();
