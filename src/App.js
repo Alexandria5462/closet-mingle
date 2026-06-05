@@ -33,15 +33,22 @@ import StylistAnalytics from "./pages/StylistAnalytics";
 import StylistClients from "./pages/StylistClients";
 
 function PrivateRoute({ children, accountType }) {
-  const { currentUser, userProfile } = useAuth();
-  if (!currentUser) return <Navigate to="/" />;
-  if (accountType && userProfile?.accountType !== accountType)
-    return <Navigate to={userProfile?.accountType === "stylist" ? "/stylist" : "/home"} />;
+  const { currentUser, userProfile, loading } = useAuth();
+  // Wait for auth to finish loading
+  if (loading) return null;
+  if (!currentUser) return <Navigate to="/" replace />;
+  // Wait for profile to load before checking accountType
+  if (accountType && userProfile && userProfile.accountType !== accountType)
+    return <Navigate to={userProfile.accountType === "stylist" ? "/stylist" : "/home"} replace />;
   return children;
 }
 
 function AppRoutes() {
-  const { currentUser, userProfile } = useAuth();
+  const { currentUser, userProfile, loading } = useAuth();
+
+  // While auth is loading show nothing to prevent flash
+  if (loading) return null;
+
   return (
     <Routes>
       {/* Public */}

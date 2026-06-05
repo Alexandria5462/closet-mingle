@@ -101,8 +101,13 @@ export default function Signup() {
 
       await signup(email, password, name, acct, extra);
 
-      if (acct === "stylist") nav("/stylist");
-      else nav("/onboarding");
+      // Small delay to let Firebase auth state settle before navigating
+      await new Promise(resolve => setTimeout(resolve, 300));
+      if (acct === "stylist") {
+        nav("/stylist", { replace: true });
+      } else {
+        nav("/onboarding", { replace: true });
+      }
     } catch (e) {
       setError(e.message.includes("email-already-in-use") ? "Email already in use." : "Sign up failed. Try again.");
     }

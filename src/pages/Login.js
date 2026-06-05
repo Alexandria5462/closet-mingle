@@ -20,9 +20,22 @@ export default function Login() {
     setLoading(true);
     setError("");
     try {
-      await login(email, password);
+      const result = await login(email, password);
+      // Fetch account type directly from Firestore
+      const userDoc = await fetch(
+        `https://firestore.googleapis.com/v1/projects/${process.env.REACT_APP_FIREBASE_PROJECT_ID}/databases/(default)/documents/users/${result.user.uid}`,
+        { headers: { "Authorization": `Bearer ${await result.user.getIdToken()}` } }
+      );
+      const userData = await userDoc.json();
+      const accountType = userData?.fields?.accountType?.stringValue || "client";
+      if (accountType === "stylist") {
+        nav("/stylist", { replace: true });
+      } else {
+        nav("/home", { replace: true });
+      }
     } catch (e) {
-      setError("Invalid email or password.");
+      console.error("Login error:", e);
+      setError("Invalid email or password. Please try again.");
     }
     setLoading(false);
   }

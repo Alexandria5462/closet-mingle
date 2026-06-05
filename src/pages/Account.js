@@ -359,7 +359,8 @@ export default function Account() {
                 {[
                   { key: "messages", label: "New messages", sub: "When a stylist or client messages you" },
                   { key: "sessions", label: "Session updates", sub: "Session started, ended, or completed" },
-                  { key: "tips", label: "Tips received", sub: "When a client leaves you a tip" },
+                  // Tips received — stylist accounts only
+                  ...(isStylist ? [{ key: "tips", label: "Tips received", sub: "When a client leaves you a tip" }] : []),
                   { key: "promotions", label: "Promotions & updates", sub: "New features and offers from ClosetMingle" },
                 ].map(n => (
                   <div key={n.key} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
