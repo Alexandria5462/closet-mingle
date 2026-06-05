@@ -101,6 +101,9 @@ export default function StylistProfile() {
               <div style={{ fontSize: 20, fontWeight: 600 }}>{stylist.name}</div>
               {stylist.isVerified && <span className="badge badge-green" style={{ fontSize: 10 }}>✓ Verified</span>}
             </div>
+            {stylist.username && (
+              <div style={{ fontSize: 13, color: "var(--text-tertiary)", marginBottom: 4 }}>@{stylist.username}</div>
+            )}
             {stylist.specialty && <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 4 }}>{stylist.specialty}</div>}
             {stylist.city && <div style={{ fontSize: 12, color: "var(--text-tertiary)" }}>📍 {stylist.city}</div>}
             {avgRating > 0 && (

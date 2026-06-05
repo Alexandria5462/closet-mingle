@@ -168,6 +168,7 @@ export default function StylistClients() {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
                     <div style={{ fontSize: 14, fontWeight: 500 }}>{c.user?.name || "Client"}</div>
+                  {c.user?.username && <div style={{ fontSize: 11, color: "var(--text-tertiary)" }}>@{c.user.username}</div>}
                     {c.isActive && (
                       <span style={{ fontSize: 9, background: "#d1fae5", border: "1px solid #6ee7b7", borderRadius: 10, padding: "1px 6px", color: "#065f46" }}>Active</span>
                     )}

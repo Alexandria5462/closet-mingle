@@ -163,6 +163,7 @@ export default function Account() {
 
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(userProfile?.name || "");
+  const [username, setUsername] = useState(userProfile?.username || "");
   const [about, setAbout] = useState(userProfile?.about || "");
   const [city, setCity] = useState(userProfile?.city || "");
   const [specialty, setSpecialty] = useState(userProfile?.specialty || "");
@@ -187,6 +188,7 @@ export default function Account() {
   useEffect(() => {
     if (userProfile) {
       setName(userProfile.name || "");
+      setUsername(userProfile.username || "");
       setAbout(userProfile.about || "");
       setCity(userProfile.city || "");
       setSpecialty(userProfile.specialty || "");
@@ -216,7 +218,8 @@ export default function Account() {
     try {
       let photoUrl = userProfile?.photoUrl || "";
       if (photoFile) photoUrl = await uploadPhoto(photoFile);
-      await updateDoc(doc(db, "users", currentUser.uid), { name, about, city, specialty, phone, photoUrl, updatedAt: new Date().toISOString() });
+      if (!username || username.length < 3) { setToast("Username must be at least 3 characters."); setSaving(false); return; }
+      await updateDoc(doc(db, "users", currentUser.uid), { name, username: username.toLowerCase(), about, city, specialty, phone, photoUrl, updatedAt: new Date().toISOString() });
       setToast("Profile updated!");
       setEditing(false);
     } catch (e) { setToast("Failed to save. Try again."); }
@@ -241,7 +244,7 @@ export default function Account() {
   }
 
   const sections = isStylist
-    ? ["profile", "settings", "reviews"]
+    ? ["profile", "settings", "billing", "reviews"]
     : ["profile", "settings", "billing", "reviews"];
 
   return (
@@ -257,6 +260,16 @@ export default function Account() {
       <div className="screen">
         <div className="body">
 
+          {/* Username missing banner — prompts existing users to add one */}
+          {!userProfile?.username && (
+            <div style={{ background: "#fff8e7", border: "1px solid #fcd34d", borderRadius: "var(--radius)", padding: "10px 14px", marginBottom: 12, fontSize: 13, color: "#92400e", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span>⚠️ Please add a username to your profile</span>
+              <button onClick={() => setEditing(true)} style={{ background: "#d97706", border: "none", borderRadius: 20, padding: "4px 12px", color: "white", cursor: "pointer", fontSize: 12, fontWeight: 500 }}>
+                Add now
+              </button>
+            </div>
+          )}
+
           {/* Profile header */}
           <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 20 }}>
             <div onClick={() => editing && fileRef.current.click()} style={{ width: 72, height: 72, borderRadius: "50%", overflow: "hidden", background: "var(--pink-light)", border: editing ? "2px dashed var(--pink)" : "2px solid var(--border)", cursor: editing ? "pointer" : "default", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -268,9 +281,20 @@ export default function Account() {
             <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handlePhotoSelect} />
             <div style={{ flex: 1 }}>
               {editing
-                ? <input className="input-field" value={name} onChange={e => setName(e.target.value)} style={{ marginBottom: 6 }} placeholder="Full name" />
+                ? (
+                  <>
+                    <input className="input-field" value={name} onChange={e => setName(e.target.value)} style={{ marginBottom: 6 }} placeholder="Full name" />
+                    <div style={{ position: "relative" }}>
+                      <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--text-tertiary)", fontSize: 13 }}>@</span>
+                      <input className="input-field" value={username} onChange={e => setUsername(e.target.value.replace(/\s/g,"").toLowerCase())} style={{ paddingLeft: 24, marginBottom: 6 }} placeholder="username (required)" />
+                    </div>
+                  </>
+                )
                 : <div style={{ fontSize: 18, fontWeight: 500 }}>{userProfile?.name}</div>
               }
+              {userProfile?.username && (
+                <div style={{ fontSize: 13, color: "var(--text-tertiary)", marginTop: 2 }}>@{userProfile.username}</div>
+              )}
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 4 }}>
                 <span className="badge" style={{ background: tierBg, color: "var(--pink-dark)", fontSize: 10 }}>{tierLabel}</span>
                 {isStylist && userProfile?.isVerified && <span className="badge badge-green" style={{ fontSize: 10 }}>✓ Verified</span>}

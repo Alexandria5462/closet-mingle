@@ -286,7 +286,7 @@ export default function FindStylist() {
         </div>
       </div>
 
-      <TabBar active="stylists" type="client" />
+      <TabBar active="home" type={userProfile?.accountType === "stylist" ? "stylist" : "client"} />
     </>
   );
 }
