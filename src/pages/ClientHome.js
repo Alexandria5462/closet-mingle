@@ -19,7 +19,9 @@ export default function ClientHome() {
   const { userProfile } = useAuth();
   const [closetCount, setClosetCount] = useState(0);
   const [savedCount, setSavedCount] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [topsCount, setTopsCount] = useState(0);
+  const [bottomsCount, setBottomsCount] = useState(0);
+  const [dressCount, setDressCount] = useState(0);
 
   const firstName = userProfile?.name?.split(" ")[0] || "there";
   const hour = new Date().getHours();
@@ -31,26 +33,30 @@ export default function ClientHome() {
     async function fetchStats() {
       try {
         const cSnap = await getDocs(query(collection(db, "closetItems"), where("userId", "==", userProfile.uid)));
-        setClosetCount(cSnap.size);
+        const items = cSnap.docs.map(d => d.data());
+        setClosetCount(items.length);
+        setTopsCount(items.filter(i => i.category === "tops").length);
+        setBottomsCount(items.filter(i => i.category === "bottoms").length);
+        setDressCount(items.filter(i => i.category === "dresses").length);
         const now = new Date();
         const oSnap = await getDocs(query(collection(db, "savedOutfits"), where("userId", "==", userProfile.uid)));
-        const valid = oSnap.docs.filter(d => { const data = d.data(); return !data.expiresAt || new Date(data.expiresAt) > now; });
-        setSavedCount(valid.length);
+        setSavedCount(oSnap.docs.filter(d => { const data = d.data(); return !data.expiresAt || new Date(data.expiresAt) > now; }).length);
       } catch (e) { console.error(e); }
-      setLoading(false);
     }
     fetchStats();
   }, [userProfile]);
 
-  // Progress indicator for new users
+  // Progress milestones with specific item guidance
   const MILESTONES = [
-    { label: "Upload 1 item", done: closetCount >= 1 },
-    { label: "Upload 5 items", done: closetCount >= 5 },
-    { label: "Like items & generate an outfit", done: savedCount >= 1 },
-    { label: "Upgrade to chat with a stylist", done: tier.hasStylist },
+    { label: "Upload 1 top item to get started", done: topsCount >= 1, tip: "Go to Closet → Tops" },
+    { label: "Upload 1 bottom item or 1 dress", done: bottomsCount >= 1 || dressCount >= 1, tip: "Go to Closet → Bottoms or Dresses" },
+    { label: "Upload 5 tops, 5 bottoms or dresses", done: topsCount >= 5 && (bottomsCount >= 5 || dressCount >= 5), tip: "AI needs variety to build great outfits" },
+    { label: "Add accessories, shoes and outerwear", done: closetCount >= 15, tip: "Completes your full wardrobe" },
+    { label: "Generate your first AI outfit", done: savedCount >= 1, tip: "Like items then tap Generate" },
+    { label: "Chat with a personal stylist", done: tier.hasStylist, tip: tier.hasStylist ? "You have access!" : "Upgrade to unlock" },
   ];
-  const completedMilestones = MILESTONES.filter(m => m.done).length;
-  const showProgress = completedMilestones < MILESTONES.length;
+  const completed = MILESTONES.filter(m => m.done).length;
+  const showProgress = completed < MILESTONES.length;
 
   return (
     <>
@@ -72,20 +78,23 @@ export default function ClientHome() {
           <div style={{ fontSize: 20, fontWeight: 500, marginBottom: 4 }}>{greeting}, {firstName}</div>
           <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 16 }}>What are we wearing today?</div>
 
-          {/* Progress indicator for new users */}
+          {/* Progress indicator with specific guidance */}
           {showProgress && (
             <div className="card" style={{ marginBottom: 14 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                 <div style={{ fontSize: 13, fontWeight: 500 }}>Getting started</div>
-                <div style={{ fontSize: 12, color: "var(--pink)" }}>{completedMilestones}/{MILESTONES.length}</div>
+                <div style={{ fontSize: 12, color: "var(--pink)" }}>{completed}/{MILESTONES.length}</div>
               </div>
-              <div style={{ background: "var(--border)", borderRadius: 10, height: 5, marginBottom: 10, overflow: "hidden" }}>
-                <div style={{ background: "var(--pink)", height: "100%", width: `${(completedMilestones / MILESTONES.length) * 100}%`, borderRadius: 10, transition: "width 0.5s ease" }} />
+              <div style={{ background: "var(--border)", borderRadius: 10, height: 5, marginBottom: 12, overflow: "hidden" }}>
+                <div style={{ background: "var(--pink)", height: "100%", width: `${(completed / MILESTONES.length) * 100}%`, borderRadius: 10, transition: "width 0.5s ease" }} />
               </div>
               {MILESTONES.map((m, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5 }}>
-                  <i className={`ti ${m.done ? "ti-circle-check" : "ti-circle"}`} style={{ color: m.done ? "var(--success)" : "var(--border)", fontSize: 16, flexShrink: 0 }} aria-hidden="true"></i>
-                  <span style={{ fontSize: 12, color: m.done ? "var(--text-secondary)" : "var(--text-primary)", textDecoration: m.done ? "line-through" : "none" }}>{m.label}</span>
+                <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 6 }}>
+                  <i className={`ti ${m.done ? "ti-circle-check" : "ti-circle"}`} style={{ color: m.done ? "var(--success)" : "var(--border)", fontSize: 16, flexShrink: 0, marginTop: 1 }} aria-hidden="true"></i>
+                  <div>
+                    <div style={{ fontSize: 12, color: m.done ? "var(--text-secondary)" : "var(--text-primary)", textDecoration: m.done ? "line-through" : "none" }}>{m.label}</div>
+                    {!m.done && <div style={{ fontSize: 10, color: "var(--text-tertiary)" }}>{m.tip}</div>}
+                  </div>
                 </div>
               ))}
             </div>
@@ -96,6 +105,28 @@ export default function ClientHome() {
             <div className="stat-card"><div className="stat-label">Closet items</div><div className="stat-val">{closetCount}</div></div>
             <div className="stat-card"><div className="stat-label">Saved outfits</div><div className="stat-val">{savedCount}</div></div>
             <div className="stat-card"><div className="stat-label">Sessions</div><div className="stat-val">{tier.hasStylist ? "∞" : "0"}</div></div>
+          </div>
+
+          {/* ── Find a Stylist — prominent card ── */}
+          <div
+            onClick={() => nav("/find-stylist")}
+            style={{ background: "linear-gradient(135deg, var(--pink) 0%, #9d2449 100%)", borderRadius: "var(--radius)", padding: 16, marginBottom: 14, cursor: "pointer", color: "white" }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div>
+                <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>✂️ Find a Stylist</div>
+                <div style={{ fontSize: 12, opacity: 0.9, lineHeight: 1.5 }}>
+                  {tier.hasStylist
+                    ? "Browse stylists matched to your style profile"
+                    : "Browse stylists — upgrade to chat with them"
+                  }
+                </div>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#4ade80", display: "inline-block", boxShadow: "0 0 6px #4ade80" }}></span>
+                <i className="ti ti-arrow-right" style={{ fontSize: 18 }} aria-hidden="true"></i>
+              </div>
+            </div>
           </div>
 
           {/* My Closet */}
@@ -114,7 +145,7 @@ export default function ClientHome() {
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <div>
                 <div style={{ fontSize: 14, fontWeight: 500 }}>AI Outfit Builder</div>
-                <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 2 }}>Swipe to build outfits from your closet</div>
+                <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 2 }}>Swipe items to build AI outfits</div>
               </div>
               <i className="ti ti-sparkles" style={{ fontSize: 22, color: "var(--pink)" }} aria-hidden="true"></i>
             </div>
@@ -133,23 +164,7 @@ export default function ClientHome() {
             </div>
           </div>
 
-          {/* Talk to a Stylist */}
-          <div className="card" style={{ cursor: "pointer" }} onClick={() => tier.hasStylist ? nav("/stylists") : nav("/plans")}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <div>
-                <div style={{ fontSize: 14, fontWeight: 500 }}>Talk to a Stylist</div>
-                <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 2 }}>
-                  {tier.hasStylist ? tier.canChoose ? "Choose your own personal stylist" : "Live stylists available now" : "Upgrade to chat with live stylists"}
-                </div>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                {tier.hasStylist ? (<><span className="online-dot"></span><span style={{ fontSize: 11, color: "var(--success)" }}>Live</span></>) : (<span className="badge badge-pink">Upgrade</span>)}
-                <i className="ti ti-arrow-right" style={{ color: "var(--text-tertiary)", marginLeft: 4 }} aria-hidden="true"></i>
-              </div>
-            </div>
-          </div>
-
-          {/* Video badge */}
+          {/* Video badge for premium plus */}
           {tier.hasVideo && (
             <div style={{ background: "#ede9fe", border: "1px solid #c4b5fd", borderRadius: "var(--radius)", padding: "10px 14px", fontSize: 12, color: "#5b21b6", display: "flex", gap: 8, alignItems: "center" }}>
               <i className="ti ti-video" aria-hidden="true"></i>

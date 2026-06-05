@@ -179,6 +179,53 @@ export default function StylistHome() {
             ))}
           </div>
 
+          {/* ── Stylist matching visibility ── */}
+          <div className="card" style={{ marginBottom: 14, cursor: "pointer" }} onClick={() => nav("/find-stylist")}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 500 }}>🔍 Find a Client</div>
+                <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 2 }}>
+                  See how clients can discover your profile
+                </div>
+              </div>
+              <i className="ti ti-arrow-right" style={{ color: "var(--text-tertiary)" }} aria-hidden="true"></i>
+            </div>
+          </div>
+
+          {/* ── Visibility status ── */}
+          <div className="card" style={{ marginBottom: 14 }}>
+            <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 8 }}>Your visibility to clients</div>
+            <div style={{ display: "flex", gap: 10 }}>
+              <div style={{ flex: 1, background: availability ? "#d1fae5" : "var(--bg)", border: `1px solid ${availability ? "#6ee7b7" : "var(--border)"}`, borderRadius: "var(--radius-sm)", padding: "10px 12px", textAlign: "center" }}>
+                <div style={{ fontSize: 18, marginBottom: 4 }}>{availability ? "🟢" : "⚫"}</div>
+                <div style={{ fontSize: 11, fontWeight: 500, color: availability ? "#065f46" : "var(--text-tertiary)" }}>
+                  {availability ? "Visible" : "Hidden"}
+                </div>
+                <div style={{ fontSize: 10, color: "var(--text-tertiary)", marginTop: 2 }}>In search results</div>
+              </div>
+              <div style={{ flex: 1, background: userProfile?.isVerified ? "#d1fae5" : "var(--bg)", border: `1px solid ${userProfile?.isVerified ? "#6ee7b7" : "var(--border)"}`, borderRadius: "var(--radius-sm)", padding: "10px 12px", textAlign: "center" }}>
+                <div style={{ fontSize: 18, marginBottom: 4 }}>{userProfile?.isVerified ? "✅" : "⏳"}</div>
+                <div style={{ fontSize: 11, fontWeight: 500, color: userProfile?.isVerified ? "#065f46" : "var(--text-tertiary)" }}>
+                  {userProfile?.isVerified ? "Verified" : "Pending"}
+                </div>
+                <div style={{ fontSize: 10, color: "var(--text-tertiary)", marginTop: 2 }}>Verified badge</div>
+              </div>
+              <div style={{ flex: 1, background: (userProfile?.rating > 0) ? "#fef3c7" : "var(--bg)", border: `1px solid ${userProfile?.rating > 0 ? "#fcd34d" : "var(--border)"}`, borderRadius: "var(--radius-sm)", padding: "10px 12px", textAlign: "center" }}>
+                <div style={{ fontSize: 18, marginBottom: 4 }}>⭐</div>
+                <div style={{ fontSize: 11, fontWeight: 500, color: "var(--text-primary)" }}>
+                  {userProfile?.rating > 0 ? userProfile.rating : "—"}
+                </div>
+                <div style={{ fontSize: 10, color: "var(--text-tertiary)", marginTop: 2 }}>Avg rating</div>
+              </div>
+            </div>
+            <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 10, textAlign: "center" }}>
+              {availability
+                ? "Clients can find and message you · Turn off availability to go offline"
+                : "Turn on availability above so clients can find you"
+              }
+            </div>
+          </div>
+
           {/* Recent conversations */}
           <div className="section-label">Recent conversations</div>
           {loading ? (

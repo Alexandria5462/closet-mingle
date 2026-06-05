@@ -18,11 +18,14 @@ import GeneratedOutfits from "./pages/GeneratedOutfits";
 import SavedOutfits from "./pages/SavedOutfits";
 import StylistList from "./pages/StylistList";
 import StylistProfile from "./pages/StylistProfile";
+import FindStylist from "./pages/FindStylist";
 import Chat from "./pages/Chat";
 import Account from "./pages/Account";
 import StyleQuiz from "./pages/StyleQuiz";
 import Referral from "./pages/Referral";
 import GiftSubscription from "./pages/GiftSubscription";
+import TermsOfService from "./pages/TermsOfService";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 import StylistHome from "./pages/StylistHome";
 import StylistChat from "./pages/StylistChat";
 import StylistMessages from "./pages/StylistMessages";
@@ -41,9 +44,14 @@ function AppRoutes() {
   const { currentUser, userProfile } = useAuth();
   return (
     <Routes>
+      {/* Public */}
       <Route path="/" element={currentUser ? <Navigate to={userProfile?.accountType === "stylist" ? "/stylist" : "/home"} /> : <Welcome />} />
       <Route path="/signup" element={<Signup />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/terms" element={<TermsOfService />} />
+      <Route path="/privacy" element={<PrivacyPolicy />} />
+
+      {/* Client */}
       <Route path="/plans" element={<Plans />} />
       <Route path="/onboarding" element={<PrivateRoute><Onboarding /></PrivateRoute>} />
       <Route path="/home" element={<PrivateRoute><ClientHome /></PrivateRoute>} />
@@ -53,17 +61,21 @@ function AppRoutes() {
       <Route path="/generated" element={<PrivateRoute><GeneratedOutfits /></PrivateRoute>} />
       <Route path="/saved" element={<PrivateRoute><SavedOutfits /></PrivateRoute>} />
       <Route path="/stylists" element={<PrivateRoute><StylistList /></PrivateRoute>} />
+      <Route path="/find-stylist" element={<PrivateRoute><FindStylist /></PrivateRoute>} />
       <Route path="/stylist/:stylistId" element={<PrivateRoute><StylistProfile /></PrivateRoute>} />
       <Route path="/chat/:stylistId" element={<PrivateRoute><Chat /></PrivateRoute>} />
       <Route path="/account" element={<PrivateRoute><Account /></PrivateRoute>} />
       <Route path="/quiz" element={<PrivateRoute><StyleQuiz /></PrivateRoute>} />
       <Route path="/referral" element={<PrivateRoute><Referral /></PrivateRoute>} />
       <Route path="/gift" element={<PrivateRoute><GiftSubscription /></PrivateRoute>} />
+
+      {/* Stylist */}
       <Route path="/stylist" element={<PrivateRoute accountType="stylist"><StylistHome /></PrivateRoute>} />
       <Route path="/stylist/messages" element={<PrivateRoute accountType="stylist"><StylistMessages /></PrivateRoute>} />
       <Route path="/stylist/clients" element={<PrivateRoute accountType="stylist"><StylistClients /></PrivateRoute>} />
       <Route path="/stylist/analytics" element={<PrivateRoute accountType="stylist"><StylistAnalytics /></PrivateRoute>} />
       <Route path="/stylist/chat/:clientId" element={<PrivateRoute accountType="stylist"><StylistChat /></PrivateRoute>} />
+
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
   );

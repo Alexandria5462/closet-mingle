@@ -49,6 +49,7 @@ export default function Signup() {
   const [phone, setPhone] = useState("");
   const [city, setCity] = useState("");
   const [about, setAbout] = useState("");
+  const [username, setUsername] = useState("");
   const [specialty, setSpecialty] = useState("");
   const [yearsExp, setYearsExp] = useState("");
   const [photoFile, setPhotoFile] = useState(null);
@@ -81,6 +82,7 @@ export default function Signup() {
       if (photoFile) photoUrl = await uploadProfilePhoto(photoFile);
 
       const extra = {
+        username: username.toLowerCase(),
         phone: phone || "",
         city: city || "",
         about: about || "",
@@ -149,6 +151,10 @@ export default function Signup() {
         {error && <p className="error-text">{error}</p>}
 
         <input className="input-field" placeholder="Full name *" value={name} onChange={e => setName(e.target.value)} />
+        <div style={{ position: "relative" }}>
+          <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "var(--text-tertiary)", fontSize: 14 }}>@</span>
+          <input className="input-field" placeholder="Username * (e.g. alexstyles)" value={username} onChange={e => setUsername(e.target.value.replace(/\s/g, "").toLowerCase())} style={{ paddingLeft: 28 }} />
+        </div>
         <input className="input-field" type="email" placeholder="Email address *" value={email} onChange={e => setEmail(e.target.value)} />
         <input className="input-field" type="password" placeholder="Password (min 6 characters) *" value={password} onChange={e => setPassword(e.target.value)} />
         <input className="input-field" type="tel" placeholder="Phone number (for verification)" value={phone} onChange={e => setPhone(e.target.value)} />
@@ -213,6 +219,12 @@ export default function Signup() {
           </>
         )}
 
+        <p style={{ fontSize: 11, color: "var(--text-tertiary)", textAlign: "center", marginBottom: 12, lineHeight: 1.6 }}>
+          By creating an account you agree to our{" "}
+          <span style={{ color: "var(--pink)", cursor: "pointer" }} onClick={() => window.location.href = "/terms"}>Terms of Service</span>
+          {" "}and{" "}
+          <span style={{ color: "var(--pink)", cursor: "pointer" }} onClick={() => window.location.href = "/privacy"}>Privacy Policy</span>
+        </p>
         <button className="btn-pink" onClick={handleSubmit} disabled={loading}>
           {loading ? <span className="spinner"></span> : "Create account"}
         </button>
