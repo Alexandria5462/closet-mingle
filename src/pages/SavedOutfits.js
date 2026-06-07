@@ -13,6 +13,7 @@ export default function SavedOutfits() {
   const [outfits, setOutfits] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dayFilter, setDayFilter] = useState("All");
+  const [search, setSearch] = useState("");
   const [toast, setToast] = useState("");
 
   useEffect(() => {
@@ -129,9 +130,21 @@ export default function SavedOutfits() {
             </div>
           ) : (
             <>
+              {/* Search by outfit name */}
+              <div style={{ position: "relative", marginBottom: 10 }}>
+                <i className="ti ti-search" style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--text-tertiary)", fontSize: 16 }} aria-hidden="true"></i>
+                <input
+                  className="input-field"
+                  placeholder="Search saved outfits..."
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  style={{ paddingLeft: 36, marginBottom: 0 }}
+                />
+              </div>
+
               {/* Plan your week */}
               <div style={{ marginBottom: 14 }}>
-                <div style={{ fontSize: 11, color: "var(--text-tertiary)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>📅 Plan your week</div>
+                <div style={{ fontSize: 11, color: "var(--text-tertiary)", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 8 }}>Plan your week</div>
                 <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 4, scrollbarWidth: "none" }}>
                   {[["All","All"],["Mon","Monday"],["Tue","Tuesday"],["Wed","Wednesday"],["Thu","Thursday"],["Fri","Friday"],["Sat","Saturday"],["Sun","Sunday"]].map(([short, full]) => (
                     <button key={short} onClick={() => setDayFilter(full)} style={{
@@ -182,11 +195,11 @@ export default function SavedOutfits() {
 
                 {outfit.colorStory && (
                   <div style={{ background: "var(--pink-light)", borderRadius: 8, padding: "6px 10px", marginBottom: 6, fontSize: 12, color: "var(--pink-dark)" }}>
-                    🎨 {outfit.colorStory}
+                    {outfit.colorStory}
                   </div>
                 )}
                 {outfit.styleNote && (
-                  <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>✨ {outfit.styleNote}</div>
+                  <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>{outfit.styleNote}</div>
                 )}
                 <div style={{ fontSize: 10, color: "var(--text-tertiary)", marginTop: 6 }}>
                   Saved {new Date(outfit.savedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}

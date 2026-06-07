@@ -41,6 +41,9 @@ export default function StylistChat() {
   const [sessionStatus, setSessionStatus] = useState(null);
   const [showEndConfirm, setShowEndConfirm] = useState(false);
   const [ending, setEnding] = useState(false);
+  const [showCloset, setShowCloset] = useState(false);
+  const [clientCloset, setClientCloset] = useState([]);
+  const [closetLoading, setClosetLoading] = useState(false);
   const bottomRef = useRef(null);
 
   const conversationId = [currentUser?.uid, clientId].sort().join("_");
@@ -59,6 +62,30 @@ export default function StylistChat() {
     });
     return unsub;
   }, [clientId, conversationId]);
+
+  async function loadClientCloset() {
+    if (!clientId) return;
+    setClosetLoading(true);
+    try {
+      const snap = await getDocs(
+        query(
+          collection(db, "closetItems"),
+          where("userId", "==", clientId),
+          where("isPrivate", "!=", true)
+        )
+      );
+      setClientCloset(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    } catch (e) {
+      // Fallback without privacy filter if index not set
+      try {
+        const snap = await getDocs(
+          query(collection(db, "closetItems"), where("userId", "==", clientId))
+        );
+        setClientCloset(snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(i => !i.isPrivate));
+      } catch (e2) { console.error(e2); }
+    }
+    setClosetLoading(false);
+  }
 
   async function loadClient() {
     const c = await getDoc(doc(db, "users", clientId));
@@ -192,7 +219,7 @@ export default function StylistChat() {
             </div>
             {isSessionClient && (
               <div style={{ background: "#f0fdf4", border: "1px solid #6ee7b7", borderRadius: "var(--radius)", padding: "10px 14px", marginBottom: 14, fontSize: 12, color: "#065f46" }}>
-                💰 You will earn <strong>${(9.99 * 0.7).toFixed(2)}</strong> for this session (70% of $9.99)
+                You will earn <strong>${(9.99 * 0.7).toFixed(2)}</strong> for this session (70% of $9.99)
               </div>
             )}
             <div style={{ display: "flex", gap: 10 }}>
@@ -256,6 +283,16 @@ export default function StylistChat() {
             </button>
           )}
 
+          {/* View client closet button */}
+          {!sessionEnded && (
+            <button
+              onClick={() => { setShowCloset(!showCloset); if (!clientCloset.length) loadClientCloset(); }}
+              style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 20, padding: "6px 12px", cursor: "pointer", fontSize: 12, color: "var(--text-primary)", fontFamily: "inherit" }}
+            >
+              {showCloset ? "Hide closet" : "View closet"}
+            </button>
+          )}
+
           {/* End Session button — only shows when session client */}
           {isSessionClient && !sessionEnded && (
             <button
@@ -271,6 +308,35 @@ export default function StylistChat() {
           )}
         </div>
       </div>
+
+      {/* Client closet panel */}
+      {showCloset && (
+        <div style={{ background: "var(--bg-card)", borderBottom: "0.5px solid var(--border)", padding: "12px 16px", maxHeight: 220, overflowY: "auto" }}>
+          <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 10, color: "var(--text-primary)" }}>
+            {client?.name || "Client"}'s closet — visible items only
+          </div>
+          {closetLoading ? (
+            <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>Loading...</div>
+          ) : clientCloset.length === 0 ? (
+            <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>No public items in closet yet</div>
+          ) : (
+            <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4, scrollbarWidth: "none" }}>
+              {clientCloset.map(item => (
+                <div key={item.id} style={{ flexShrink: 0, textAlign: "center" }}>
+                  <img
+                    src={item.imageUrl || item.fallbackUrl}
+                    alt={item.name}
+                    onError={e => { if (item.fallbackUrl) e.target.src = item.fallbackUrl; }}
+                    style={{ width: 64, height: 64, borderRadius: 8, objectFit: "cover", border: "0.5px solid var(--border)" }}
+                  />
+                  <div style={{ fontSize: 9, color: "var(--text-tertiary)", marginTop: 2, maxWidth: 64, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</div>
+                  <div style={{ fontSize: 9, color: "var(--text-tertiary)", textTransform: "capitalize" }}>{item.attributes?.primaryColor}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Session ended banner for stylist */}
       {sessionEnded && (

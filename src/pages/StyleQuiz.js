@@ -50,7 +50,7 @@ const QUESTIONS = [
     id: "fit",
     question: "What silhouette do you prefer?",
     options: [
-      { label: "Fitted and structured", value: "fitted", emoji: "✂️" },
+      { label: "Fitted and structured", value: "fitted", emoji: "" },
       { label: "Relaxed and oversized", value: "oversized", emoji: "👕" },
       { label: "Flowy and feminine", value: "flowy", emoji: "👗" },
       { label: "Mix — fitted top, loose bottom", value: "mix", emoji: "⚖️" },
@@ -60,7 +60,7 @@ const QUESTIONS = [
     id: "budget",
     question: "What is your typical styling budget per session?",
     options: [
-      { label: "Just outfit ideas, no shopping", value: "no_shopping", emoji: "💡" },
+      { label: "Just outfit ideas, no shopping", value: "no_shopping", emoji: "" },
       { label: "Under $50", value: "budget", emoji: "💵" },
       { label: "$50 to $200", value: "mid_range", emoji: "💳" },
       { label: "$200 and above", value: "luxury", emoji: "💎" },
@@ -139,8 +139,10 @@ export default function StyleQuiz() {
       setSavedProfile(profile);
       setDone(true);
     } catch (e) {
-      console.error("Quiz save error:", e);
-      setToast("Failed to save quiz. Please check your connection and try again.");
+      console.error("Quiz save error:", e.message || e);
+      // Common cause: Firestore rules blocking write
+      // Check Firebase console > Firestore > Rules > styleQuiz collection
+      setToast("Failed to save. Check your connection and try again.");
     }
     setSubmitting(false);
   }
@@ -169,7 +171,7 @@ export default function StyleQuiz() {
                 { label: "Primary Style", value: savedProfile.primaryStyle, icon: "👗" },
                 { label: "Color Preference", value: savedProfile.colorPreference, icon: "🎨" },
                 { label: "Pattern Style", value: savedProfile.patternStyle, icon: "🔲" },
-                { label: "Fit Preference", value: savedProfile.fitPreference, icon: "✂️" },
+                { label: "Fit Preference", value: savedProfile.fitPreference, icon: "" },
               ].map(item => (
                 <div key={item.label} className="card" style={{ display: "flex", alignItems: "center", gap: 12 }}>
                   <span style={{ fontSize: 24 }}>{item.icon}</span>
@@ -186,7 +188,7 @@ export default function StyleQuiz() {
             </div>
 
             {/* Go to stylist page — the main purpose of the quiz */}
-            <button className="btn-pink" onClick={() => nav("/stylists")} style={{ marginBottom: 10 }}>
+            <button className="btn-pink" onClick={() => nav("/find-stylist")} style={{ marginBottom: 10 }}>
               Find My Perfect Stylist →
             </button>
             <button className="btn-outline" onClick={() => nav("/account")}>

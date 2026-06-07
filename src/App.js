@@ -28,6 +28,7 @@ import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import StylistHome from "./pages/StylistHome";
 import ClientSessions from "./pages/ClientSessions";
+import ClosetPrivacy from "./pages/ClosetPrivacy";
 import StylistChat from "./pages/StylistChat";
 import StylistMessages from "./pages/StylistMessages";
 import StylistAnalytics from "./pages/StylistAnalytics";
@@ -77,6 +78,8 @@ function AppRoutes() {
       <Route path="/referral" element={<PrivateRoute><Referral /></PrivateRoute>} />
       <Route path="/gift" element={<PrivateRoute><GiftSubscription /></PrivateRoute>} />
       <Route path="/my-sessions" element={<PrivateRoute><ClientSessions /></PrivateRoute>} />
+      <Route path="/closet-privacy" element={<PrivateRoute><ClosetPrivacy /></PrivateRoute>} />
+      <Route path="/my-stylists" element={<PrivateRoute><ClientStylistHistory /></PrivateRoute>} />
 
       {/* Stylist */}
       <Route path="/stylist" element={<PrivateRoute accountType="stylist"><StylistHome /></PrivateRoute>} />

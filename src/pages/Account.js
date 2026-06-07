@@ -371,7 +371,7 @@ export default function Account() {
           {activeSection === "profile" && (
             <>
               <div className="card">
-                <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 4 }}>📍 Location</div>
+                <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 4 }}>Location</div>
                 {editing
                   ? <input className="input-field" value={city} onChange={e => setCity(e.target.value)} placeholder="City / Location" style={{ marginBottom: 0 }} />
                   : <div style={{ fontSize: 14 }}>{userProfile?.city || "Not set"}</div>
@@ -391,7 +391,7 @@ export default function Account() {
               </div>
 
               <div className="card">
-                <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 4 }}>📱 Phone</div>
+                <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 4 }}>Phone</div>
                 {editing
                   ? <input className="input-field" type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="Phone number" style={{ marginBottom: 0 }} />
                   : <div style={{ fontSize: 14 }}>{userProfile?.phone || "Not set"}</div>
@@ -400,7 +400,7 @@ export default function Account() {
 
               {isStylist && (
                 <div className="card">
-                  <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 4 }}>✂️ Specialty</div>
+                  <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 4 }}> Specialty</div>
                   {editing
                     ? <input className="input-field" value={specialty} onChange={e => setSpecialty(e.target.value)} placeholder="Your styling specialty" style={{ marginBottom: 0 }} />
                     : <div style={{ fontSize: 14 }}>{userProfile?.specialty || "Not set"}</div>
@@ -413,7 +413,7 @@ export default function Account() {
                 <div className="card" style={{ cursor: "pointer" }} onClick={() => nav("/stylist/portfolio")}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                     <div>
-                      <div style={{ fontSize: 14, fontWeight: 500 }}>🖼️ My Portfolio</div>
+                      <div style={{ fontSize: 14, fontWeight: 500 }}>My Portfolio</div>
                       <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 2 }}>
                         Upload outfit photos for clients to see →
                       </div>
@@ -481,11 +481,24 @@ export default function Account() {
                 </div>
               </div>
 
+              {/* Closet privacy — client only */}
+              {!isStylist && (
+                <div className="card" style={{ cursor: "pointer" }} onClick={() => nav("/closet-privacy")}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 500 }}>Closet Privacy</div>
+                      <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 2 }}>Control which items stylists can see</div>
+                    </div>
+                    <i className="ti ti-chevron-right" style={{ color: "var(--text-tertiary)" }} aria-hidden="true"></i>
+                  </div>
+                </div>
+              )}
+
               {/* Referral */}
               <div className="card" style={{ cursor: "pointer" }} onClick={() => nav("/referral")}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                   <div>
-                    <div style={{ fontSize: 14, fontWeight: 500 }}>🎁 Invite friends</div>
+                    <div style={{ fontSize: 14, fontWeight: 500 }}>Invite friends</div>
                     <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 2 }}>Get 72 hours free for each friend you refer</div>
                   </div>
                   <i className="ti ti-chevron-right" style={{ color: "var(--text-tertiary)" }} aria-hidden="true"></i>
@@ -496,7 +509,7 @@ export default function Account() {
               <div className="card" style={{ cursor: "pointer" }} onClick={() => nav("/gift")}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                   <div>
-                    <div style={{ fontSize: 14, fontWeight: 500 }}>💝 Gift a subscription</div>
+                    <div style={{ fontSize: 14, fontWeight: 500 }}>Gift a subscription</div>
                     <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 2 }}>Send Premium as a gift to someone</div>
                   </div>
                   <i className="ti ti-chevron-right" style={{ color: "var(--text-tertiary)" }} aria-hidden="true"></i>
@@ -553,7 +566,7 @@ export default function Account() {
 
                   <div className="card" style={{ background: "#f0fdf4", border: "1px solid #6ee7b7" }}>
                     <div style={{ fontSize: 13, color: "#065f46" }}>
-                      💰 You keep <strong>70%</strong> of every session fee and tip. Closet Mingle keeps 30%.
+                      You keep <strong>70%</strong> of every session fee and tip. Closet Mingle keeps 30%.
                     </div>
                   </div>
 
