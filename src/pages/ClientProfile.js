@@ -32,22 +32,36 @@ export default function ClientProfile() {
 
       // Load public closet items
       const closetSnap = await getDocs(
-        query(collection(db, "closetItems"),
-          where("userId", "==", clientId),
-          where("isPrivate", "!=", true)
+        query(collection(db, "closetItems"), where("userId", "==", clientId))
+      );
+      // Filter privately marked items client-side
+      setClosetItems(closetSnap.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .filter(item => !item.isPrivate));
+
+      // Load session history — query by conversationId as fallback
+      const conversationId = [clientId, currentUser.uid].sort().join("_");
+      const sessionSnap = await getDocs(
+        query(collection(db, "chatSessions"),
+          where("conversationId", "==", conversationId)
         )
       );
-      setClosetItems(closetSnap.docs.map(d => ({ id: d.id, ...d.data() })));
-
-      // Load session history with this stylist
-      const sessionSnap = await getDocs(
+      // Also try by clientId + stylistId
+      const sessionSnap2 = await getDocs(
         query(collection(db, "chatSessions"),
           where("clientId", "==", clientId),
           where("stylistId", "==", currentUser.uid)
         )
       );
-      setSessions(sessionSnap.docs.map(d => ({ id: d.id, ...d.data() }))
-        .sort((a, b) => new Date(b.startedAt) - new Date(a.startedAt)));
+      const allSessionIds = new Set();
+      const allSessions = [];
+      [...sessionSnap.docs, ...sessionSnap2.docs].forEach(d => {
+        if (!allSessionIds.has(d.id)) {
+          allSessionIds.add(d.id);
+          allSessions.push({ id: d.id, ...d.data() });
+        }
+      });
+      setSessions(allSessions.sort((a, b) => new Date(b.startedAt) - new Date(a.startedAt)));
 
       // Load style quiz result
       const quizSnap = await getDocs(

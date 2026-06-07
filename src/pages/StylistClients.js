@@ -28,71 +28,84 @@ export default function StylistClients() {
   async function loadClients() {
     setLoading(true);
     try {
-      // Get all sessions for this stylist
+      // Source 1: chatSessions collection
       const sessionSnap = await getDocs(
         query(collection(db, "chatSessions"), where("stylistId", "==", currentUser.uid))
       );
 
-      // ALSO get clients from messages directly — anyone who sent a message
-      // is auto-saved as a client even without a formal session
-      const msgSnap = await getDocs(
-        query(collection(db, "messages"), where("conversationId", ">=", currentUser.uid),
-          where("conversationId", "<=", currentUser.uid + ""))
-      );
-
-      // Get unique client IDs from sessions
       const clientMap = {};
+
+      // Add all clients from sessions
       sessionSnap.docs.forEach(d => {
         const data = d.data();
-        if (!clientMap[data.clientId]) {
+        if (data.clientId && !clientMap[data.clientId]) {
           clientMap[data.clientId] = {
             clientId: data.clientId,
             sessions: [],
             lastSessionAt: data.startedAt,
+            isActive: data.status === "active",
           };
         }
-        clientMap[data.clientId].sessions.push(data);
-        if (new Date(data.startedAt) > new Date(clientMap[data.clientId].lastSessionAt)) {
-          clientMap[data.clientId].lastSessionAt = data.startedAt;
+        if (data.clientId && clientMap[data.clientId]) {
+          clientMap[data.clientId].sessions.push(data);
+          if (data.status === "active") clientMap[data.clientId].isActive = true;
+          if (new Date(data.startedAt) > new Date(clientMap[data.clientId].lastSessionAt)) {
+            clientMap[data.clientId].lastSessionAt = data.startedAt;
+          }
         }
       });
 
-      // Get client profiles and quiz results
-      const clientList = await Promise.all(
+      // Source 2: messages — find anyone who messaged this stylist
+      // conversationId = [clientId, stylistId].sort().join("_")
+      // We need messages where the conversation includes this stylist
+      // and the sender is NOT this stylist
+      const msgSnap = await getDocs(
+        query(
+          collection(db, "messages"),
+          where("senderId", "!=", currentUser.uid)
+        )
+      );
+
+      // Filter to only messages in conversations involving this stylist
+      msgSnap.docs.forEach(d => {
+        const data = d.data();
+        const convId = data.conversationId || "";
+        // convId contains stylist uid if this is their conversation
+        if (convId.includes(currentUser.uid) && data.senderId !== currentUser.uid) {
+          const clientId = data.senderId;
+          if (clientId && !clientMap[clientId]) {
+            clientMap[clientId] = {
+              clientId,
+              sessions: [],
+              lastSessionAt: data.createdAt || new Date().toISOString(),
+              isActive: false,
+            };
+          }
+        }
+      });
+
+      // Load user profiles for all clients
+      const withProfiles = await Promise.all(
         Object.values(clientMap).map(async c => {
           try {
             const userSnap = await getDoc(doc(db, "users", c.clientId));
             const user = userSnap.exists() ? userSnap.data() : null;
-
-            const quizSnap = await getDocs(
-              query(collection(db, "styleQuiz"), where("userId", "==", c.clientId))
-            );
-            const quiz = !quizSnap.empty ? quizSnap.docs[0].data() : null;
-
-            const activeSessions = c.sessions.filter(s => s.status === "active");
-            const completedSessions = c.sessions.filter(s => s.status === "ended");
-
-            return {
-              ...c,
-              user,
-              quiz,
-              isActive: activeSessions.length > 0,
-              totalSessions: c.sessions.length,
-              completedSessions: completedSessions.length,
-            };
-          } catch (e) { return null; }
+            return { ...c, user };
+          } catch(e) { return { ...c, user: null }; }
         })
       );
 
-      setClients(clientList.filter(Boolean).sort((a, b) =>
-        new Date(b.lastSessionAt) - new Date(a.lastSessionAt)
-      ));
-    } catch (e) {
-      console.error("Clients load error:", e);
-    }
+      // Filter out stylists and null profiles, sort by most recent
+      const validClients = withProfiles
+        .filter(c => c.user && c.user.accountType !== "stylist")
+        .sort((a, b) => new Date(b.lastSessionAt) - new Date(a.lastSessionAt));
+
+      setClients(validClients);
+    } catch(e) { console.error("loadClients error:", e); }
     setLoading(false);
   }
 
+  
   async function loadBlocked() {
     try {
       const snap = await getDocs(
@@ -188,7 +201,7 @@ export default function StylistClients() {
             <SkeletonList count={4} />
           ) : filtered.length === 0 ? (
             <div style={{ textAlign: "center", padding: "60px 20px" }}>
-              <div style={{ fontSize: 48, marginBottom: 12 }}>👥</div>
+              <div style={{ fontSize: 32, marginBottom: 12, color: "var(--text-tertiary)" }}><i className="ti ti-users" style={{ fontSize: 48 }} aria-hidden="true"></i></div>
               <div style={{ fontSize: 16, fontWeight: 500, marginBottom: 8 }}>
                 {clients.length === 0 ? "No clients yet" : "No clients match your search"}
               </div>

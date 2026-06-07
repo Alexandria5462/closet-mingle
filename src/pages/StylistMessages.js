@@ -12,6 +12,10 @@ export default function StylistMessages() {
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState("newest");
+  const [filterBy, setFilterBy] = useState("all");
+  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     if (!currentUser?.uid) return;
@@ -51,13 +55,29 @@ export default function StylistMessages() {
             );
             const client = !clientSnap.empty ? clientSnap.docs[0].data() : null;
             const sorted = conv.messages.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            // Load session status for this conversation
+            let sessionStatus = "none";
+            try {
+              const sessionSnap = await getDocs(
+                query(collection(db, "chatSessions"),
+                  where("conversationId", "==", conv.id)
+                )
+              );
+              if (!sessionSnap.empty) {
+                sessionStatus = sessionSnap.docs[0].data().status || "active";
+              }
+            } catch(e) {}
+
             return {
               id: conv.id,
+              conversationId: conv.id,
               clientId,
               client,
-              lastMessage: sorted[0],
+              lastMessage: sorted[0],          // full object for display
+              lastMessageAt: sorted[0]?.createdAt || "",  // string for sorting
               unread: conv.unread,
               messageCount: conv.messages.length,
+              sessionStatus,
             };
           } catch (e) {
             return null;
@@ -90,6 +110,31 @@ export default function StylistMessages() {
     return new Date(dateStr).toLocaleDateString("en-US", { month: "short", day: "numeric" });
   }
 
+  // ── Apply search + filters ────────────────────────────
+  const filteredConversations = conversations
+    .filter(conv => {
+      // Search filter
+      if (search) {
+        const q = search.toLowerCase();
+        const nameMatch = (conv.client?.name || "").toLowerCase().includes(q);
+        const usernameMatch = (conv.client?.username || "").toLowerCase().includes(q);
+        const msgMatch = (conv.lastMessage?.content || "").toLowerCase().includes(q);
+        if (!nameMatch && !usernameMatch && !msgMatch) return false;
+      }
+      // Status filter
+      if (filterBy === "unread") return conv.unread > 0;
+      if (filterBy === "active") return conv.sessionStatus === "active";
+      if (filterBy === "ended") return conv.sessionStatus === "ended" || conv.sessionStatus === "closed";
+      return true;
+    })
+    .sort((a, b) => {
+      if (sortBy === "newest") return new Date(b.lastMessageAt || b.lastMessage?.createdAt || 0) - new Date(a.lastMessageAt || a.lastMessage?.createdAt || 0);
+      if (sortBy === "oldest") return new Date(a.lastMessageAt || a.lastMessage?.createdAt || 0) - new Date(b.lastMessageAt || b.lastMessage?.createdAt || 0);
+      if (sortBy === "unread") return (b.unread || 0) - (a.unread || 0);
+      if (sortBy === "name") return (a.client?.name || "").localeCompare(b.client?.name || "");
+      return 0;
+    });
+
   return (
     <>
       <div className="header">
@@ -104,6 +149,79 @@ export default function StylistMessages() {
       <div className="screen">
         <div className="body">
           <div className="section-label">Messages</div>
+
+          {/* ── Search bar ── */}
+          <div style={{ position: "relative", marginBottom: 10 }}>
+            <i className="ti ti-search" style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--text-tertiary)", fontSize: 16 }} aria-hidden="true"></i>
+            <input
+              className="input-field"
+              placeholder="Search by name, @username or message..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              style={{ paddingLeft: 36, paddingRight: 40, marginBottom: 0 }}
+            />
+            {search && (
+              <button
+                onClick={() => setSearch("")}
+                style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "var(--text-tertiary)", fontSize: 16, lineHeight: 1 }}
+              >✕</button>
+            )}
+          </div>
+
+          {/* ── Filter row ── */}
+          <div style={{ display: "flex", gap: 8, marginBottom: 14, alignItems: "center" }}>
+            {/* Sort */}
+            <select
+              value={sortBy}
+              onChange={e => setSortBy(e.target.value)}
+              style={{
+                flex: 1, padding: "8px 12px", borderRadius: "var(--radius-sm)",
+                border: "1px solid var(--border)", background: "var(--bg-card)",
+                color: "var(--text-primary)", fontSize: 12, fontFamily: "inherit",
+                cursor: "pointer", appearance: "none",
+              }}
+            >
+              <option value="newest">Newest first</option>
+              <option value="oldest">Oldest first</option>
+              <option value="unread">Most unread</option>
+              <option value="name">Name A–Z</option>
+            </select>
+
+            {/* Status filter pills */}
+            <div style={{ display: "flex", gap: 6 }}>
+              {[
+                { key: "all", label: "All" },
+                { key: "unread", label: "Unread" },
+                { key: "active", label: "Active" },
+                { key: "ended", label: "Ended" },
+              ].map(f => (
+                <button
+                  key={f.key}
+                  onClick={() => setFilterBy(f.key)}
+                  style={{
+                    padding: "6px 12px", borderRadius: 20, fontSize: 11, fontWeight: 500,
+                    border: `1px solid ${filterBy === f.key ? "var(--pink)" : "var(--border)"}`,
+                    background: filterBy === f.key ? "var(--pink)" : "var(--bg-card)",
+                    color: filterBy === f.key ? "white" : "var(--text-secondary)",
+                    cursor: "pointer", whiteSpace: "nowrap",
+                  }}
+                >{f.label}</button>
+              ))}
+            </div>
+          </div>
+
+          {/* ── Results count ── */}
+          {(search || filterBy !== "all") && (
+            <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 10 }}>
+              {filteredConversations.length} result{filteredConversations.length !== 1 ? "s" : ""}
+              {search && <> for "<strong>{search}</strong>"</>}
+              {" "}
+              <button
+                onClick={() => { setSearch(""); setFilterBy("all"); setSortBy("newest"); }}
+                style={{ background: "none", border: "none", color: "var(--pink)", cursor: "pointer", fontSize: 12, padding: 0 }}
+              >Clear filters</button>
+            </div>
+          )}
 
           {loading ? (
             <SkeletonList count={4} />
@@ -121,7 +239,7 @@ export default function StylistMessages() {
                 When clients reach out your conversations will appear here
               </div>
             </div>
-          ) : conversations.map(conv => (
+          ) : filteredConversations.map(conv => (
             <div
               key={conv.id}
               onClick={async () => {
