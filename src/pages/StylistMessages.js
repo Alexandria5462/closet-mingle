@@ -151,63 +151,58 @@ export default function StylistMessages() {
           <div className="section-label">Messages</div>
 
           {/* ── Search bar ── */}
-          <div style={{ position: "relative", marginBottom: 10 }}>
-            <i className="ti ti-search" style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--text-tertiary)", fontSize: 16 }} aria-hidden="true"></i>
-            <input
-              className="input-field"
-              placeholder="Search by name, @username or message..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              style={{ paddingLeft: 36, paddingRight: 40, marginBottom: 0 }}
-            />
-            {search && (
-              <button
-                onClick={() => setSearch("")}
-                style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "var(--text-tertiary)", fontSize: 16, lineHeight: 1 }}
-              >✕</button>
-            )}
+          <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+            <div style={{ position: "relative", flex: 1 }}>
+              <i className="ti ti-search" style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--text-tertiary)", fontSize: 16 }} aria-hidden="true"></i>
+              <input
+                className="input-field"
+                placeholder="Search by name, @username..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && e.target.blur()}
+                style={{ paddingLeft: 36, paddingRight: search ? 36 : 12, marginBottom: 0 }}
+              />
+              {search && (
+                <button
+                  onClick={() => setSearch("")}
+                  style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "var(--text-tertiary)", fontSize: 16, lineHeight: 1 }}
+                >✕</button>
+              )}
+            </div>
+            <button
+              onClick={() => {}}
+              style={{ background: "var(--pink)", border: "none", borderRadius: "var(--radius-sm)", padding: "0 16px", color: "white", cursor: "pointer", fontSize: 13, fontWeight: 500, fontFamily: "inherit", flexShrink: 0 }}
+            >Search</button>
           </div>
 
-          {/* ── Filter row ── */}
-          <div style={{ display: "flex", gap: 8, marginBottom: 14, alignItems: "center" }}>
-            {/* Sort */}
-            <select
-              value={sortBy}
-              onChange={e => setSortBy(e.target.value)}
-              style={{
-                flex: 1, padding: "8px 12px", borderRadius: "var(--radius-sm)",
-                border: "1px solid var(--border)", background: "var(--bg-card)",
-                color: "var(--text-primary)", fontSize: 12, fontFamily: "inherit",
-                cursor: "pointer", appearance: "none",
-              }}
-            >
-              <option value="newest">Newest first</option>
-              <option value="oldest">Oldest first</option>
-              <option value="unread">Most unread</option>
-              <option value="name">Name A–Z</option>
-            </select>
-
-            {/* Status filter pills */}
-            <div style={{ display: "flex", gap: 6 }}>
-              {[
-                { key: "all", label: "All" },
-                { key: "unread", label: "Unread" },
-                { key: "active", label: "Active" },
-                { key: "ended", label: "Ended" },
-              ].map(f => (
+          {/* ── Filter row — horizontal scroll only ── */}
+          <div style={{ display: "flex", gap: 8, marginBottom: 14, overflowX: "auto", overflowY: "hidden", scrollbarWidth: "none", WebkitOverflowScrolling: "touch", paddingBottom: 2 }}>
+            {[
+              { key: "sort-newest", label: "Newest", group: "sort", val: "newest" },
+              { key: "sort-oldest", label: "Oldest", group: "sort", val: "oldest" },
+              { key: "sort-unread", label: "Most unread", group: "sort", val: "unread" },
+              { key: "sort-name",   label: "Name A–Z",   group: "sort", val: "name" },
+              { key: "filter-all",    label: "All",     group: "filter", val: "all" },
+              { key: "filter-unread", label: "Unread",  group: "filter", val: "unread" },
+              { key: "filter-active", label: "Active",  group: "filter", val: "active" },
+              { key: "filter-ended",  label: "Ended",   group: "filter", val: "ended" },
+            ].map(f => {
+              const isActive = f.group === "sort" ? sortBy === f.val : filterBy === f.val;
+              return (
                 <button
                   key={f.key}
-                  onClick={() => setFilterBy(f.key)}
+                  onClick={() => f.group === "sort" ? setSortBy(f.val) : setFilterBy(f.val)}
                   style={{
-                    padding: "6px 12px", borderRadius: 20, fontSize: 11, fontWeight: 500,
-                    border: `1px solid ${filterBy === f.key ? "var(--pink)" : "var(--border)"}`,
-                    background: filterBy === f.key ? "var(--pink)" : "var(--bg-card)",
-                    color: filterBy === f.key ? "white" : "var(--text-secondary)",
-                    cursor: "pointer", whiteSpace: "nowrap",
+                    padding: "7px 14px", borderRadius: 20, fontSize: 12, fontWeight: 500,
+                    border: `1.5px solid ${isActive ? "var(--pink)" : "var(--border)"}`,
+                    background: isActive ? "var(--pink)" : "var(--bg-card)",
+                    color: isActive ? "white" : "var(--text-secondary)",
+                    cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0,
+                    transition: "all 0.15s",
                   }}
                 >{f.label}</button>
-              ))}
-            </div>
+              );
+            })}
           </div>
 
           {/* ── Results count ── */}
@@ -243,8 +238,12 @@ export default function StylistMessages() {
             <div
               key={conv.id}
               onClick={async () => {
-                // Mark all unread messages in this conversation as read
+                // Mark as read in local state immediately for instant UI update
                 if (conv.unread > 0) {
+                  setConversations(prev => prev.map(c =>
+                    c.id === conv.id ? { ...c, unread: 0 } : c
+                  ));
+                  // Also update Firebase in background
                   try {
                     const unreadSnap = await getDocs(
                       query(collection(db, "messages"),
