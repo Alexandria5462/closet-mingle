@@ -11,6 +11,7 @@ export default function StylistProfile() {
   const { stylistId } = useParams();
   const nav = useNavigate();
   const { userProfile } = useAuth();
+  const isStylist = userProfile?.accountType === "stylist";
   const [stylist, setStylist] = useState(null);
   const [portfolio, setPortfolio] = useState([]);
   const [reviews, setReviews] = useState([]);

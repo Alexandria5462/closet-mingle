@@ -55,7 +55,14 @@ function AppRoutes() {
   return (
     <Routes>
       {/* Public */}
-      <Route path="/" element={currentUser ? <Navigate to={userProfile?.accountType === "stylist" ? "/stylist" : "/home"} /> : <Welcome />} />
+      <Route path="/" element={
+        currentUser
+          ? (userProfile
+              ? <Navigate to={userProfile.accountType === "stylist" ? "/stylist" : "/home"} replace />
+              : null  // Wait for profile to load before redirecting
+            )
+          : <Welcome />
+      } />
       <Route path="/signup" element={<Signup />} />
       <Route path="/login" element={<Login />} />
       <Route path="/terms" element={<TermsOfService />} />

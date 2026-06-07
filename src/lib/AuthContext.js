@@ -61,6 +61,7 @@ export function AuthProvider({ children }) {
       profileUnsubRef.current();
       profileUnsubRef.current = null;
     }
+    let firstLoad = true;
     const unsub = onSnapshot(
       doc(db, "users", uid),
       (snap) => {
@@ -69,8 +70,16 @@ export function AuthProvider({ children }) {
           setUserProfile(profile);
           try { localStorage.setItem("cm_profile", JSON.stringify(profile)); } catch(e) {}
         }
+        // Only set loading false after profile is confirmed loaded
+        if (firstLoad) {
+          firstLoad = false;
+          setLoading(false);
+        }
       },
-      (err) => console.error("Profile listener error:", err)
+      (err) => {
+        console.error("Profile listener error:", err);
+        if (firstLoad) { firstLoad = false; setLoading(false); }
+      }
     );
     profileUnsubRef.current = unsub;
     return unsub;
@@ -143,7 +152,9 @@ export function AuthProvider({ children }) {
         }
         setUserProfile(null);
       }
-      setLoading(false);
+      // setLoading(false) is handled by subscribeToProfile for logged-in users
+      // Only set it false here for logged-out users
+      if (!user) setLoading(false);
     });
     return () => {
       unsub();
