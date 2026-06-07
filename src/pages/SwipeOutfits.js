@@ -125,6 +125,7 @@ export default function SwipeOutfits() {
   const [savedCount, setSavedCount] = useState(0);
   const [canGenerate, setCanGenerate] = useState(false);
   const [occasion, setOccasion] = useState("All");
+  const [occasionFilter, setOccasionFilter] = useState("All");
   const [toast, setToast] = useState("");
   const [loading, setLoading] = useState(true);
   const [timeUntilReset, setTimeUntilReset] = useState("");
