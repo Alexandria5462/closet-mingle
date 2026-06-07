@@ -69,7 +69,12 @@ export default function FindStylist() {
           query(collection(db, "styleQuiz"), where("userId", "==", s.id))
         );
         const sQuizAnswers = !sQuizSnap.empty ? sQuizSnap.docs[0].data()?.answers : null;
-        return { ...s, quizAnswers: sQuizAnswers };
+        let reviewCount = 0;
+          try {
+            const rSnap = await getDocs(query(collection(db, "reviews"), where("targetUserId", "==", s.id)));
+            reviewCount = rSnap.size;
+          } catch(e) {}
+          return { ...s, quizAnswers: sQuizAnswers, reviewCount };
       }));
 
       const specs = ["All", ...new Set(withData.map(s => s.specialty).filter(Boolean))];
@@ -238,12 +243,20 @@ export default function FindStylist() {
                   </div>
                   {s.specialty && <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>{s.specialty}</div>}
                   {s.city && <div style={{ fontSize: 11, color: "var(--text-tertiary)" }}>{s.city}</div>}
-                  {s.rating > 0 && (
-                    <div style={{ fontSize: 11, color: "#f59e0b", marginTop: 2 }}>
-                      {"★".repeat(Math.round(s.rating))}{"☆".repeat(5 - Math.round(s.rating))}
-                      <span style={{ color: "var(--text-tertiary)", marginLeft: 4 }}>({s.rating})</span>
-                    </div>
-                  )}
+                  <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 3 }}>
+                    {s.rating > 0 ? (
+                      <>
+                        <span style={{ fontSize: 12, color: "#c4745a", letterSpacing: 1 }}>
+                          {"★".repeat(Math.round(s.rating))}{"☆".repeat(5 - Math.round(s.rating))}
+                        </span>
+                        <span style={{ fontSize: 11, color: "var(--text-secondary)" }}>
+                          {s.rating} &middot; {s.reviewCount || 0} review{(s.reviewCount || 0) !== 1 ? "s" : ""}
+                        </span>
+                      </>
+                    ) : (
+                      <span style={{ fontSize: 11, color: "var(--text-tertiary)" }}>No reviews yet</span>
+                    )}
+                  </div>
                   {s.about && (
                     <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {s.about}
