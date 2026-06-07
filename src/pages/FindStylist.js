@@ -29,6 +29,8 @@ function matchScore(stylistAnswers, userAnswers) {
 export default function FindStylist() {
   const nav = useNavigate();
   const { userProfile } = useAuth();
+  const isStylist = userProfile?.accountType === "stylist";
+  const isFree = !userProfile?.subscriptionTier || userProfile?.subscriptionTier === "free";
   const [stylists, setStylists] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
