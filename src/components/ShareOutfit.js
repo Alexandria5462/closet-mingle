@@ -3,7 +3,7 @@ import React, { useState } from "react";
 export default function ShareOutfit({ outfit, onClose }) {
   const [copied, setCopied] = useState(false);
 
-  const shareText = `Check out this outfit I created on ClosetMingle! 👗✨\n${outfit.outfitName || "My styled look"}\n${outfit.colorStory || ""}\n\nCreate your own at closet-mingle.vercel.app`;
+  const shareText = `Check out this outfit I created on ClosetMingle! 👗✨\n${outfit.outfitName || "My styled look"}\n${outfit.colorStory || ""}\n\nCreate your own at closetmingle.com`;
 
   async function copyLink() {
     try {
@@ -21,7 +21,7 @@ export default function ShareOutfit({ outfit, onClose }) {
         await navigator.share({
           title: outfit.outfitName || "My ClosetMingle Outfit",
           text: shareText,
-          url: "https://closet-mingle.vercel.app",
+          url: "https://closetmingle.com",
         });
       } catch (e) {
         if (e.name !== "AbortError") console.error("Share failed:", e);
@@ -43,7 +43,7 @@ export default function ShareOutfit({ outfit, onClose }) {
         <div style={{ background: "var(--bg)", borderRadius: "var(--radius)", padding: "10px 14px", marginBottom: 14 }}>
           <div style={{ fontSize: 14, fontWeight: 500, marginBottom: 6 }}>{outfit.outfitName || "My Outfit"}</div>
           {outfit.colorStory && (
-            <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>🎨 {outfit.colorStory}</div>
+            <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>{outfit.colorStory}</div>
           )}
           <div style={{ display: "flex", gap: 6, marginTop: 8, overflowX: "auto", scrollbarWidth: "none" }}>
             {(outfit.itemImages || []).filter(Boolean).map((img, i) => (

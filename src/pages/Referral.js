@@ -47,7 +47,7 @@ export default function Referral() {
     setLoading(false);
   }
 
-  const shareUrl = `https://closet-mingle.vercel.app?ref=${referralCode}`;
+  const shareUrl = `https://closetmingle.com?ref=${referralCode}`;
   const shareText = `Join me on ClosetMingle — AI-powered personal styling! Use my code ${referralCode} and get 72 hours of Premium free! 💗\n${shareUrl}`;
 
   async function copyCode() {
@@ -74,7 +74,7 @@ export default function Referral() {
           <button onClick={() => nav(-1)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-secondary)" }}>
             <i className="ti ti-arrow-left" style={{ fontSize: 20 }} aria-hidden="true"></i>
           </button>
-          <div className="logo" style={{ cursor: "pointer" }} onClick={() => nav("/home")}>Closet<span>Mingle</span></div>
+          <div className="logo" style={{ cursor: "pointer" }} onClick={() => nav("/home")}><em>closet</em><span>mingle</span></div>
         </div>
       </div>
 
