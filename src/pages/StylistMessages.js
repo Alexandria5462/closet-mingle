@@ -143,7 +143,12 @@ export default function StylistMessages() {
               }}
               style={{ background: conv.unread > 0 ? "var(--pink-light)" : "var(--bg-card)", border: `0.5px solid ${conv.unread > 0 ? "#f4c0d1" : "var(--border)"}`, borderRadius: "var(--radius)", padding: 14, marginBottom: 10, cursor: "pointer", display: "flex", alignItems: "center", gap: 12 }}
             >
-              <div className="avatar" style={{ width: 48, height: 48, background: "var(--pink-light)", color: "var(--pink-dark)", fontSize: 16, overflow: "hidden", flexShrink: 0, position: "relative" }}>
+              <div
+                className="avatar"
+                onClick={e => { e.stopPropagation(); nav(`/stylist/client/${conv.clientId}`); }}
+                style={{ width: 48, height: 48, background: "var(--pink-light)", color: "var(--pink-dark)", fontSize: 16, overflow: "hidden", flexShrink: 0, position: "relative", cursor: "pointer" }}
+                title="View client profile"
+              >
                 {conv.client?.photoUrl
                   ? <img src={conv.client.photoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   : conv.client?.name?.split(" ").map(n => n[0]).join("").slice(0, 2) || "?"

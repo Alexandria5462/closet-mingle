@@ -317,14 +317,22 @@ export default function StylistChat() {
           >
             <i className="ti ti-arrow-left" style={{ fontSize: 20 }} aria-hidden="true"></i>
           </button>
-          <div className="avatar" style={{ background: "var(--pink-light)", color: "var(--pink-dark)", width: 36, height: 36, fontSize: 13, overflow: "hidden" }}>
+          <div
+            className="avatar"
+            onClick={() => nav(`/stylist/client/${clientId}`)}
+            style={{ background: "var(--pink-light)", color: "var(--pink-dark)", width: 36, height: 36, fontSize: 13, overflow: "hidden", cursor: "pointer" }}
+            title="View client profile"
+          >
             {client?.photoUrl
               ? <img src={client.photoUrl} alt={client.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
               : initials
             }
           </div>
           <div>
-            <div style={{ fontSize: 14, fontWeight: 500 }}>{client?.name || "Client"}</div>
+            <div
+              style={{ fontSize: 14, fontWeight: 500, cursor: "pointer" }}
+              onClick={() => nav(`/stylist/client/${clientId}`)}
+            >{client?.name || "Client"}</div>
             <div style={{ fontSize: 11, color: "var(--text-secondary)", display: "flex", alignItems: "center", gap: 4 }}>
               {isSessionClient && (
                 <span style={{ background: "#f0fdf4", border: "1px solid #6ee7b7", borderRadius: 10, padding: "1px 6px", fontSize: 9, color: "#065f46" }}>

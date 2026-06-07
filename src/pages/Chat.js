@@ -142,6 +142,27 @@ export default function Chat() {
         read: false,
       });
       setText("");
+
+      // Auto-register this client under the stylist when they send first message
+      // This ensures client always appears in stylist's client list
+      try {
+        const existingSession = await getDocs(
+          query(collection(db, "chatSessions"),
+            where("conversationId", "==", conversationId),
+            where("clientId", "==", currentUser.uid)
+          )
+        );
+        if (existingSession.empty) {
+          await addDoc(collection(db, "chatSessions"), {
+            conversationId,
+            clientId: currentUser.uid,
+            clientName: userProfile?.name || "",
+            stylistId,
+            status: "active",
+            startedAt: new Date().toISOString(),
+          });
+        }
+      } catch(e) { /* non-critical */ }
       // Notify stylist
       if (type === "text") {
         try {
