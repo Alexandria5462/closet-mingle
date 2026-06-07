@@ -135,7 +135,7 @@ export default function StylistList() {
               onClick={() => setFilterAvail(!filterAvail)}
               style={{ padding: "5px 14px", borderRadius: 20, fontSize: 12, fontWeight: 500, border: "1px solid", cursor: "pointer", whiteSpace: "nowrap", background: filterAvail ? "var(--success)" : "var(--bg-card)", borderColor: filterAvail ? "var(--success)" : "var(--border)", color: filterAvail ? "white" : "var(--text-secondary)" }}
             >
-              🟢 Online only
+              Online only
             </button>
           </div>
 
@@ -147,14 +147,14 @@ export default function StylistList() {
             </div>
           ) : (
             <div style={{ background: "#f0f4ff", border: "1px solid #c7d2fe", borderRadius: "var(--radius)", padding: "10px 14px", marginBottom: 14, fontSize: 12, color: "#3730a3", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span>💡 Take the style quiz to get matched with the best stylist</span>
+              <span>Take the style quiz to get matched with the best stylist</span>
               <button onClick={() => nav("/quiz")} style={{ background: "var(--pink)", border: "none", borderRadius: 20, padding: "4px 12px", color: "white", cursor: "pointer", fontSize: 11, fontWeight: 500, whiteSpace: "nowrap", marginLeft: 8 }}>Take quiz</button>
             </div>
           )}
 
           {!tier.canChoose && (
             <div style={{ background: "#fff8e7", border: "1px solid #fcd34d", borderRadius: "var(--radius)", padding: "10px 14px", marginBottom: 14, fontSize: 12, color: "#92400e" }}>
-              💡 Upgrade to <strong>Premium Plus</strong> to personally choose your stylist.
+              Upgrade to <strong>Premium Plus</strong> to personally choose your stylist.
             </div>
           )}
 
@@ -204,11 +204,11 @@ export default function StylistList() {
                         </span>
                       )}
                       {index === 0 && userQuiz && score > 0 && (
-                        <span style={{ background: "var(--pink)", borderRadius: 20, padding: "1px 8px", fontSize: 9, color: "white", fontWeight: 500 }}>⭐ Top pick</span>
+                        <span style={{ background: "var(--pink)", borderRadius: 20, padding: "1px 8px", fontSize: 9, color: "white", fontWeight: 500 }}>Top pick</span>
                       )}
                     </div>
                     {s.specialty && <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>{s.specialty}</div>}
-                    {s.city && <div style={{ fontSize: 11, color: "var(--text-tertiary)" }}>📍 {s.city}</div>}
+                    {s.city && <div style={{ fontSize: 11, color: "var(--text-tertiary)" }}>{s.city}</div>}
                     {s.rating > 0 && (
                       <div style={{ fontSize: 11, color: "#f59e0b", marginTop: 2 }}>
                         {"★".repeat(Math.round(s.rating))}{"☆".repeat(5 - Math.round(s.rating))}
@@ -245,7 +245,7 @@ export default function StylistList() {
                     className="btn-pink"
                     style={{ flex: 1, marginBottom: 0, fontSize: 12, padding: "8px 12px" }}
                   >
-                    {tier.canChoose ? "💬 Chat" : "💬 Start session"}
+                    {tier.canChoose ? "Chat" : "Start session"}
                   </button>
                 </div>
               </div>

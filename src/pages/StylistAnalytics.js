@@ -112,7 +112,7 @@ export default function StylistAnalytics() {
                 Complete sessions with clients and your earnings, ratings and session history will show up here
               </div>
               <div style={{ background: "var(--pink-light)", border: "1px solid #f4c0d1", borderRadius: "var(--radius)", padding: "14px 16px", fontSize: 13, color: "var(--pink-dark)", textAlign: "left" }}>
-                💡 <strong>Tip:</strong> Turn on your availability in your Profile tab so clients can find you!
+                <strong>Tip:</strong> Turn on your availability in your Profile tab so clients can find you!
               </div>
             </div>
           ) : (
@@ -170,7 +170,7 @@ export default function StylistAnalytics() {
               {/* Revenue split reminder */}
               <div className="card">
                 <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>
-                  💰 You keep <strong style={{ color: "var(--success)" }}>70%</strong> of every session fee and <strong style={{ color: "var(--success)" }}>70%</strong> of every tip. Closet Mingle keeps 30%.
+                  You keep <strong style={{ color: "var(--success)" }}>70%</strong> of every session fee and <strong style={{ color: "var(--success)" }}>70%</strong> of every tip. Closet Mingle keeps 30%.
                 </div>
               </div>
             </>

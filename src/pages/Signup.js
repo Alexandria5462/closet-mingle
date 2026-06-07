@@ -219,7 +219,7 @@ export default function Signup() {
             </div>
 
             <div style={{ background: "#f0fdf4", border: "1px solid #6ee7b7", borderRadius: "var(--radius)", padding: "10px 14px", marginBottom: 14, fontSize: 12, color: "#065f46" }}>
-              💰 You keep <strong>70%</strong> of every session. Closet Mingle keeps 30%. Cancel anytime.
+              You keep <strong>70%</strong> of every session. Closet Mingle keeps 30%. Cancel anytime.
             </div>
           </>
         )}

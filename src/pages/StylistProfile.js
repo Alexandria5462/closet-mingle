@@ -105,7 +105,7 @@ export default function StylistProfile() {
               <div style={{ fontSize: 13, color: "var(--text-tertiary)", marginBottom: 4 }}>@{stylist.username}</div>
             )}
             {stylist.specialty && <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 4 }}>{stylist.specialty}</div>}
-            {stylist.city && <div style={{ fontSize: 12, color: "var(--text-tertiary)" }}>📍 {stylist.city}</div>}
+            {stylist.city && <div style={{ fontSize: 12, color: "var(--text-tertiary)" }}>{stylist.city}</div>}
             {avgRating > 0 && (
               <div style={{ fontSize: 13, color: "#f59e0b", marginTop: 6 }}>
                 {"★".repeat(Math.round(avgRating))}{"☆".repeat(5 - Math.round(avgRating))}

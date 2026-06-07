@@ -120,7 +120,7 @@ export default function GiftSubscription() {
           />
 
           <button className="btn-pink" onClick={sendGift} disabled={sending || !recipientEmail || !recipientName}>
-            {sending ? <span className="spinner"></span> : "🎁 Send gift"}
+            {sending ? <span className="spinner"></span> : "Send gift"}
           </button>
 
           <p style={{ textAlign: "center", fontSize: 11, color: "var(--text-tertiary)", marginTop: 10 }}>

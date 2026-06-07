@@ -174,7 +174,7 @@ export default function StylistClients() {
                     )}
                   </div>
                   {c.user?.city && (
-                    <div style={{ fontSize: 11, color: "var(--text-tertiary)" }}>📍 {c.user.city}</div>
+                    <div style={{ fontSize: 11, color: "var(--text-tertiary)" }}>{c.user.city}</div>
                   )}
                   <div style={{ fontSize: 11, color: "var(--text-secondary)", marginTop: 4 }}>
                     {c.completedSessions} session{c.completedSessions !== 1 ? "s" : ""} completed · Last active: {getLastActive(c.lastSessionAt)}

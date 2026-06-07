@@ -118,7 +118,7 @@ export default function ClientHome() {
           >
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <div>
-                <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>✂️ Find a Stylist</div>
+                <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>Find a Stylist</div>
                 <div style={{ fontSize: 12, opacity: 0.9, lineHeight: 1.5 }}>
                   {tier.hasStylist
                     ? "Browse stylists matched to your style profile"

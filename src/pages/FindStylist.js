@@ -126,7 +126,7 @@ export default function FindStylist() {
             <em>closet</em><span>mingle</span>
           </div>
         </div>
-        <span className="badge badge-pink">✂️ Find a Stylist</span>
+        <span className="badge badge-pink">Find a Stylist</span>
       </div>
 
       <div className="screen">
@@ -135,7 +135,7 @@ export default function FindStylist() {
           {/* Free account banner */}
           {isFree && (
             <div style={{ background: "var(--pink-light)", border: "1px solid #f4c0d1", borderRadius: "var(--radius)", padding: "12px 14px", marginBottom: 14, fontSize: 13, color: "var(--pink-dark)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <span>💡 Upgrade to chat with stylists</span>
+              <span>Upgrade to chat with stylists</span>
               <button onClick={() => nav("/plans")} style={{ background: "var(--pink)", border: "none", borderRadius: 20, padding: "5px 14px", color: "white", cursor: "pointer", fontSize: 12, fontWeight: 500 }}>
                 Upgrade →
               </button>
@@ -179,7 +179,7 @@ export default function FindStylist() {
             </div>
           ) : (
             <div style={{ background: "#f0f4ff", border: "1px solid #c7d2fe", borderRadius: "var(--radius)", padding: "10px 14px", marginBottom: 14, fontSize: 12, color: "#3730a3", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span>💡 Take the style quiz to get matched with the best stylist</span>
+              <span>Take the style quiz to get matched with the best stylist</span>
               <button onClick={() => nav("/quiz")} style={{ background: "var(--pink)", border: "none", borderRadius: 20, padding: "4px 12px", color: "white", cursor: "pointer", fontSize: 11, fontWeight: 500, marginLeft: 8 }}>Take quiz</button>
             </div>
           )}
@@ -233,11 +233,11 @@ export default function FindStylist() {
                       </span>
                     )}
                     {index === 0 && userQuiz && s.score > 0 && (
-                      <span style={{ background: "var(--pink)", borderRadius: 20, padding: "1px 8px", fontSize: 9, color: "white", fontWeight: 500 }}>⭐ Top pick</span>
+                      <span style={{ background: "var(--pink)", borderRadius: 20, padding: "1px 8px", fontSize: 9, color: "white", fontWeight: 500 }}>Top pick</span>
                     )}
                   </div>
                   {s.specialty && <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>{s.specialty}</div>}
-                  {s.city && <div style={{ fontSize: 11, color: "var(--text-tertiary)" }}>📍 {s.city}</div>}
+                  {s.city && <div style={{ fontSize: 11, color: "var(--text-tertiary)" }}>{s.city}</div>}
                   {s.rating > 0 && (
                     <div style={{ fontSize: 11, color: "#f59e0b", marginTop: 2 }}>
                       {"★".repeat(Math.round(s.rating))}{"☆".repeat(5 - Math.round(s.rating))}
@@ -278,7 +278,7 @@ export default function FindStylist() {
                   className="btn-pink"
                   style={{ flex: 1, marginBottom: 0, fontSize: 12, padding: "8px 12px", background: isFree ? "var(--text-tertiary)" : "var(--pink)" }}
                 >
-                  {isFree ? "🔒 Upgrade to chat" : "💬 Chat"}
+                  {isFree ? "🔒 Upgrade to chat" : "Chat"}
                 </button>
               </div>
             </div>

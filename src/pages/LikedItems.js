@@ -101,7 +101,7 @@ export default function LikedItems() {
             <em>closet</em><span>mingle</span>
           </div>
         </div>
-        <span className="badge badge-pink">💗 {items.length} liked</span>
+        <span className="badge badge-pink">{items.length} liked</span>
       </div>
 
       <div className="screen">
@@ -125,7 +125,7 @@ export default function LikedItems() {
 
           {canGenerate ? (
             <button className="btn-pink" onClick={() => nav("/generated")} style={{ marginBottom:16 }}>
-              ✨ Generate AI Outfits from Liked Items
+              Generate AI Outfits from Liked Items
             </button>
           ) : (
             <div style={{ background:"var(--pink-light)", border:"1px solid #f4c0d1", borderRadius:"var(--radius)", padding:"12px 14px", marginBottom:16, fontSize:13, color:"var(--pink-dark)" }}>

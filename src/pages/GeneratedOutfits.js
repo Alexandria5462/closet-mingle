@@ -175,7 +175,7 @@ export default function GeneratedOutfits() {
       });
       setSavedIds(prev => new Set([...prev, index]));
       const expiryMsg = isFreeAccount ? "Expires in 24 hours." : isPremiumPlus ? "Saved for 7 days." : "Saved — no expiry.";
-      setToast(`💗 Outfit saved! ${expiryMsg}`);
+      setToast(`Outfit saved! ${expiryMsg}`);
     } catch (e) {
       console.error("Save error:", e);
       setToast("Failed to save. Please try again.");
@@ -200,7 +200,7 @@ export default function GeneratedOutfits() {
             <em>closet</em><span>mingle</span>
           </div>
         </div>
-        <span className="badge badge-pink">✨ AI Outfits</span>
+        <span className="badge badge-pink">AI Outfits</span>
       </div>
 
       <div className="screen">
@@ -242,7 +242,7 @@ export default function GeneratedOutfits() {
           {/* Regenerate button */}
           {!loading && !generating && outfits.length > 0 && (
             <button className="btn-outline" onClick={() => generateNew(likedItems, occasion)} style={{ marginBottom: 14, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-              🔄 Regenerate new combinations
+              Regenerate new combinations
             </button>
           )}
 
@@ -302,17 +302,17 @@ export default function GeneratedOutfits() {
 
                 {outfit.colorStory && (
                   <div style={{ background: "var(--pink-light)", borderRadius: 8, padding: "8px 12px", marginBottom: 8, fontSize: 12, color: "var(--pink-dark)" }}>
-                    🎨 <strong>Color story:</strong> {outfit.colorStory}
+                    <strong>Color story:</strong> {outfit.colorStory}
                   </div>
                 )}
                 {outfit.patternNote && (
                   <div style={{ background: "var(--bg)", borderRadius: 8, padding: "8px 12px", marginBottom: 8, fontSize: 12, color: "var(--text-secondary)" }}>
-                    🔲 <strong>Patterns:</strong> {outfit.patternNote}
+                    <strong>Patterns:</strong> {outfit.patternNote}
                   </div>
                 )}
                 {outfit.styleNote && (
                   <div style={{ background: "var(--bg)", borderRadius: 8, padding: "8px 12px", marginBottom: 12, fontSize: 12, color: "var(--text-secondary)" }}>
-                    ✨ <strong>Why it works:</strong> {outfit.styleNote}
+                    <strong>Why it works:</strong> {outfit.styleNote}
                   </div>
                 )}
 
@@ -324,7 +324,7 @@ export default function GeneratedOutfits() {
                 ) : (
                   <div style={{ display: "flex", gap: 8 }}>
                     <button className="btn-pink" onClick={() => setNamingOutfit({ outfit, index })} style={{ flex: 1 }}>
-                      💗 Save this outfit
+                      Save this outfit
                     </button>
                     <button
                       onClick={() => setSharingOutfit({ ...outfit, itemImages: outfit.items.map(i => i.imageUrl || "") })}
@@ -342,7 +342,7 @@ export default function GeneratedOutfits() {
           {/* View saved button */}
           {savedIds.size > 0 && (
             <button className="btn-outline" onClick={() => nav("/saved")} style={{ marginBottom: 20 }}>
-              🔖 View all saved outfits
+              View all saved outfits
             </button>
           )}
 

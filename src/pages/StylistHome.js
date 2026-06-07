@@ -121,7 +121,7 @@ export default function StylistHome() {
 
       <div className="screen">
         <div className="body">
-          <div style={{ fontSize: 20, fontWeight: 500, marginBottom: 4 }}>{greeting}, {firstName} ✂️</div>
+          <div style={{ fontSize: 20, fontWeight: 500, marginBottom: 4 }}>{greeting}, {firstName} </div>
           <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 16 }}>
             {availability ? "You are live — clients can book you now" : "You are offline — turn on availability to receive clients"}
           </div>
@@ -130,7 +130,7 @@ export default function StylistHome() {
           <div style={{ background: availability ? "#d1fae5" : "var(--bg-card)", border: `0.5px solid ${availability ? "#6ee7b7" : "var(--border)"}`, borderRadius: "var(--radius)", padding: "12px 14px", marginBottom: 14, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <div>
               <div style={{ fontSize: 14, fontWeight: 500, color: availability ? "#065f46" : "var(--text-primary)" }}>
-                {availability ? "🟢 Available for sessions" : "⚫ Not available"}
+                {availability ? "Available for sessions" : "Not available"}
               </div>
               <div style={{ fontSize: 12, color: availability ? "#065f46" : "var(--text-secondary)", marginTop: 2, opacity: 0.8 }}>
                 {availability ? userProfile?.availabilityHours || "Open now" : "Clients cannot see or book you"}
@@ -187,7 +187,7 @@ export default function StylistHome() {
           <div className="card" style={{ marginBottom: 14, cursor: "pointer" }} onClick={() => nav("/find-stylist")}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <div>
-                <div style={{ fontSize: 14, fontWeight: 500 }}>🔍 Find a Client</div>
+                <div style={{ fontSize: 14, fontWeight: 500 }}>Find a Client</div>
                 <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 2 }}>
                   See how clients can discover your profile
                 </div>

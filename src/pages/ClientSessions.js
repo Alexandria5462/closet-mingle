@@ -129,7 +129,7 @@ export default function ClientSessions() {
             <SkeletonList count={4} />
           ) : filtered.length === 0 ? (
             <div style={{ textAlign: "center", padding: "60px 20px" }}>
-              <div style={{ fontSize: 48, marginBottom: 12 }}>✂️</div>
+              <div style={{ fontSize: 48, marginBottom: 12 }}></div>
               <div style={{ fontSize: 16, fontWeight: 500, marginBottom: 8 }}>
                 {sessions.length === 0 ? "No sessions yet" : "No sessions match your search"}
               </div>

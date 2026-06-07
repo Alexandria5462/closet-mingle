@@ -17,7 +17,7 @@ export default function Welcome() {
         {/* Feature highlights */}
         {[
           { icon: "✨", text: "AI builds outfits from your closet" },
-          { icon: "✂️", text: "Chat with real personal stylists" },
+          { icon: "", text: "Chat with real personal stylists" },
           { icon: "🎨", text: "Color-matched, trend-aware looks" },
         ].map(f => (
           <div key={f.text} style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12, background: "var(--bg-card)", borderRadius: "var(--radius)", padding: "12px 16px", width: "100%", maxWidth: 320, border: "0.5px solid var(--border)" }}>

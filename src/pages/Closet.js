@@ -291,7 +291,7 @@ export default function Closet() {
           {/* Re-analyze banner */}
           {showReanalyzeBtn && !reanalyzing && (
             <div style={{ background: "#fff8e7", border: "1px solid #fcd34d", borderRadius: "var(--radius)", padding: "10px 14px", marginBottom: 12, fontSize: 13, color: "#92400e", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-              <span>🎨 Some items have unknown colors</span>
+              <span>Some items have unknown colors</span>
               <button onClick={reanalyzeAll} style={{ background: "#d97706", border: "none", borderRadius: 20, padding: "5px 14px", color: "white", cursor: "pointer", fontSize: 12, fontWeight: 500, whiteSpace: "nowrap" }}>Fix now</button>
             </div>
           )}
@@ -342,7 +342,7 @@ export default function Closet() {
 
           {filter === "All" && occasionFilter === "All" && !searchQuery && (
             <div style={{ background: "#f0f4ff", border: "1px solid #c7d2fe", borderRadius: "var(--radius)", padding: "10px 14px", marginBottom: 14, fontSize: 13, color: "#3730a3", display: "flex", gap: 8 }}>
-              <span>💡</span>
+              <span></span>
               <span>Select a <strong>category</strong> to add items. Tap any item to <strong>rename, edit or tag occasions</strong>.</span>
             </div>
           )}

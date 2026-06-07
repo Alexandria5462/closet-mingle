@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import TabBar from "../components/TabBar";
 import Toast from "../components/Toast";
 
-const OCCASIONS = ["Casual","Work / Office","Date Night","Brunch","Formal","Travel","Workout"];
+const OCCASIONS = ["All","Casual","Work / Office","Date Night","Brunch","Formal","Travel","Workout"];
 const SESSION_HOURS = 6;
 
 // ─── Swipe Card Component ─────────────────────────────────────
@@ -90,7 +90,7 @@ function SwipeCard({ item, onSwipe, isTop, position }) {
         }
       </div>
       {stamp === "like" && (
-        <div style={{ position:"absolute", top:28, left:16, padding:"5px 14px", borderRadius:8, fontSize:20, fontWeight:700, border:"3px solid var(--pink)", color:"var(--pink)", transform:"rotate(-20deg)", background:"rgba(255,255,255,0.92)" }}>💗 LIKE</div>
+        <div style={{ position:"absolute", top:28, left:16, padding:"5px 14px", borderRadius:8, fontSize:20, fontWeight:700, border:"3px solid var(--pink)", color:"var(--pink)", transform:"rotate(-20deg)", background:"rgba(255,255,255,0.92)" }}>LIKE</div>
       )}
       {stamp === "pass" && (
         <div style={{ position:"absolute", top:28, right:16, padding:"5px 14px", borderRadius:8, fontSize:20, fontWeight:700, border:"3px solid #ef4444", color:"#ef4444", transform:"rotate(20deg)", background:"rgba(255,255,255,0.92)" }}>✕ PASS</div>
@@ -124,7 +124,7 @@ export default function SwipeOutfits() {
   const [likedCount, setLikedCount] = useState(0);
   const [savedCount, setSavedCount] = useState(0);
   const [canGenerate, setCanGenerate] = useState(false);
-  const [occasion, setOccasion] = useState("Casual");
+  const [occasion, setOccasion] = useState("All");
   const [toast, setToast] = useState("");
   const [loading, setLoading] = useState(true);
   const [timeUntilReset, setTimeUntilReset] = useState("");
@@ -166,6 +166,12 @@ export default function SwipeOutfits() {
       );
       const allItems = itemsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
+      // ── Load already liked items to exclude from deck ─────
+      const likedSnap = await getDocs(
+        query(collection(db, "likedItems"), where("userId", "==", userProfile.uid))
+      );
+      const alreadyLikedIds = new Set(likedSnap.docs.map(d => d.data().itemId || d.data().id));
+
       // ── 2. Load swipe session (free accounts only) ──────────
       const now = new Date();
       let alreadySwiped = new Set();
@@ -194,9 +200,18 @@ export default function SwipeOutfits() {
 
       // ── 3. Build deck from unswiped items ─────────────────
       const remaining = isFreeAccount
-        ? allItems.filter(item => !alreadySwiped.has(item.id))
-        : [...allItems]; // paid accounts always see all items
-      const shuffled = [...remaining].sort(() => Math.random() - 0.5);
+        ? allItems.filter(item => !alreadySwiped.has(item.id) && !alreadyLikedIds.has(item.id))
+        : allItems.filter(item => !alreadyLikedIds.has(item.id)); // paid still exclude liked items
+      // Apply occasion filter if set
+      // "All" shows everything, specific occasion shows tagged items + untagged items
+      const occasionFiltered = occasionFilter === "All"
+        ? remaining
+        : remaining.filter(item => {
+            const tags = item.occasions || [];
+            // Show items tagged with this occasion OR items with no tags at all
+            return tags.includes(occasionFilter) || tags.length === 0;
+          });
+      const shuffled = [...occasionFiltered].sort(() => Math.random() - 0.5);
       setDeck(shuffled);
       setAllDone(shuffled.length === 0 && allItems.length > 0);
 
@@ -297,7 +312,7 @@ export default function SwipeOutfits() {
         });
         const newCount = likedCount + 1;
         setLikedCount(newCount);
-        setToast(`💗 Liked ${item.name}!`);
+        setToast(`Liked ${item.name}!`);
 
         // Reload liked items to check combo
         const lSnap = await getDocs(
@@ -324,7 +339,7 @@ export default function SwipeOutfits() {
         </div>
         <div style={{ display:"flex", gap:8, alignItems:"center" }}>
           <button onClick={() => nav("/liked")} style={{ background: likedCount > 0 ? "var(--pink-light)" : "var(--bg)", border:`1px solid ${likedCount > 0 ? "#f4c0d1" : "var(--border)"}`, borderRadius:20, padding:"4px 12px", fontSize:12, color: likedCount > 0 ? "var(--pink-dark)" : "var(--text-secondary)", cursor:"pointer", fontWeight:500 }}>
-            💗 {likedCount} liked
+            {likedCount} liked
           </button>
           <button onClick={() => nav("/saved")} style={{ background: savedCount > 0 ? "var(--pink-light)" : "var(--bg)", border:`1px solid ${savedCount > 0 ? "#f4c0d1" : "var(--border)"}`, borderRadius:20, padding:"4px 12px", fontSize:12, color: savedCount > 0 ? "var(--pink-dark)" : "var(--text-secondary)", cursor:"pointer", fontWeight:500 }}>
             🔖 {savedCount} saved
@@ -345,19 +360,19 @@ export default function SwipeOutfits() {
           {/* Occasion selector */}
           <div style={{ display:"flex", gap:6, overflowX:"auto", paddingBottom:8, marginBottom:12, scrollbarWidth:"none" }}>
             {OCCASIONS.map(o => (
-              <button key={o} onClick={() => setOccasion(o)} style={{
+              <button key={o} onClick={() => { setOccasionFilter(o); setOccasion(o); }} style={{
                 padding:"5px 14px", borderRadius:20, fontSize:12, fontWeight:500,
                 border:"1px solid", cursor:"pointer", whiteSpace:"nowrap",
-                background: occasion === o ? "var(--pink)" : "var(--bg-card)",
-                borderColor: occasion === o ? "var(--pink)" : "var(--border)",
-                color: occasion === o ? "white" : "var(--text-secondary)"
+                background: occasionFilter === o ? "var(--pink)" : "var(--bg-card)",
+                borderColor: occasionFilter === o ? "var(--pink)" : "var(--border)",
+                color: occasionFilter === o ? "white" : "var(--text-secondary)"
               }}>{o}</button>
             ))}
           </div>
 
           {/* Instruction banner */}
           <div style={{ background:"#f0f4ff", border:"1px solid #c7d2fe", borderRadius:"var(--radius)", padding:"10px 14px", marginBottom:12, fontSize:12, color:"#3730a3" }}>
-            💡 Swipe 💗 on items you like. Like a <strong>top + bottom</strong> or a <strong>dress</strong> to unlock AI outfit generation.{isFreeAccount && " Each item can only be swiped once every 6 hours."}
+            Swipe on items you like. Like a <strong>top + bottom</strong> or a <strong>dress</strong> to unlock AI outfit generation.{isFreeAccount && " Each item can only be swiped once every 6 hours."}
           </div>
 
           {/* Ready to generate */}
@@ -390,7 +405,7 @@ export default function SwipeOutfits() {
               )}
               {likedCount > 0 && (
                 <button className="btn-pink" onClick={() => nav("/liked")} style={{ width:"auto", padding:"10px 24px" }}>
-                  💗 View my {likedCount} liked items
+                  View my {likedCount} liked items
                 </button>
               )}
             </div>
@@ -412,7 +427,7 @@ export default function SwipeOutfits() {
           {!loading && !allDone && deck.length > 0 && (
             <>
               <div style={{ textAlign:"center", fontSize:12, color:"var(--text-secondary)", marginBottom:10 }}>
-                ← Pass &nbsp;·&nbsp; Like 💗 → &nbsp;|&nbsp; <strong>{deck.length}</strong> item{deck.length !== 1 ? "s" : ""} remaining
+                ← Pass &nbsp;·&nbsp; Like → &nbsp;|&nbsp; <strong>{deck.length}</strong> item{deck.length !== 1 ? "s" : ""} remaining
               </div>
               <div className="swipe-container" style={{ height:420 }}>
                 {deck.slice(0, 3).map((item, i) => (

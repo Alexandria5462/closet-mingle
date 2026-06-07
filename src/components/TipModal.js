@@ -95,7 +95,7 @@ export default function TipModal({ stylistId, stylistName, conversationId, onClo
           </div>
         </div>
         <div style={{ background: "var(--bg)", borderRadius: "var(--radius)", padding: "10px 14px", marginBottom: 14, fontSize: 12, color: "var(--text-secondary)" }}>
-          💰 {stylistName} receives <strong style={{ color: "var(--success)" }}>${(finalAmount * 0.7).toFixed(2)}</strong> (70% of tip)
+          {stylistName} receives <strong style={{ color: "var(--success)" }}>${(finalAmount * 0.7).toFixed(2)}</strong> (70% of tip)
         </div>
         <button className="btn-pink" onClick={sendTip} disabled={sending || finalAmount <= 0}>
           {sending ? <span className="spinner"></span> : `Send $${finalAmount.toFixed(2)} tip`}
