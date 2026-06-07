@@ -206,7 +206,7 @@ export default function StylistClients() {
               style={{ background: "var(--bg-card)", border: `0.5px solid ${c.isActive ? "#6ee7b7" : "var(--border)"}`, borderRadius: "var(--radius)", padding: 14, marginBottom: 10, cursor: "pointer" }}
             >
               <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-                <div className="avatar" style={{ width: 48, height: 48, background: "var(--pink-light)", color: "var(--pink-dark)", fontSize: 15, overflow: "hidden", flexShrink: 0 }}>
+                <div className="avatar" onClick={() => nav(`/stylist/client/${c.clientId}`)} style={{ width: 48, height: 48, background: "var(--pink-light)", color: "var(--pink-dark)", fontSize: 15, overflow: "hidden", flexShrink: 0, cursor: "pointer" }}>
                   {c.user?.photoUrl
                     ? <img src={c.user.photoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     : c.user?.name?.split(" ").map(n => n[0]).join("").slice(0, 2) || "?"
