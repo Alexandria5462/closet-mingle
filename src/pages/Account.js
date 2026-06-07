@@ -494,6 +494,19 @@ export default function Account() {
                 </div>
               )}
 
+              {/* Following — client only */}
+              {!isStylist && (
+                <div className="card" style={{ cursor: "pointer" }} onClick={() => nav("/following")}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 500 }}>Following</div>
+                      <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 2 }}>Stylists you follow</div>
+                    </div>
+                    <i className="ti ti-chevron-right" style={{ color: "var(--text-tertiary)" }} aria-hidden="true"></i>
+                  </div>
+                </div>
+              )}
+
               {/* Referral */}
               <div className="card" style={{ cursor: "pointer" }} onClick={() => nav("/referral")}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>

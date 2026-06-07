@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, getDocs, addDoc, deleteDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { useAuth } from "../lib/AuthContext";
 import Reviews from "../components/Reviews";
@@ -15,6 +15,9 @@ export default function StylistProfile() {
   const [portfolio, setPortfolio] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("about");
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followDocId, setFollowDocId] = useState(null);
+  const [followLoading, setFollowLoading] = useState(false);
 
   const canChoose = userProfile?.subscriptionTier === "premium_plus";
 
@@ -36,10 +39,57 @@ export default function StylistProfile() {
         )
       );
       setPortfolio(portSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+      // Check if already following
+      if (userProfile?.uid) {
+        const followSnap = await getDocs(
+          query(collection(db, "follows"),
+            where("followerId", "==", userProfile.uid),
+            where("stylistId", "==", stylistId)
+          )
+        );
+        if (!followSnap.empty) {
+          setIsFollowing(true);
+          setFollowDocId(followSnap.docs[0].id);
+        }
+      }
     } catch (e) {
       console.error("Stylist profile error:", e);
     }
     setLoading(false);
+  }
+
+  async function toggleFollow() {
+    if (!userProfile?.uid) return;
+    setFollowLoading(true);
+    try {
+      if (isFollowing && followDocId) {
+        await deleteDoc(doc(db, "follows", followDocId));
+        setIsFollowing(false);
+        setFollowDocId(null);
+      } else {
+        const newFollow = await addDoc(collection(db, "follows"), {
+          followerId: userProfile.uid,
+          followerName: userProfile?.name || "",
+          stylistId,
+          stylistName: stylist?.name || "",
+          createdAt: new Date().toISOString(),
+        });
+        setIsFollowing(true);
+        setFollowDocId(newFollow.id);
+        // Notify stylist
+        try {
+          await addDoc(collection(db, "notifications"), {
+            userId: stylistId,
+            title: "New follower",
+            body: `${userProfile?.name || "Someone"} started following you`,
+            type: "follow",
+            read: false,
+            createdAt: new Date().toISOString(),
+          });
+        } catch (e) { /* notification failure is non-critical */ }
+      }
+    } catch (e) { console.error(e); }
+    setFollowLoading(false);
   }
 
   if (loading) {

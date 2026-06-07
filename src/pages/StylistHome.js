@@ -79,7 +79,13 @@ export default function StylistHome() {
       );
 
       setRecentConvs(recent);
-      setTodayStats({ sessions: todaySessions, earnings: todayEarnings, unread: unreadCount });
+      // Follower count
+      const followerSnap = await getDocs(
+        query(collection(db, "follows"), where("stylistId", "==", currentUser.uid))
+      );
+      const followerCount = followerSnap.size;
+
+      setTodayStats({ sessions: todaySessions, earnings: todayEarnings, unread: unreadCount, followers: followerCount });
     } catch (e) {
       console.error("Dashboard error:", e);
     }

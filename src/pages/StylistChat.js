@@ -53,12 +53,20 @@ export default function StylistChat() {
     loadSession();
     const q = query(
       collection(db, "messages"),
-      where("conversationId", "==", conversationId),
-      orderBy("createdAt", "asc")
+      where("conversationId", "==", conversationId)
     );
-    const unsub = onSnapshot(q, snap => {
-      setMessages(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    const unsub = onSnapshot(q, (snap) => {
+      const msgs = snap.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => {
+          const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return aTime - bTime;
+        });
+      setMessages(msgs);
       setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+    }, (error) => {
+      console.error("Messages listener error:", error);
     });
     return unsub;
   }, [clientId, conversationId]);
@@ -119,12 +127,26 @@ export default function StylistChat() {
     await addDoc(collection(db, "messages"), {
       conversationId,
       senderId: currentUser.uid,
-      senderName: userProfile.name,
+      senderName: userProfile?.name || "",
       content,
       type,
       createdAt: new Date().toISOString(),
+      read: false,
     });
     setText("");
+    // Notify client of new message
+    if (type === "text") {
+      try {
+        await addDoc(collection(db, "notifications"), {
+          userId: clientId,
+          title: "Message from your stylist",
+          body: `${userProfile?.name || "Your stylist"}: ${content.slice(0, 60)}`,
+          type: "message",
+          read: false,
+          createdAt: new Date().toISOString(),
+        });
+      } catch (e) { /* non-critical */ }
+    }
     setSending(false);
   }
 
