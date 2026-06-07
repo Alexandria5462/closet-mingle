@@ -231,6 +231,7 @@ export default function Plans() {
         <p style={{ textAlign: "center", fontSize: 11, color: "var(--text-tertiary)", marginTop: 10 }}>
           Payments processed securely by Stripe. Cancel anytime.
         </p>
+        )} 
       </div>
     </div>
   );
