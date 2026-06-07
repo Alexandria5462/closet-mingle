@@ -30,6 +30,7 @@ import StylistHome from "./pages/StylistHome";
 import ClientSessions from "./pages/ClientSessions";
 import ClosetPrivacy from "./pages/ClosetPrivacy";
 import Following from "./pages/Following";
+import ClientMessages from "./pages/ClientMessages";
 import StylistChat from "./pages/StylistChat";
 import StylistMessages from "./pages/StylistMessages";
 import StylistAnalytics from "./pages/StylistAnalytics";
@@ -89,6 +90,7 @@ function AppRoutes() {
       <Route path="/my-sessions" element={<PrivateRoute><ClientSessions /></PrivateRoute>} />
       <Route path="/closet-privacy" element={<PrivateRoute><ClosetPrivacy /></PrivateRoute>} />
       <Route path="/following" element={<PrivateRoute><Following /></PrivateRoute>} />
+      <Route path="/my-messages" element={<PrivateRoute><ClientMessages /></PrivateRoute>} />
 
       {/* Stylist */}
       <Route path="/stylist" element={<PrivateRoute accountType="stylist"><StylistHome /></PrivateRoute>} />

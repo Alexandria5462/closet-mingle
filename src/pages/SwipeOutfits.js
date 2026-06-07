@@ -86,7 +86,7 @@ function SwipeCard({ item, onSwipe, isTop, position }) {
           ? <img src={item.imageUrl} alt={item.name}
               onError={e => { if (item.fallbackUrl) e.target.src = item.fallbackUrl; }}
               style={{ width:"100%", height:"100%", objectFit:"cover", background:"repeating-conic-gradient(#f5f5f5 0% 25%, white 0% 50%) 0 0 / 12px 12px" }} />
-          : <span style={{ fontSize: 80 }}>👗</span>
+          : <i className="ti ti-hanger" style={{ fontSize: 64, color: "var(--text-tertiary)" }} aria-hidden="true"></i>
         }
       </div>
       {stamp === "like" && (
@@ -389,8 +389,10 @@ export default function SwipeOutfits() {
           {/* Loading state */}
           {loading && (
             <div style={{ textAlign:"center", padding:"60px 20px", color:"var(--text-secondary)" }}>
-              <div style={{ fontSize:32, marginBottom:12 }}>👗</div>
-              <div style={{ fontSize:14 }}>Loading your closet...</div>
+              <div style={{ marginBottom: 16 }}>
+                <div className="spinner" style={{ width: 36, height: 36, border: "3px solid var(--border)", borderTop: "3px solid var(--pink)", borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto" }}></div>
+              </div>
+              <div style={{ fontSize: 14, color: "var(--text-secondary)" }}>Loading your closet...</div>
             </div>
           )}
 

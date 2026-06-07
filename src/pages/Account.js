@@ -499,6 +499,19 @@ export default function Account() {
                 </div>
               )}
 
+              {/* Messages — client only */}
+              {!isStylist && (
+                <div className="card" style={{ cursor: "pointer" }} onClick={() => nav("/my-messages")}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 500 }}>My Messages</div>
+                      <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 2 }}>View all stylist conversations</div>
+                    </div>
+                    <i className="ti ti-chevron-right" style={{ color: "var(--text-tertiary)" }} aria-hidden="true"></i>
+                  </div>
+                </div>
+              )}
+
               {/* Following — client only */}
               {!isStylist && (
                 <div className="card" style={{ cursor: "pointer" }} onClick={() => nav("/following")}>

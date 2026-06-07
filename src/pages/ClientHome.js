@@ -56,7 +56,15 @@ export default function ClientHome() {
     { label: "Chat with a personal stylist", done: tier.hasStylist, tip: tier.hasStylist ? "You have access!" : "Upgrade to unlock" },
   ];
   const completed = MILESTONES.filter(m => m.done).length;
-  const showProgress = completed < MILESTONES.length;
+  const [guideDismissed, setGuideDismissed] = React.useState(() => {
+    try { return localStorage.getItem("cm_guide_dismissed") === "true"; } catch(e) { return false; }
+  });
+  const showProgress = completed < MILESTONES.length && !guideDismissed;
+
+  function dismissGuide() {
+    setGuideDismissed(true);
+    try { localStorage.setItem("cm_guide_dismissed", "true"); } catch(e) {}
+  }
 
   return (
     <>
@@ -83,7 +91,14 @@ export default function ClientHome() {
             <div className="card" style={{ marginBottom: 14 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                 <div style={{ fontSize: 13, fontWeight: 500 }}>Getting started</div>
-                <div style={{ fontSize: 12, color: "var(--pink)" }}>{completed}/{MILESTONES.length}</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <div style={{ fontSize: 12, color: "var(--pink)" }}>{completed}/{MILESTONES.length}</div>
+                  <button
+                    onClick={dismissGuide}
+                    style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-tertiary)", fontSize: 16, lineHeight: 1, padding: 2 }}
+                    title="Dismiss"
+                  >✕</button>
+                </div>
               </div>
               <div style={{ background: "var(--border)", borderRadius: 10, height: 5, marginBottom: 12, overflow: "hidden" }}>
                 <div style={{ background: "var(--pink)", height: "100%", width: `${(completed / MILESTONES.length) * 100}%`, borderRadius: 10, transition: "width 0.5s ease" }} />
