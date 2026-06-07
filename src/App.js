@@ -79,7 +79,7 @@ function AppRoutes() {
       <Route path="/gift" element={<PrivateRoute><GiftSubscription /></PrivateRoute>} />
       <Route path="/my-sessions" element={<PrivateRoute><ClientSessions /></PrivateRoute>} />
       <Route path="/closet-privacy" element={<PrivateRoute><ClosetPrivacy /></PrivateRoute>} />
-      <Route path="/my-stylists" element={<PrivateRoute><ClientStylistHistory /></PrivateRoute>} />
+      
 
       {/* Stylist */}
       <Route path="/stylist" element={<PrivateRoute accountType="stylist"><StylistHome /></PrivateRoute>} />
