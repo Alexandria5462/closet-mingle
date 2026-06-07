@@ -81,7 +81,6 @@ function AppRoutes() {
       <Route path="/my-sessions" element={<PrivateRoute><ClientSessions /></PrivateRoute>} />
       <Route path="/closet-privacy" element={<PrivateRoute><ClosetPrivacy /></PrivateRoute>} />
       <Route path="/following" element={<PrivateRoute><Following /></PrivateRoute>} />
-      <Route path="/my-stylists" element={<PrivateRoute><ClientStylistHistory /></PrivateRoute>} />
 
       {/* Stylist */}
       <Route path="/stylist" element={<PrivateRoute accountType="stylist"><StylistHome /></PrivateRoute>} />
