@@ -185,7 +185,10 @@ export default function SavedOutfits() {
                   <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 2 }}>Assign an outfit to {dayFilter} when saving it</div>
                 </div>
               )}
-              {outfits.filter(o => dayFilter === "All" || (o.dayOfWeek || "") === dayFilter).map(outfit => (
+              {outfits
+                .filter(o => dayFilter === "All" || (o.dayOfWeek || "") === dayFilter)
+                .filter(o => !activeSearch || (o.outfitName || "").toLowerCase().includes(activeSearch.toLowerCase()))
+                .map(outfit => (
             <div key={outfit.id} className="card" style={{ padding: 0, overflow: "hidden", marginBottom: 14 }}>
               <div style={{ padding: "12px 14px 8px", borderBottom: "0.5px solid var(--border)" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
