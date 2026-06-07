@@ -70,7 +70,7 @@ export default function FindStylist() {
         );
         const sQuizAnswers = !sQuizSnap.empty ? sQuizSnap.docs[0].data()?.answers : null;
         
-          return { ...s, quizAnswers: sQuizAnswers;
+          return { ...s, quizAnswers: sQuizAnswers };
       }));
 
       const specs = ["All", ...new Set(withData.map(s => s.specialty).filter(Boolean))];
