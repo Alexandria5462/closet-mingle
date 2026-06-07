@@ -320,7 +320,7 @@ export default function SwipeOutfits() {
       <div className="header">
         {/* Clickable logo */}
         <div className="logo" style={{ cursor:"pointer" }} onClick={() => nav("/home")}>
-          Closet<span>Mingle</span>
+          <em>closet</em><span>mingle</span>
         </div>
         <div style={{ display:"flex", gap:8, alignItems:"center" }}>
           <button onClick={() => nav("/liked")} style={{ background: likedCount > 0 ? "var(--pink-light)" : "var(--bg)", border:`1px solid ${likedCount > 0 ? "#f4c0d1" : "var(--border)"}`, borderRadius:20, padding:"4px 12px", fontSize:12, color: likedCount > 0 ? "var(--pink-dark)" : "var(--text-secondary)", cursor:"pointer", fontWeight:500 }}>

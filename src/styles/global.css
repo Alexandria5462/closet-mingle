@@ -4,38 +4,38 @@ html { -webkit-text-size-adjust: 100%; }
 
 /* ── Light theme (default) ───────────────────────────────── */
 :root {
-  --pink: #d4537e;
-  --pink-light: #fce7f3;
-  --pink-dark: #9d2449;
-  --bg: #f9fafb;
-  --bg-card: #ffffff;
-  --border: #e5e7eb;
-  --text-primary: #111827;
-  --text-secondary: #6b7280;
-  --text-tertiary: #9ca3af;
-  --success: #10b981;
-  --danger: #ef4444;
+  --pink: #c4745a;
+  --pink-light: #f5ede6;
+  --pink-dark: #8a4a35;
+  --bg: #f4f0e8;
+  --bg-card: #fdfaf6;
+  --border: #ddd8c8;
+  --text-primary: #1a1410;
+  --text-secondary: #8a8070;
+  --text-tertiary: #b0a898;
+  --success: #4a6741;
+  --danger: #c0392b;
   --radius: 14px;
   --radius-sm: 10px;
-  --skeleton-base: #f0f0f0;
-  --skeleton-shine: #e0e0e0;
+  --skeleton-base: #ede8de;
+  --skeleton-shine: #e4dfd4;
 }
 
 /* ── Dark theme ──────────────────────────────────────────── */
 [data-theme="dark"] {
-  --pink: #e87fa8;
-  --pink-light: #3d1a28;
-  --pink-dark: #f4b8d0;
-  --bg: #0f0f0f;
-  --bg-card: #1a1a1a;
-  --border: #2d2d2d;
-  --text-primary: #f9fafb;
-  --text-secondary: #9ca3af;
-  --text-tertiary: #6b7280;
-  --success: #34d399;
-  --danger: #f87171;
-  --skeleton-base: #2a2a2a;
-  --skeleton-shine: #333333;
+  --pink: #d4856a;
+  --pink-light: #2d1a12;
+  --pink-dark: #e8a88e;
+  --bg: #0e0c0a;
+  --bg-card: #1a1612;
+  --border: #2d2822;
+  --text-primary: #f4f0e8;
+  --text-secondary: #8a8070;
+  --text-tertiary: #5a5248;
+  --success: #7a9b6a;
+  --danger: #e05a4a;
+  --skeleton-base: #2a2420;
+  --skeleton-shine: #332e28;
 }
 
 /* ── Base ────────────────────────────────────────────────── */
@@ -48,8 +48,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 
 /* ── Header ──────────────────────────────────────────────── */
 .header { background: var(--bg-card); border-bottom: 0.5px solid var(--border); padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; padding-top: max(14px, env(safe-area-inset-top)); position: sticky; top: 0; z-index: 100; }
-.logo { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; color: var(--text-primary); }
-.logo span { color: var(--pink); }
+.logo { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; color: var(--text-primary); font-family: Georgia, "Times New Roman", serif; }
+.logo em { font-weight: 300; font-style: italic; color: var(--text-primary); }
+.logo span { font-weight: 800; font-style: normal; color: var(--text-primary); }
 
 /* ── Tab bar ─────────────────────────────────────────────── */
 .tab-bar { display: flex; background: var(--bg-card); border-top: 0.5px solid var(--border); padding: 8px 0; padding-bottom: max(16px, env(safe-area-inset-bottom)); flex-shrink: 0; position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 430px; z-index: 100; }
@@ -141,6 +142,23 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; b
 /* ── Spinner ─────────────────────────────────────────────── */
 .spinner { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.6s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Watermark ───────────────────────────────────────────── */
+.watermark-container { position: relative; }
+.watermark-container::after {
+  content: "ClosetMingle Free Plan";
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background: rgba(212, 83, 126, 0.75);
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 10px;
+  pointer-events: none;
+  letter-spacing: 0.3px;
+}
 
 /* ── Scrollbar hide ──────────────────────────────────────── */
 ::-webkit-scrollbar { display: none; }

@@ -59,7 +59,7 @@ export default function Login() {
     return (
       <div className="screen" style={{ paddingBottom: 0 }}>
         <div className="header">
-          <div className="logo" style={{ cursor: "pointer" }} onClick={() => nav("/")}>Closet<span>Mingle</span></div>
+          <div className="logo" style={{ cursor: "pointer" }} onClick={() => nav("/")}><em>closet</em><span>mingle</span></div>
           <button onClick={() => { setShowForgot(false); setResetSent(false); setError(""); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-secondary)", fontSize: 13 }}>Back</button>
         </div>
         <div className="body" style={{ paddingTop: 32 }}>
@@ -105,7 +105,7 @@ export default function Login() {
   return (
     <div className="screen" style={{ paddingBottom: 0 }}>
       <div className="header">
-        <div className="logo" style={{ cursor: "pointer" }} onClick={() => nav("/")}>Closet<span>Mingle</span></div>
+        <div className="logo" style={{ cursor: "pointer" }} onClick={() => nav("/")}><em>closet</em><span>mingle</span></div>
         <button onClick={() => nav("/")} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-secondary)", fontSize: 13 }}>Back</button>
       </div>
       <div className="body" style={{ paddingTop: 24 }}>

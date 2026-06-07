@@ -61,7 +61,7 @@ export default function ClientHome() {
   return (
     <>
       <div className="header">
-        <div className="logo" style={{ cursor: "pointer" }} onClick={() => nav("/home")}>Closet<span>Mingle</span></div>
+        <div className="logo" style={{ cursor: "pointer" }} onClick={() => nav("/home")}><em>closet</em><span>mingle</span></div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           {tier.isPaid && <span className="badge" style={{ background: tier.color, color: "var(--pink-dark)", fontSize: 10 }}>{tier.label}</span>}
           <div className="avatar" style={{ background: "var(--pink-light)", color: "var(--pink-dark)", width: 36, height: 36, fontSize: 13, overflow: "hidden", cursor: "pointer" }} onClick={() => nav("/account")}>

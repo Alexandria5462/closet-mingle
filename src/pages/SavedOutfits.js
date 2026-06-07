@@ -93,7 +93,7 @@ export default function SavedOutfits() {
           <button onClick={() => nav(-1)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-secondary)" }}>
             <i className="ti ti-arrow-left" style={{ fontSize: 20 }} aria-hidden="true"></i>
           </button>
-          <div className="logo" style={{ cursor: "pointer" }} onClick={() => nav("/home")}>Closet<span>Mingle</span></div>
+          <div className="logo" style={{ cursor: "pointer" }} onClick={() => nav("/home")}><em>closet</em><span>mingle</span></div>
         </div>
         <span className="badge badge-pink">{outfits.length} saved</span>
       </div>

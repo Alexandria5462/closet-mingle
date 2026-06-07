@@ -52,7 +52,7 @@ export default function GiftSubscription() {
     return (
       <>
         <div className="header">
-          <div className="logo" style={{ cursor: "pointer" }} onClick={() => nav("/home")}>Closet<span>Mingle</span></div>
+          <div className="logo" style={{ cursor: "pointer" }} onClick={() => nav("/home")}><em>closet</em><span>mingle</span></div>
         </div>
         <div className="screen">
           <div style={{ textAlign: "center", padding: "80px 24px" }}>
@@ -76,7 +76,7 @@ export default function GiftSubscription() {
           <button onClick={() => nav(-1)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-secondary)" }}>
             <i className="ti ti-arrow-left" style={{ fontSize: 20 }} aria-hidden="true"></i>
           </button>
-          <div className="logo" style={{ cursor: "pointer" }} onClick={() => nav("/home")}>Closet<span>Mingle</span></div>
+          <div className="logo" style={{ cursor: "pointer" }} onClick={() => nav("/home")}><em>closet</em><span>mingle</span></div>
         </div>
       </div>
 

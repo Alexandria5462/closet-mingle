@@ -298,7 +298,7 @@ export default function Account() {
   return (
     <>
       <div className="header">
-        <div className="logo" style={{ cursor: "pointer" }} onClick={() => nav(isStylist ? "/stylist" : "/home")}>Closet<span>Mingle</span></div>
+        <div className="logo" style={{ cursor: "pointer" }} onClick={() => nav(isStylist ? "/stylist" : "/home")}><em>closet</em><span>mingle</span></div>
         {editing
           ? <button className="btn-pink btn-sm" onClick={saveProfile} disabled={saving}>{saving ? <span className="spinner"></span> : "Save"}</button>
           : <button className="btn-outline btn-sm" onClick={() => setEditing(true)}>Edit profile</button>

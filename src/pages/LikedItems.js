@@ -98,7 +98,7 @@ export default function LikedItems() {
             <i className="ti ti-arrow-left" style={{ fontSize:20 }} aria-hidden="true"></i>
           </button>
           <div className="logo" style={{ cursor:"pointer" }} onClick={() => nav("/home")}>
-            Closet<span>Mingle</span>
+            <em>closet</em><span>mingle</span>
           </div>
         </div>
         <span className="badge badge-pink">💗 {items.length} liked</span>

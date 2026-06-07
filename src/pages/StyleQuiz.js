@@ -151,7 +151,7 @@ export default function StyleQuiz() {
       <>
         <div className="header">
           <div className="logo" style={{ cursor: "pointer" }} onClick={() => nav("/home")}>
-            Closet<span>Mingle</span>
+            <em>closet</em><span>mingle</span>
           </div>
         </div>
         <div className="screen">
@@ -214,7 +214,7 @@ export default function StyleQuiz() {
             <i className="ti ti-arrow-left" style={{ fontSize: 20 }} aria-hidden="true"></i>
           </button>
           <div className="logo" style={{ cursor: "pointer" }} onClick={() => nav("/home")}>
-            Closet<span>Mingle</span>
+            <em>closet</em><span>mingle</span>
           </div>
         </div>
         <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>

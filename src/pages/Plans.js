@@ -114,7 +114,7 @@ export default function Plans() {
     <div className="screen" style={{ paddingBottom: 0 }}>
       <div className="header">
         <div className="logo" style={{ cursor: "pointer" }} onClick={() => nav("/home")}>
-          Closet<span>Mingle</span>
+          <em>closet</em><span>mingle</span>
         </div>
       </div>
       <div className="body">

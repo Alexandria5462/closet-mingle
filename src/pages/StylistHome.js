@@ -109,7 +109,7 @@ export default function StylistHome() {
     <>
       <div className="header">
         <div className="logo" style={{ cursor: "pointer" }} onClick={() => nav("/stylist")}>
-          Closet<span>Mingle</span>
+          <em>closet</em><span>mingle</span>
         </div>
         <div className="avatar" style={{ background: "var(--pink-light)", color: "var(--pink-dark)", width: 36, height: 36, fontSize: 13, overflow: "hidden", cursor: "pointer" }} onClick={() => nav("/account")}>
           {userProfile?.photoUrl

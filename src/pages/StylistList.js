@@ -90,7 +90,7 @@ export default function StylistList() {
     return (
       <>
         <div className="header">
-          <div className="logo" style={{ cursor: "pointer" }} onClick={() => nav("/home")}>Closet<span>Mingle</span></div>
+          <div className="logo" style={{ cursor: "pointer" }} onClick={() => nav("/home")}><em>closet</em><span>mingle</span></div>
         </div>
         <div className="screen">
           <div style={{ textAlign: "center", padding: "60px 24px" }}>
@@ -110,7 +110,7 @@ export default function StylistList() {
   return (
     <>
       <div className="header">
-        <div className="logo" style={{ cursor: "pointer" }} onClick={() => nav("/home")}>Closet<span>Mingle</span></div>
+        <div className="logo" style={{ cursor: "pointer" }} onClick={() => nav("/home")}><em>closet</em><span>mingle</span></div>
       </div>
 
       <div className="screen">

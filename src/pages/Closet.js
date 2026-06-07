@@ -270,7 +270,7 @@ export default function Closet() {
   return (
     <>
       <div className="header">
-        <div className="logo" style={{ cursor: "pointer" }}>Closet<span>Mingle</span></div>
+        <div className="logo" style={{ cursor: "pointer" }}><em>closet</em><span>mingle</span></div>
         {filter !== "All" && (
           <button className="btn-pink btn-sm" onClick={() => setShowCamera(true)} disabled={uploading}>
             {uploading ? <span className="spinner"></span> : <><i className="ti ti-plus" aria-hidden="true"></i> Add {filter}</>}

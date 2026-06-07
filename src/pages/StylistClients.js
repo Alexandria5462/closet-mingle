@@ -105,7 +105,7 @@ export default function StylistClients() {
     <>
       <div className="header">
         <div className="logo" style={{ cursor: "pointer" }} onClick={() => nav("/stylist")}>
-          Closet<span>Mingle</span>
+          <em>closet</em><span>mingle</span>
         </div>
         <span className="badge badge-pink">{clients.length} clients</span>
       </div>
