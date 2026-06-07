@@ -275,21 +275,23 @@ export default function FindStylist() {
               <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
                 <button
                   onClick={e => { e.stopPropagation(); nav(`/stylist/${s.id}`); }}
-                  style={{ flex: 1, background: "var(--bg)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", padding: "8px 12px", cursor: "pointer", fontSize: 12, color: "var(--text-secondary)", fontFamily: "inherit" }}
+                  style={{ flex: isStylist ? 1 : undefined, background: "var(--bg)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", padding: "8px 12px", cursor: "pointer", fontSize: 12, color: "var(--text-secondary)", fontFamily: "inherit" }}
                 >
                   View profile
                 </button>
-                <button
-                  onClick={e => {
-                    e.stopPropagation();
-                    if (isFree) nav("/plans");
-                    else nav(`/chat/${s.id}`);
-                  }}
-                  className="btn-pink"
-                  style={{ flex: 1, marginBottom: 0, fontSize: 12, padding: "8px 12px", background: isFree ? "var(--text-tertiary)" : "var(--pink)" }}
-                >
-                  {isFree ? "🔒 Upgrade to chat" : "Chat"}
-                </button>
+                {!isStylist && (
+                  <button
+                    onClick={e => {
+                      e.stopPropagation();
+                      if (isFree) nav("/plans");
+                      else nav(`/chat/${s.id}`);
+                    }}
+                    className="btn-pink"
+                    style={{ flex: 1, marginBottom: 0, fontSize: 12, padding: "8px 12px", background: isFree ? "var(--text-tertiary)" : "var(--pink)" }}
+                  >
+                    {isFree ? "Upgrade to chat" : "Chat"}
+                  </button>
+                )}
               </div>
             </div>
           ))}

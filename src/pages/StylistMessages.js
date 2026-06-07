@@ -16,6 +16,8 @@ export default function StylistMessages() {
   const [sortBy, setSortBy] = useState("newest");
   const [filterBy, setFilterBy] = useState("all");
   const [showFilters, setShowFilters] = useState(false);
+  // Track conversations marked as read locally so reload doesn't revert them
+  const localReadRef = React.useRef(new Set());
 
   useEffect(() => {
     if (!currentUser?.uid) return;
@@ -89,7 +91,11 @@ export default function StylistMessages() {
         new Date(b.lastMessage?.createdAt || 0) - new Date(a.lastMessage?.createdAt || 0)
       );
 
-      setConversations(valid);
+      // Apply any locally-marked-as-read conversations
+      const withLocalRead = valid.map(c =>
+        localReadRef.current.has(c.id) ? { ...c, unread: 0 } : c
+      );
+      setConversations(withLocalRead);
     } catch (e) {
       console.error("Messages load error:", e);
       setError("Failed to load messages.");
@@ -238,12 +244,13 @@ export default function StylistMessages() {
             <div
               key={conv.id}
               onClick={async () => {
-                // Mark as read in local state immediately for instant UI update
+                // Mark as read locally immediately and persist in ref
                 if (conv.unread > 0) {
+                  localReadRef.current.add(conv.id);
                   setConversations(prev => prev.map(c =>
                     c.id === conv.id ? { ...c, unread: 0 } : c
                   ));
-                  // Also update Firebase in background
+                  // Update Firebase in background
                   try {
                     const unreadSnap = await getDocs(
                       query(collection(db, "messages"),
@@ -254,6 +261,8 @@ export default function StylistMessages() {
                     const batch = writeBatch(db);
                     unreadSnap.docs.forEach(d => batch.update(d.ref, { read: true }));
                     await batch.commit();
+                    // Remove from local ref after Firebase is updated
+                    localReadRef.current.delete(conv.id);
                   } catch(e) { console.error(e); }
                 }
                 nav(`/stylist/chat/${conv.clientId}`);

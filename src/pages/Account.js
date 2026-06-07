@@ -344,7 +344,12 @@ export default function Account() {
                 <div style={{ fontSize: 13, color: "var(--text-tertiary)", marginTop: 2 }}>@{userProfile.username}</div>
               )}
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 4 }}>
-                <span className="badge" style={{ background: tierBg, color: "var(--pink-dark)", fontSize: 10 }}>{tierLabel}</span>
+                <span className="badge" style={{
+                  background: isStylist ? "var(--pink-light)" : tierBg,
+                  color: "var(--pink-dark)", fontSize: 10, fontWeight: 600
+                }}>
+                  {isStylist ? "Stylist" : tierLabel}
+                </span>
                 {isStylist && userProfile?.isVerified && <span className="badge badge-green" style={{ fontSize: 10 }}>✓ Verified</span>}
               </div>
             </div>
