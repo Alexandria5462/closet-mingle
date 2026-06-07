@@ -13,6 +13,7 @@ export default function StylistProfile() {
   const { userProfile } = useAuth();
   const [stylist, setStylist] = useState(null);
   const [portfolio, setPortfolio] = useState([]);
+  const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("about");
   const [isFollowing, setIsFollowing] = useState(false);
@@ -31,7 +32,7 @@ export default function StylistProfile() {
       const snap = await getDoc(doc(db, "users", stylistId));
       if (snap.exists()) setStylist(snap.data());
 
-      // Load portfolio (saved outfits marked as portfolio)
+      // Load portfolio
       const portSnap = await getDocs(
         query(collection(db, "savedOutfits"),
           where("userId", "==", stylistId),
@@ -39,6 +40,12 @@ export default function StylistProfile() {
         )
       );
       setPortfolio(portSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+
+      // Load reviews for rating display
+      const reviewSnap = await getDocs(
+        query(collection(db, "reviews"), where("targetUserId", "==", stylistId))
+      );
+      setReviews(reviewSnap.docs.map(d => d.data()));
       // Check if already following
       if (userProfile?.uid) {
         const followSnap = await getDocs(
@@ -124,7 +131,9 @@ export default function StylistProfile() {
   }
 
   const initials = stylist.name?.split(" ").map(n => n[0]).join("").slice(0, 2) || "ST";
-  const avgRating = stylist.rating || 0;
+  const avgRating = reviews.length > 0
+    ? parseFloat((reviews.reduce((s, r) => s + (r.rating || 0), 0) / reviews.length).toFixed(1))
+    : 0;
 
   return (
     <>
@@ -154,13 +163,26 @@ export default function StylistProfile() {
             {stylist.username && (
               <div style={{ fontSize: 13, color: "var(--text-tertiary)", marginBottom: 4 }}>@{stylist.username}</div>
             )}
-            {stylist.specialty && <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 4 }}>{stylist.specialty}</div>}
-            {stylist.city && <div style={{ fontSize: 12, color: "var(--text-tertiary)" }}>{stylist.city}</div>}
-            {avgRating > 0 && (
-              <div style={{ fontSize: 13, color: "#f59e0b", marginTop: 6 }}>
-                {"★".repeat(Math.round(avgRating))}{"☆".repeat(5 - Math.round(avgRating))}
-                <span style={{ color: "var(--text-secondary)", marginLeft: 4 }}>({avgRating})</span>
-              </div>
+            {stylist.specialty && (
+              <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 6 }}>{stylist.specialty}</div>
+            )}
+            {/* Star rating directly below specialty */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginBottom: 4 }}>
+              {avgRating > 0 ? (
+                <>
+                  <span style={{ fontSize: 16, color: "#c4745a", letterSpacing: 1 }}>
+                    {"★".repeat(Math.round(avgRating))}{"☆".repeat(5 - Math.round(avgRating))}
+                  </span>
+                  <span style={{ fontSize: 12, color: "var(--text-secondary)", fontWeight: 500 }}>
+                    {avgRating} &middot; {reviews.length} review{reviews.length !== 1 ? "s" : ""}
+                  </span>
+                </>
+              ) : (
+                <span style={{ fontSize: 12, color: "var(--text-tertiary)" }}>No reviews yet</span>
+              )}
+            </div>
+            {stylist.city && (
+              <div style={{ fontSize: 12, color: "var(--text-tertiary)" }}>{stylist.city}</div>
             )}
             <div style={{ display: "flex", gap: 6, justifyContent: "center", marginTop: 8 }}>
               <span style={{ fontSize: 11, background: stylist.availabilityEnabled ? "#d1fae5" : "var(--bg)", border: `1px solid ${stylist.availabilityEnabled ? "#6ee7b7" : "var(--border)"}`, borderRadius: 20, padding: "2px 10px", color: stylist.availabilityEnabled ? "#065f46" : "var(--text-tertiary)" }}>
@@ -174,10 +196,30 @@ export default function StylistProfile() {
             </div>
           </div>
 
-          {/* Chat button */}
-          <button className="btn-pink" onClick={() => nav(`/chat/${stylistId}`)} style={{ marginBottom: 8 }}>
-            💬 {canChoose ? "Chat with this stylist" : "Start a session"}
-          </button>
+          {/* Chat + Follow buttons */}
+          <div style={{ display: "flex", gap: 10, marginBottom: 8 }}>
+            <button
+              className="btn-pink"
+              onClick={() => nav(`/chat/${stylistId}`)}
+              style={{ flex: 2, marginBottom: 0 }}
+            >
+              {canChoose ? "Chat with this stylist" : "Start a session"}
+            </button>
+            <button
+              onClick={toggleFollow}
+              disabled={followLoading}
+              style={{
+                flex: 1, padding: "13px 16px", borderRadius: "var(--radius-sm)",
+                border: `1.5px solid ${isFollowing ? "var(--border)" : "var(--pink)"}`,
+                background: isFollowing ? "var(--bg-card)" : "var(--pink-light)",
+                color: isFollowing ? "var(--text-secondary)" : "var(--pink-dark)",
+                cursor: "pointer", fontFamily: "inherit", fontSize: 14, fontWeight: 500,
+                transition: "all 0.15s",
+              }}
+            >
+              {followLoading ? "..." : isFollowing ? "Following ✓" : "Follow"}
+            </button>
+          </div>
           {!canChoose && (
             <div style={{ fontSize: 11, color: "var(--text-tertiary)", textAlign: "center", marginBottom: 14 }}>
               Upgrade to Premium Plus to personally choose your stylist
