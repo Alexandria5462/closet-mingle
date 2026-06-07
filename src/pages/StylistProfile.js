@@ -106,7 +106,7 @@ export default function StylistProfile() {
           <div className="logo" style={{ cursor: "pointer" }} onClick={() => nav("/stylist")}><em>closet</em><span>mingle</span></div>
         </div>
         <div className="screen"><div className="body"><SkeletonList count={3} /></div></div>
-        <TabBar active="stylists" type="client" />
+        <TabBar active={isStylist ? "clients" : "stylists"} type={isStylist ? "stylist" : "client"} />
       </>
     );
   }
@@ -125,7 +125,7 @@ export default function StylistProfile() {
             <div style={{ fontSize: 16 }}>Stylist not found</div>
           </div>
         </div>
-        <TabBar active="stylists" type="client" />
+        <TabBar active={isStylist ? "clients" : "stylists"} type={isStylist ? "stylist" : "client"} />
       </>
     );
   }
@@ -299,7 +299,7 @@ export default function StylistProfile() {
         </div>
       </div>
 
-      <TabBar active="stylists" type="client" />
+      <TabBar active={isStylist ? "clients" : "stylists"} type={isStylist ? "stylist" : "client"} />
     </>
   );
 }

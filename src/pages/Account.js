@@ -351,7 +351,7 @@ export default function Account() {
           </div>
 
           {/* Section tabs */}
-          <div style={{ display: "flex", gap: 0, marginBottom: 16, borderBottom: "2px solid var(--border)", overflowX: "auto", scrollbarWidth: "none" }}>
+          <div style={{ display: "flex", gap: 0, marginBottom: 16, borderBottom: "2px solid var(--border)", overflowX: "auto", overflowY: "hidden", scrollbarWidth: "none", WebkitOverflowScrolling: "touch", flexWrap: "nowrap" }}>
             {sections.map(s => (
               <button key={s} onClick={() => setActiveSection(s)} style={{
                 background: "none", border: "none", cursor: "pointer",

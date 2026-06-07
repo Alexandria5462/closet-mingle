@@ -133,8 +133,8 @@ export default function FindStylist() {
       <div className="screen">
         <div className="body">
 
-          {/* Free account banner */}
-          {isFree && (
+          {/* Free account banner — client only */}
+          {isFree && !isStylist && (
             <div style={{ background: "var(--pink-light)", border: "1px solid #f4c0d1", borderRadius: "var(--radius)", padding: "12px 14px", marginBottom: 14, fontSize: 13, color: "var(--pink-dark)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <span>Upgrade to chat with stylists</span>
               <button onClick={() => nav("/plans")} style={{ background: "var(--pink)", border: "none", borderRadius: 20, padding: "5px 14px", color: "white", cursor: "pointer", fontSize: 12, fontWeight: 500 }}>

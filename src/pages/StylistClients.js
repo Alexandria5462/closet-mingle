@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, getDoc, addDoc, deleteDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { useAuth } from "../lib/AuthContext";
 import TabBar from "../components/TabBar";
+import Toast from "../components/Toast";
 import { SkeletonList } from "../components/SkeletonLoader";
 
 export default function StylistClients() {
@@ -11,11 +12,17 @@ export default function StylistClients() {
   const { currentUser } = useAuth();
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [blockedIds, setBlockedIds] = useState(new Set());
+  const [blockingId, setBlockingId] = useState(null);
+  const [toast, setToast] = useState("");
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all"); // all | active | past
 
   useEffect(() => {
-    if (currentUser?.uid) loadClients();
+    if (currentUser?.uid) {
+      loadClients();
+      loadBlocked();
+    }
   }, [currentUser]);
 
   async function loadClients() {
@@ -26,7 +33,14 @@ export default function StylistClients() {
         query(collection(db, "chatSessions"), where("stylistId", "==", currentUser.uid))
       );
 
-      // Get unique client IDs
+      // ALSO get clients from messages directly — anyone who sent a message
+      // is auto-saved as a client even without a formal session
+      const msgSnap = await getDocs(
+        query(collection(db, "messages"), where("conversationId", ">=", currentUser.uid),
+          where("conversationId", "<=", currentUser.uid + ""))
+      );
+
+      // Get unique client IDs from sessions
       const clientMap = {};
       sessionSnap.docs.forEach(d => {
         const data = d.data();
@@ -77,6 +91,39 @@ export default function StylistClients() {
       console.error("Clients load error:", e);
     }
     setLoading(false);
+  }
+
+  async function loadBlocked() {
+    try {
+      const snap = await getDocs(
+        query(collection(db, "blockedUsers"), where("stylistId", "==", currentUser.uid))
+      );
+      setBlockedIds(new Set(snap.docs.map(d => d.data().clientId)));
+    } catch(e) {}
+  }
+
+  async function toggleBlock(clientId, clientName) {
+    setBlockingId(clientId);
+    try {
+      if (blockedIds.has(clientId)) {
+        const snap = await getDocs(
+          query(collection(db, "blockedUsers"),
+            where("stylistId", "==", currentUser.uid),
+            where("clientId", "==", clientId))
+        );
+        for (const d of snap.docs) await deleteDoc(doc(db, "blockedUsers", d.id));
+        setBlockedIds(prev => { const n = new Set(prev); n.delete(clientId); return n; });
+        setToast(`${clientName} unblocked`);
+      } else {
+        await addDoc(collection(db, "blockedUsers"), {
+          stylistId: currentUser.uid, clientId, clientName,
+          createdAt: new Date().toISOString(),
+        });
+        setBlockedIds(prev => new Set([...prev, clientId]));
+        setToast(`${clientName} blocked`);
+      }
+    } catch(e) { setToast("Failed. Try again."); }
+    setBlockingId(null);
   }
 
   const filtered = clients
@@ -191,7 +238,23 @@ export default function StylistClients() {
                     </div>
                   )}
                 </div>
-                <i className="ti ti-chevron-right" style={{ color: "var(--text-tertiary)", fontSize: 16, flexShrink: 0 }} aria-hidden="true"></i>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6, flexShrink: 0 }}>
+                  <button
+                    onClick={e => { e.stopPropagation(); nav(`/stylist/chat/${c.clientId}`); }}
+                    className="btn-pink btn-sm"
+                    style={{ fontSize: 11 }}
+                  >Chat</button>
+                  <button
+                    onClick={e => { e.stopPropagation(); toggleBlock(c.clientId, c.user?.name || "Client"); }}
+                    disabled={blockingId === c.clientId}
+                    style={{
+                      padding: "5px 10px", fontSize: 11, fontFamily: "inherit", cursor: "pointer",
+                      background: "none", borderRadius: "var(--radius-sm)",
+                      border: `1px solid ${blockedIds.has(c.clientId) ? "var(--success)" : "var(--danger)"}`,
+                      color: blockedIds.has(c.clientId) ? "var(--success)" : "var(--danger)",
+                    }}
+                  >{blockingId === c.clientId ? "..." : blockedIds.has(c.clientId) ? "Unblock" : "Block"}</button>
+                </div>
               </div>
             </div>
           ))}
@@ -199,6 +262,7 @@ export default function StylistClients() {
       </div>
 
       <TabBar active="clients" type="stylist" />
+      {toast && <Toast message={toast} onDone={() => setToast("")} />}
     </>
   );
 }

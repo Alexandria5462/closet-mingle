@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { collection, query, where, getDocs, onSnapshot, orderBy, limit } from "firebase/firestore";
+import { collection, query, where, getDocs, onSnapshot, orderBy, limit, updateDoc, doc, writeBatch } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { useAuth } from "../lib/AuthContext";
 import TabBar from "../components/TabBar";
@@ -124,7 +124,23 @@ export default function StylistMessages() {
           ) : conversations.map(conv => (
             <div
               key={conv.id}
-              onClick={() => nav(`/stylist/chat/${conv.clientId}`)}
+              onClick={async () => {
+                // Mark all unread messages in this conversation as read
+                if (conv.unread > 0) {
+                  try {
+                    const unreadSnap = await getDocs(
+                      query(collection(db, "messages"),
+                        where("conversationId", "==", conv.conversationId),
+                        where("read", "==", false)
+                      )
+                    );
+                    const batch = writeBatch(db);
+                    unreadSnap.docs.forEach(d => batch.update(d.ref, { read: true }));
+                    await batch.commit();
+                  } catch(e) { console.error(e); }
+                }
+                nav(`/stylist/chat/${conv.clientId}`);
+              }}
               style={{ background: conv.unread > 0 ? "var(--pink-light)" : "var(--bg-card)", border: `0.5px solid ${conv.unread > 0 ? "#f4c0d1" : "var(--border)"}`, borderRadius: "var(--radius)", padding: 14, marginBottom: 10, cursor: "pointer", display: "flex", alignItems: "center", gap: 12 }}
             >
               <div className="avatar" style={{ width: 48, height: 48, background: "var(--pink-light)", color: "var(--pink-dark)", fontSize: 16, overflow: "hidden", flexShrink: 0, position: "relative" }}>

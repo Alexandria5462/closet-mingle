@@ -189,7 +189,8 @@ export default function Chat() {
   }
 
   const initials = stylist?.name?.split(" ").map(n => n[0]).join("").slice(0, 2) || "ST";
-  const sessionEnded = sessionStatus === "ended";
+  const sessionEnded = sessionStatus === "ended" || sessionStatus === "closed";
+  const sessionClosed = sessionStatus === "closed";
 
   return (
     <>
@@ -227,7 +228,9 @@ export default function Chat() {
 
       {sessionEnded && (
         <div style={{ background: "var(--bg-card)", borderBottom: "0.5px solid var(--border)", padding: "12px 16px" }}>
-          <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 8 }}>Your session has ended</div>
+          <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 8 }}>
+            {sessionClosed ? "This stylist has closed your relationship" : "Your session has ended"}
+          </div>
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={() => setShowReviewPrompt(true)} style={{ flex: 1, padding: "8px 12px", background: "var(--pink-light)", border: "1px solid var(--pink)", borderRadius: "var(--radius-sm)", cursor: "pointer", fontSize: 12, color: "var(--pink-dark)", fontFamily: "inherit", fontWeight: 500 }}>Leave a review</button>
             <button onClick={() => nav("/plans")} style={{ flex: 1, padding: "8px 12px", background: "var(--pink)", border: "none", borderRadius: "var(--radius-sm)", cursor: "pointer", fontSize: 12, color: "white", fontFamily: "inherit", fontWeight: 500 }}>Upgrade</button>

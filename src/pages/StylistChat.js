@@ -41,9 +41,12 @@ export default function StylistChat() {
   const [sessionStatus, setSessionStatus] = useState(null);
   const [showEndConfirm, setShowEndConfirm] = useState(false);
   const [ending, setEnding] = useState(false);
+  const [closingClient, setClosingClient] = useState(false);
+  const [clientClosed, setClientClosed] = useState(false);
   const [showCloset, setShowCloset] = useState(false);
   const [clientCloset, setClientCloset] = useState([]);
   const [closetLoading, setClosetLoading] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(null);
   const bottomRef = useRef(null);
 
   const conversationId = [currentUser?.uid, clientId].sort().join("_");
@@ -93,6 +96,31 @@ export default function StylistChat() {
       } catch (e2) { console.error(e2); }
     }
     setClosetLoading(false);
+  }
+
+  async function closeClient() {
+    if (!sessionDoc) return;
+    setClosingClient(true);
+    try {
+      // Mark client as closed - they can view history but not message
+      await updateDoc(doc(db, "chatSessions", sessionDoc.id), {
+        status: "closed",
+        closedAt: new Date().toISOString(),
+        closedBy: currentUser.uid,
+      });
+      // Send system message
+      await addDoc(collection(db, "messages"), {
+        conversationId,
+        senderId: currentUser.uid,
+        senderName: userProfile?.name || "",
+        content: "This styling relationship has been closed by the stylist. You can still view your message history.",
+        type: "session_ended",
+        createdAt: new Date().toISOString(),
+        read: false,
+      });
+      setClientClosed(true);
+    } catch(e) { console.error(e); }
+    setClosingClient(false);
   }
 
   async function loadClient() {
@@ -259,8 +287,25 @@ export default function StylistChat() {
               >
                 {ending ? <span className="spinner"></span> : "End session"}
               </button>
+              {/* Close client button */}
+              {!clientClosed && (
+                <button
+                  onClick={closeClient}
+                  disabled={closingClient}
+                  style={{ flex: 1, background: "none", color: "var(--danger)", border: "1px solid var(--danger)", borderRadius: "var(--radius-sm)", padding: "10px 14px", fontSize: 13, fontWeight: 500, cursor: "pointer", fontFamily: "inherit" }}
+                >
+                  {closingClient ? <span className="spinner"></span> : "Close client"}
+                </button>
+              )}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Closed client banner */}
+      {clientClosed && (
+        <div style={{ background: "var(--bg-card)", borderBottom: "0.5px solid var(--border)", padding: "10px 16px", fontSize: 13, color: "var(--text-secondary)", textAlign: "center" }}>
+          You have closed this client relationship. The client can view message history only.
         </div>
       )}
 
@@ -292,7 +337,7 @@ export default function StylistChat() {
 
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           {/* Video call — stylist only */}
-          {!sessionEnded && (
+          {!sessionEnded && !clientClosed && (
             <button
               onClick={startVideoCall}
               disabled={startingVideo}
@@ -343,13 +388,13 @@ export default function StylistChat() {
             <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>No public items in closet yet</div>
           ) : (
             <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4, scrollbarWidth: "none" }}>
-              {clientCloset.map(item => (
-                <div key={item.id} style={{ flexShrink: 0, textAlign: "center" }}>
+              {clientCloset.map((item, idx) => (
+                <div key={item.id} style={{ flexShrink: 0, textAlign: "center", cursor: "pointer" }} onClick={() => setLightboxIndex(idx)}>
                   <img
                     src={item.imageUrl || item.fallbackUrl}
                     alt={item.name}
                     onError={e => { if (item.fallbackUrl) e.target.src = item.fallbackUrl; }}
-                    style={{ width: 64, height: 64, borderRadius: 8, objectFit: "cover", border: "0.5px solid var(--border)" }}
+                    style={{ width: 64, height: 64, borderRadius: 8, objectFit: "cover", border: "0.5px solid var(--border)", transition: "transform 0.15s" }}
                   />
                   <div style={{ fontSize: 9, color: "var(--text-tertiary)", marginTop: 2, maxWidth: 64, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</div>
                   <div style={{ fontSize: 9, color: "var(--text-tertiary)", textTransform: "capitalize" }}>{item.attributes?.primaryColor}</div>
@@ -457,6 +502,54 @@ export default function StylistChat() {
           onMultiplePhotos={files => handlePhoto(Array.from(files)[0])}
           onClose={() => setShowCamera(false)}
         />
+      )}
+
+      {/* ── Closet image lightbox carousel ── */}
+      {lightboxIndex !== null && clientCloset.length > 0 && (
+        <div
+          onClick={() => setLightboxIndex(null)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.93)", zIndex: 3000, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}
+        >
+          {/* X close */}
+          <button
+            onClick={() => setLightboxIndex(null)}
+            style={{ position: "absolute", top: 20, right: 20, background: "rgba(255,255,255,0.15)", border: "none", borderRadius: "50%", width: 42, height: 42, color: "white", fontSize: 22, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10 }}
+          >✕</button>
+
+          {/* Counter */}
+          <div style={{ position: "absolute", top: 26, left: "50%", transform: "translateX(-50%)", color: "rgba(255,255,255,0.6)", fontSize: 13 }}>
+            {lightboxIndex + 1} / {clientCloset.length}
+          </div>
+
+          {/* Image */}
+          <img
+            src={clientCloset[lightboxIndex]?.imageUrl || clientCloset[lightboxIndex]?.fallbackUrl}
+            alt={clientCloset[lightboxIndex]?.name}
+            onClick={e => e.stopPropagation()}
+            style={{ maxWidth: "82vw", maxHeight: "65vh", borderRadius: 14, objectFit: "contain" }}
+          />
+
+          {/* Item details */}
+          <div onClick={e => e.stopPropagation()} style={{ marginTop: 16, textAlign: "center", padding: "0 24px" }}>
+            <div style={{ color: "white", fontSize: 16, fontWeight: 500 }}>{clientCloset[lightboxIndex]?.name}</div>
+            <div style={{ color: "rgba(255,255,255,0.55)", fontSize: 13, marginTop: 4, textTransform: "capitalize" }}>
+              {clientCloset[lightboxIndex]?.category}
+              {clientCloset[lightboxIndex]?.attributes?.primaryColor ? ` · ${clientCloset[lightboxIndex].attributes.primaryColor}` : ""}
+            </div>
+          </div>
+
+          {/* Prev / Next */}
+          <div onClick={e => e.stopPropagation()} style={{ display: "flex", gap: 24, marginTop: 24 }}>
+            <button
+              onClick={() => setLightboxIndex(i => (i - 1 + clientCloset.length) % clientCloset.length)}
+              style={{ background: "rgba(255,255,255,0.15)", border: "none", borderRadius: "50%", width: 52, height: 52, color: "white", fontSize: 24, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+            >←</button>
+            <button
+              onClick={() => setLightboxIndex(i => (i + 1) % clientCloset.length)}
+              style={{ background: "rgba(255,255,255,0.15)", border: "none", borderRadius: "50%", width: 52, height: 52, color: "white", fontSize: 24, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+            >→</button>
+          </div>
+        </div>
       )}
     </>
   );
