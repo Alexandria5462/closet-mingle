@@ -59,12 +59,8 @@ export default function StylistList() {
       const withQuiz = await Promise.all(all.map(async s => {
         const sQuizSnap = await getDocs(query(collection(db, "styleQuiz"), where("userId", "==", s.id)));
         const sQuiz = !sQuizSnap.empty ? sQuizSnap.docs[0].data()?.answers : null;
-        let reviewCount = 0;
-          try {
-            const rSnap = await getDocs(query(collection(db, "reviews"), where("targetUserId", "==", s.id)));
-            reviewCount = rSnap.size;
-          } catch(e) {}
-          return { ...s, quizAnswers: sQuiz, matchScore: matchScore(sQuiz, userProfile?.uid ? null : null), reviewCount };
+        
+          return { ...s, quizAnswers: sQuiz, matchScore: matchScore(sQuiz, userProfile?.uid ? null : null);
       }));
 
       // Build specialty list for filter

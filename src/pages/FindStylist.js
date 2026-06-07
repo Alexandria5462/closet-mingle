@@ -69,12 +69,8 @@ export default function FindStylist() {
           query(collection(db, "styleQuiz"), where("userId", "==", s.id))
         );
         const sQuizAnswers = !sQuizSnap.empty ? sQuizSnap.docs[0].data()?.answers : null;
-        let reviewCount = 0;
-          try {
-            const rSnap = await getDocs(query(collection(db, "reviews"), where("targetUserId", "==", s.id)));
-            reviewCount = rSnap.size;
-          } catch(e) {}
-          return { ...s, quizAnswers: sQuizAnswers, reviewCount };
+        
+          return { ...s, quizAnswers: sQuizAnswers;
       }));
 
       const specs = ["All", ...new Set(withData.map(s => s.specialty).filter(Boolean))];

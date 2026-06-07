@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, addDoc, doc, updateDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { useAuth } from "../lib/AuthContext";
 
@@ -44,6 +44,21 @@ export default function Reviews({ targetUserId, targetUserName }) {
         comment: comment.trim(),
         createdAt: new Date().toISOString(),
       });
+
+      // Recalculate and update the stylist's rating on their user document
+      // so stylist cards stay in sync with the reviews collection
+      const allReviews = await getDocs(
+        query(collection(db, "reviews"), where("targetUserId", "==", targetUserId))
+      );
+      const allRatings = allReviews.docs.map(d => d.data().rating || 0);
+      const newAvg = allRatings.length > 0
+        ? parseFloat((allRatings.reduce((a, b) => a + b, 0) / allRatings.length).toFixed(1))
+        : 0;
+      await updateDoc(doc(db, "users", targetUserId), {
+        rating: newAvg,
+        reviewCount: allRatings.length,
+      });
+
       setSubmitted(true);
       setShowForm(false);
       await loadReviews();
@@ -74,7 +89,7 @@ export default function Reviews({ targetUserId, targetUserName }) {
       {/* Write review button */}
       {canReview && !submitted && !showForm && (
         <button className="btn-outline btn-sm" onClick={() => setShowForm(true)} style={{ marginBottom: 14, marginTop: 0 }}>
-          ⭐ Write a review
+          Write a review
         </button>
       )}
 
