@@ -118,7 +118,67 @@ export default function Plans() {
         </div>
       </div>
       <div className="body">
-        <div style={{ textAlign: "center", marginBottom: 20 }}>
+
+        {/* ── Stylist plans ── */}
+        {isStylist ? (
+          <div>
+            <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 4 }}>Your Stylist Plan</div>
+            <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 16 }}>
+              Choose how you want to be billed. You keep 70% of every session fee.
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
+              <div style={{ background: "var(--bg-card)", border: `2px solid ${userProfile?.stylistPlan === "monthly" ? "var(--pink)" : "var(--border)"}`, borderRadius: "var(--radius)", padding: 16, textAlign: "center" }}>
+                <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 6 }}>Monthly</div>
+                <div style={{ fontSize: 32, fontWeight: 800, color: "var(--pink)" }}>$20</div>
+                <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 12 }}>per month</div>
+                <button
+                  onClick={async () => {
+                    setLoading("monthly");
+                    try {
+                      const { doc, updateDoc } = await import("firebase/firestore");
+                      const { db } = await import("../lib/firebase");
+                      await updateDoc(doc(db, "users", currentUser.uid), { stylistPlan: "monthly", subscriptionTier: "stylist" });
+                      nav("/stylist");
+                    } catch(e) { console.error(e); }
+                    setLoading(null);
+                  }}
+                  disabled={loading === "monthly" || userProfile?.stylistPlan === "monthly"}
+                  className="btn-pink btn-sm"
+                  style={{ width: "100%", opacity: userProfile?.stylistPlan === "monthly" ? 0.6 : 1 }}
+                >
+                  {loading === "monthly" ? "..." : userProfile?.stylistPlan === "monthly" ? "Current plan" : "Select"}
+                </button>
+              </div>
+              <div style={{ background: "var(--bg-card)", border: `2px solid ${userProfile?.stylistPlan === "annual" ? "#059669" : "var(--border)"}`, borderRadius: "var(--radius)", padding: 16, textAlign: "center", position: "relative" }}>
+                <div style={{ position: "absolute", top: -10, left: "50%", transform: "translateX(-50%)", background: "#059669", color: "white", fontSize: 10, fontWeight: 600, padding: "2px 10px", borderRadius: 20, whiteSpace: "nowrap" }}>SAVE $40</div>
+                <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 6 }}>Annual</div>
+                <div style={{ fontSize: 32, fontWeight: 800, color: "#059669" }}>$200</div>
+                <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 12 }}>per year</div>
+                <button
+                  onClick={async () => {
+                    setLoading("annual");
+                    try {
+                      const { doc, updateDoc } = await import("firebase/firestore");
+                      const { db } = await import("../lib/firebase");
+                      await updateDoc(doc(db, "users", currentUser.uid), { stylistPlan: "annual", subscriptionTier: "stylist" });
+                      nav("/stylist");
+                    } catch(e) { console.error(e); }
+                    setLoading(null);
+                  }}
+                  disabled={loading === "annual" || userProfile?.stylistPlan === "annual"}
+                  style={{ width: "100%", padding: "8px", background: "#059669", border: "none", borderRadius: "var(--radius-sm)", color: "white", cursor: "pointer", fontSize: 13, fontWeight: 500, fontFamily: "inherit", opacity: userProfile?.stylistPlan === "annual" ? 0.6 : 1 }}
+                >
+                  {loading === "annual" ? "..." : userProfile?.stylistPlan === "annual" ? "Current plan" : "Select"}
+                </button>
+              </div>
+            </div>
+            <div style={{ background: "#f0fdf4", border: "1px solid #6ee7b7", borderRadius: "var(--radius)", padding: "12px 14px", fontSize: 13, color: "#065f46" }}>
+              You keep <strong>70%</strong> of every session and tip. Closet Mingle keeps 30%.
+            </div>
+          </div>
+        ) : (
+
+          <div style={{ textAlign: "center", marginBottom: 20 }}>
           <div style={{ fontSize: 20, fontWeight: 500, marginBottom: 4 }}>Choose your plan</div>
           <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>Upgrade anytime. Cancel anytime.</div>
         </div>
