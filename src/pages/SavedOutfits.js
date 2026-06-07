@@ -14,6 +14,7 @@ export default function SavedOutfits() {
   const [loading, setLoading] = useState(true);
   const [dayFilter, setDayFilter] = useState("All");
   const [search, setSearch] = useState("");
+  const [activeSearch, setActiveSearch] = useState("");
   const [toast, setToast] = useState("");
 
   useEffect(() => {
@@ -131,16 +132,35 @@ export default function SavedOutfits() {
           ) : (
             <>
               {/* Search by outfit name */}
-              <div style={{ position: "relative", marginBottom: 10 }}>
-                <i className="ti ti-search" style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--text-tertiary)", fontSize: 16 }} aria-hidden="true"></i>
-                <input
-                  className="input-field"
-                  placeholder="Search saved outfits..."
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                  style={{ paddingLeft: 36, marginBottom: 0 }}
-                />
+              <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+                <div style={{ position: "relative", flex: 1 }}>
+                  <i className="ti ti-search" style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--text-tertiary)", fontSize: 16 }} aria-hidden="true"></i>
+                  <input
+                    className="input-field"
+                    placeholder="Search by outfit name..."
+                    value={search}
+                    onChange={e => {
+                      setSearch(e.target.value);
+                      // Clear results if search is cleared
+                      if (e.target.value === "") setActiveSearch("");
+                    }}
+                    onKeyDown={e => e.key === "Enter" && setActiveSearch(search)}
+                    style={{ paddingLeft: 36, marginBottom: 0 }}
+                  />
+                </div>
+                <button
+                  onClick={() => setActiveSearch(search)}
+                  style={{ background: "var(--pink)", border: "none", borderRadius: "var(--radius-sm)", padding: "0 16px", color: "white", cursor: "pointer", fontSize: 13, fontWeight: 500, fontFamily: "inherit", flexShrink: 0 }}
+                >
+                  Search
+                </button>
               </div>
+              {activeSearch && (
+                <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
+                  Showing results for <strong>"{activeSearch}"</strong>
+                  <button onClick={() => { setSearch(""); setActiveSearch(""); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-tertiary)", fontSize: 12 }}>× Clear</button>
+                </div>
+              )}
 
               {/* Plan your week */}
               <div style={{ marginBottom: 14 }}>

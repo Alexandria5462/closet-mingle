@@ -1,18 +1,18 @@
-import React, { useState, useRef } from "react";
+import React, { useRef } from "react";
 import ImageCropper from "./ImageCropper";
+import { useState } from "react";
 
 export default function CameraModal({ onPhoto, onMultiplePhotos, onClose }) {
-  const fileRef = useRef();
+  const cameraRef = useRef();
+  const libraryRef = useRef();
   const multiRef = useRef();
   const [cropSrc, setCropSrc] = useState(null);
-  const [pendingFile, setPendingFile] = useState(null);
 
   function handleFileSelect(e) {
     const file = e.target.files[0];
     if (!file) return;
     const url = URL.createObjectURL(file);
     setCropSrc(url);
-    setPendingFile(file);
   }
 
   function handleMultipleSelect(e) {
@@ -29,44 +29,80 @@ export default function CameraModal({ onPhoto, onMultiplePhotos, onClose }) {
     if (onPhoto) onPhoto(croppedFile);
   }
 
-  function handleCropCancel() {
-    setCropSrc(null);
-    setPendingFile(null);
-  }
-
   if (cropSrc) {
-    return <ImageCropper imageSrc={cropSrc} onCrop={handleCrop} onCancel={handleCropCancel} />;
+    return <ImageCropper imageSrc={cropSrc} onCrop={handleCrop} onCancel={() => setCropSrc(null)} />;
   }
 
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-sheet" onClick={e => e.stopPropagation()}>
-        <div style={{ fontSize: 15, fontWeight: 500, textAlign: "center", marginBottom: 4 }}>Add photo</div>
-        <div style={{ fontSize: 12, color: "var(--text-secondary)", textAlign: "center", marginBottom: 16 }}>Choose how to add your clothing item</div>
+        <div style={{ fontSize: 15, fontWeight: 600, textAlign: "center", marginBottom: 4 }}>
+          Add photo
+        </div>
+        <div style={{ fontSize: 13, color: "var(--text-secondary)", textAlign: "center", marginBottom: 20 }}>
+          How would you like to add your item?
+        </div>
 
-        {/* Single photo */}
+        {/* Take a photo — opens camera directly */}
         <button
           className="btn-pink"
-          onClick={() => fileRef.current.click()}
-          style={{ marginBottom: 10 }}
+          onClick={() => cameraRef.current.click()}
+          style={{ marginBottom: 10, display: "flex", alignItems: "center", gap: 10 }}
         >
-          <i className="ti ti-photo" aria-hidden="true"></i> Choose from library
+          <i className="ti ti-camera" style={{ fontSize: 18 }} aria-hidden="true"></i>
+          Take a photo
         </button>
-        <input ref={fileRef} type="file" accept="image/*" capture="environment" style={{ display: "none" }} onChange={handleFileSelect} />
+        <input
+          ref={cameraRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          style={{ display: "none" }}
+          onChange={handleFileSelect}
+        />
 
-        {/* Multiple photos */}
+        {/* Choose from library — no camera capture */}
+        <button
+          className="btn-outline"
+          onClick={() => libraryRef.current.click()}
+          style={{ marginBottom: 10, display: "flex", alignItems: "center", gap: 10 }}
+        >
+          <i className="ti ti-photo" style={{ fontSize: 18 }} aria-hidden="true"></i>
+          Choose from library
+        </button>
+        <input
+          ref={libraryRef}
+          type="file"
+          accept="image/*"
+          style={{ display: "none" }}
+          onChange={handleFileSelect}
+        />
+
+        {/* Select multiple */}
         {onMultiplePhotos && (
           <button
             className="btn-outline"
             onClick={() => multiRef.current.click()}
-            style={{ marginBottom: 10 }}
+            style={{ marginBottom: 10, display: "flex", alignItems: "center", gap: 10 }}
           >
-            <i className="ti ti-photos" aria-hidden="true"></i> Select multiple photos
+            <i className="ti ti-photos" style={{ fontSize: 18 }} aria-hidden="true"></i>
+            Select multiple photos
           </button>
         )}
-        <input ref={multiRef} type="file" accept="image/*" multiple style={{ display: "none" }} onChange={handleMultipleSelect} />
+        <input
+          ref={multiRef}
+          type="file"
+          accept="image/*"
+          multiple
+          style={{ display: "none" }}
+          onChange={handleMultipleSelect}
+        />
 
-        <button className="btn-outline" onClick={onClose} style={{ color: "var(--text-secondary)" }}>
+        <button
+          className="btn-outline"
+          onClick={onClose}
+          style={{ color: "var(--text-secondary)", borderColor: "var(--border)" }}
+        >
           Cancel
         </button>
       </div>

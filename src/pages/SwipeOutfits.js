@@ -167,10 +167,10 @@ export default function SwipeOutfits() {
       const allItems = itemsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
       // ── Load already liked items to exclude from deck ─────
-      const likedSnap = await getDocs(
+      const alreadyLikedSnap = await getDocs(
         query(collection(db, "likedItems"), where("userId", "==", userProfile.uid))
       );
-      const alreadyLikedIds = new Set(likedSnap.docs.map(d => d.data().itemId || d.data().id));
+      const alreadyLikedIds = new Set(alreadyLikedSnap.docs.map(d => d.data().itemId || d.data().id));
 
       // ── 2. Load swipe session (free accounts only) ──────────
       const now = new Date();

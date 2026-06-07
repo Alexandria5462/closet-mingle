@@ -33,9 +33,13 @@ export function AuthProvider({ children }) {
   // ── Dark mode ─────────────────────────────────────────────
   const [darkMode, setDarkMode] = useState(() => {
     try {
-      if (typeof window === "undefined") return false;
-      if (localStorage.getItem("cm_darkmode") === "true") return true;
-      if (window.matchMedia) return window.matchMedia("(prefers-color-scheme: dark)").matches;
+      // Only use saved preference — do NOT follow system dark mode
+      // App defaults to light mode unless user explicitly turned on dark mode
+      const saved = localStorage.getItem("cm_darkmode");
+      if (saved === "true") return true;
+      if (saved === "false") return false;
+      // No saved preference — default to light mode
+      return false;
     } catch (e) {}
     return false;
   });
