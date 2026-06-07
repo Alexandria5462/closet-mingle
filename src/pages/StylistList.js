@@ -60,7 +60,7 @@ export default function StylistList() {
         const sQuizSnap = await getDocs(query(collection(db, "styleQuiz"), where("userId", "==", s.id)));
         const sQuiz = !sQuizSnap.empty ? sQuizSnap.docs[0].data()?.answers : null;
         
-          return { ...s, quizAnswers: sQuiz, matchScore: matchScore(sQuiz, userProfile?.uid ? null : null);
+          return { ...s, quizAnswers: sQuiz, matchScore: matchScore(sQuiz, userProfile?.uid ? null : null) };
       }));
 
       // Build specialty list for filter
