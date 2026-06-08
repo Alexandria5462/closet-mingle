@@ -273,14 +273,14 @@ export default function ClientProfile() {
               {/* ── Style Quiz tab ── */}
               {activeTab === "style" && (
                 <div>
-                  {!quizResult ? (
+                  {(!quizResult || (!quizResult.styleProfile && !quizResult.answers)) ? (
                     <div style={{ textAlign: "center", padding: "40px 20px", color: "var(--text-secondary)" }}>
                       <div style={{ fontSize: 14 }}>Client hasn't taken the style quiz yet</div>
                     </div>
                   ) : (
                     <div className="card">
                       <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 12 }}>Style Profile</div>
-                      {quizResult.styleProfile && Object.entries(quizResult.styleProfile).map(([key, value]) => (
+                      {Object.entries(quizResult.styleProfile || quizResult.answers || {}).map(([key, value]) => (
                         <div key={key} style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 8, paddingBottom: 8, borderBottom: "0.5px solid var(--border)" }}>
                           <span style={{ color: "var(--text-secondary)", textTransform: "capitalize" }}>{key.replace(/_/g, " ")}</span>
                           <span style={{ fontWeight: 500, textTransform: "capitalize" }}>{Array.isArray(value) ? value.join(", ") : value}</span>

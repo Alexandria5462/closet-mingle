@@ -70,8 +70,17 @@ export default function FindStylist() {
           query(collection(db, "styleQuiz"), where("userId", "==", s.id))
         );
         const sQuizAnswers = !sQuizSnap.empty ? sQuizSnap.docs[0].data()?.answers : null;
-        
-          return { ...s, quizAnswers: sQuizAnswers };
+
+        // Load live rating from reviews collection for accurate match with profile page
+        const reviewSnap = await getDocs(
+          query(collection(db, "reviews"), where("targetUserId", "==", s.id))
+        );
+        const liveReviewCount = reviewSnap.size;
+        const liveRating = liveReviewCount > 0
+          ? parseFloat((reviewSnap.docs.map(d => d.data().rating || 0).reduce((a, b) => a + b, 0) / liveReviewCount).toFixed(1))
+          : (s.rating || 0);
+
+        return { ...s, quizAnswers: sQuizAnswers, rating: liveRating, reviewCount: liveReviewCount };
       }));
 
       const specs = ["All", ...new Set(withData.map(s => s.specialty).filter(Boolean))];

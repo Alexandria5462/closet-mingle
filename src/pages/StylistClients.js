@@ -58,23 +58,47 @@ export default function StylistClients() {
       // Source 2: scan ALL messages and find ones in this stylist's conversations
       // conversationId format: [uid1, uid2].sort().join("_")
       // So any conversationId containing currentUser.uid is this stylist's
-      const allMsgSnap = await getDocs(collection(db, "messages"));
-      allMsgSnap.docs.forEach(d => {
-        const data = d.data();
-        const convId = data.conversationId || "";
-        if (!convId.includes(currentUser.uid)) return;
-        if (data.senderId === currentUser.uid) return; // skip own messages
-        const clientId = data.senderId;
-        if (!clientId) return;
-        if (!clientMap[clientId]) {
+      // Scan messages to find clients - try filtered query first
+      try {
+        const msgSnap = await getDocs(
+          query(collection(db, "messages"),
+            where("conversationId", ">=", currentUser.uid.substring(0, 10)),
+          )
+        );
+        msgSnap.docs.forEach(d => {
+          const data = d.data();
+          const convId = data.conversationId || "";
+          if (!convId.includes(currentUser.uid)) return;
+          if (data.senderId === currentUser.uid) return;
+          const clientId = data.senderId;
+          if (!clientId || clientMap[clientId]) return;
           clientMap[clientId] = {
             clientId,
             sessions: [],
             lastSessionAt: data.createdAt || new Date().toISOString(),
             isActive: false,
           };
-        }
-      });
+        });
+      } catch(msgErr) {
+        // Fallback: scan all messages
+        try {
+          const allMsgSnap = await getDocs(collection(db, "messages"));
+          allMsgSnap.docs.forEach(d => {
+            const data = d.data();
+            const convId = data.conversationId || "";
+            if (!convId.includes(currentUser.uid)) return;
+            if (data.senderId === currentUser.uid) return;
+            const clientId = data.senderId;
+            if (!clientId || clientMap[clientId]) return;
+            clientMap[clientId] = {
+              clientId,
+              sessions: [],
+              lastSessionAt: data.createdAt || new Date().toISOString(),
+              isActive: false,
+            };
+          });
+        } catch(e2) { console.error("Message scan failed:", e2); }
+      }
 
       // Load user profiles for all clients
       const withProfiles = await Promise.all(

@@ -18,25 +18,11 @@ export default function StylistMessages() {
   const [showFilters, setShowFilters] = useState(false);
   // Track conversations marked as read locally so reload doesn't revert them
   const localReadRef = React.useRef(new Set());
-
-  const lastLoadRef = React.useRef(0);
+  const lastMarkReadRef = React.useRef(0);
 
   useEffect(() => {
     if (!currentUser?.uid) return;
     loadConversations();
-  }, [currentUser]);
-
-  // When page becomes visible again (user navigates back), reload
-  // but apply localReadRef to prevent flash-back to unread
-  useEffect(() => {
-    const handleVisibility = () => {
-      if (!document.hidden && currentUser?.uid) {
-        // Small delay to ensure Firebase writes have completed
-        setTimeout(loadConversations, 500);
-      }
-    };
-    document.addEventListener("visibilitychange", handleVisibility);
-    return () => document.removeEventListener("visibilitychange", handleVisibility);
   }, [currentUser]);
 
   async function loadConversations() {
@@ -106,7 +92,7 @@ export default function StylistMessages() {
         new Date(b.lastMessage?.createdAt || 0) - new Date(a.lastMessage?.createdAt || 0)
       );
 
-      // Apply any locally-marked-as-read conversations
+      // Always apply localReadRef - prevents ANY reload from reverting read state
       const withLocalRead = valid.map(c =>
         localReadRef.current.has(c.id) ? { ...c, unread: 0 } : c
       );
@@ -262,6 +248,7 @@ export default function StylistMessages() {
                 // Mark as read locally immediately and persist in ref
                 if (conv.unread > 0) {
                   localReadRef.current.add(conv.id);
+                  lastMarkReadRef.current = Date.now();
                   setConversations(prev => prev.map(c =>
                     c.id === conv.id ? { ...c, unread: 0 } : c
                   ));
