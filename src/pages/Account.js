@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../lib/AuthContext";
 import { useDarkMode } from "../lib/AuthContext";
 import { doc, updateDoc, collection, query, where, getDocs, addDoc } from "firebase/firestore";
@@ -174,11 +174,18 @@ export default function Account() {
   const [toast, setToast] = useState("");
   const [quizResult, setQuizResult] = useState(null);
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [unreadMsgCount, setUnreadMsgCount] = useState(0);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [notifPrefs, setNotifPrefs] = useState({ messages: true, sessions: true, tips: true, promotions: false });
-  const [activeSection, setActiveSection] = useState("profile");
+  const location = useLocation();
+  const [activeSection, setActiveSection] = useState(() => {
+    // Read section from URL hash so back button restores position
+    const hash = window.location.hash.replace("#", "");
+    const validSections = ["profile", "portfolio", "reviews", "billing", "settings"];
+    return validSections.includes(hash) ? hash : "profile";
+  });
   const [portfolio, setPortfolio] = useState([]);
   const [portfolioLoading, setPortfolioLoading] = useState(false);
   const portfolioRef = useRef();
@@ -358,7 +365,7 @@ export default function Account() {
           {/* Section tabs */}
           <div style={{ display: "flex", gap: 0, marginBottom: 16, borderBottom: "2px solid var(--border)", overflowX: "auto", overflowY: "hidden", scrollbarWidth: "none", WebkitOverflowScrolling: "touch", flexWrap: "nowrap" }}>
             {sections.map(s => (
-              <button key={s} onClick={() => setActiveSection(s)} style={{
+              <button key={s} onClick={() => { setActiveSection(s); try { window.history.replaceState(null, "", "#" + s); } catch(e) {} }} style={{
                 background: "none", border: "none", cursor: "pointer",
                 fontSize: 13, fontWeight: activeSection === s ? 600 : 400,
                 color: activeSection === s ? "var(--pink)" : "var(--text-secondary)",
@@ -504,7 +511,12 @@ export default function Account() {
                 <div className="card" style={{ cursor: "pointer" }} onClick={() => nav("/my-messages")}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                     <div>
-                      <div style={{ fontSize: 14, fontWeight: 500 }}>My Messages</div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <div style={{ fontSize: 14, fontWeight: 500 }}>My Messages</div>
+                        {unreadMsgCount > 0 && (
+                          <span style={{ background: "var(--pink)", color: "white", borderRadius: 20, padding: "1px 7px", fontSize: 10, fontWeight: 600 }}>{unreadMsgCount}</span>
+                        )}
+                      </div>
                       <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 2 }}>View all stylist conversations</div>
                     </div>
                     <i className="ti ti-chevron-right" style={{ color: "var(--text-tertiary)" }} aria-hidden="true"></i>

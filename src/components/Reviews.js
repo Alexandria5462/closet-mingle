@@ -12,8 +12,27 @@ export default function Reviews({ targetUserId, targetUserName }) {
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [replyingTo, setReplyingTo] = useState(null); // review id
+  const [replyText, setReplyText] = useState("");
+  const [submittingReply, setSubmittingReply] = useState(false);
 
   const canReview = currentUser && currentUser.uid !== targetUserId && userProfile?.accountType === "client";
+  const canReply = currentUser?.uid === targetUserId && userProfile?.accountType === "stylist";
+
+  async function submitReply(reviewId) {
+    if (!replyText.trim()) return;
+    setSubmittingReply(true);
+    try {
+      await updateDoc(doc(db, "reviews", reviewId), {
+        reply: replyText.trim(),
+        repliedAt: new Date().toISOString(),
+      });
+      setReviews(prev => prev.map(r => r.id === reviewId ? { ...r, reply: replyText.trim() } : r));
+      setReplyingTo(null);
+      setReplyText("");
+    } catch(e) { console.error(e); }
+    setSubmittingReply(false);
+  }
 
   useEffect(() => {
     if (targetUserId) loadReviews();
@@ -152,6 +171,38 @@ export default function Reviews({ targetUserId, targetUserName }) {
             </div>
           </div>
           <div style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.6 }}>{r.comment}</div>
+
+          {/* Stylist reply */}
+          {r.reply && (
+            <div style={{ marginTop: 8, paddingLeft: 12, borderLeft: "2px solid var(--border)", fontSize: 12, color: "var(--text-secondary)", fontStyle: "italic" }}>
+              <span style={{ fontWeight: 600, fontStyle: "normal", color: "var(--text-primary)" }}>Stylist replied: </span>{r.reply}
+            </div>
+          )}
+
+          {/* Reply button — stylist only, optional */}
+          {canReply && !r.reply && replyingTo !== r.id && (
+            <button onClick={() => { setReplyingTo(r.id); setReplyText(""); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--pink)", fontSize: 12, padding: "4px 0", fontFamily: "inherit" }}>
+              Reply to this review
+            </button>
+          )}
+          {canReply && replyingTo === r.id && (
+            <div style={{ marginTop: 8 }}>
+              <textarea
+                className="input-field"
+                placeholder="Write a reply..."
+                value={replyText}
+                onChange={e => setReplyText(e.target.value)}
+                rows={2}
+                style={{ resize: "none", fontFamily: "inherit", fontSize: 13, marginBottom: 6 }}
+              />
+              <div style={{ display: "flex", gap: 8 }}>
+                <button className="btn-outline btn-sm" onClick={() => setReplyingTo(null)} style={{ flex: 1, marginTop: 0 }}>Cancel</button>
+                <button className="btn-pink btn-sm" onClick={() => submitReply(r.id)} disabled={submittingReply || !replyText.trim()} style={{ flex: 1 }}>
+                  {submittingReply ? "Posting..." : "Post reply"}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       ))}
     </div>

@@ -13,6 +13,8 @@ export default function LikedItems() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState("");
+  const [unlikingAll, setUnlikingAll] = useState(false);
+  const [showUnlikeConfirm, setShowUnlikeConfirm] = useState(false);
   const [canGenerate, setCanGenerate] = useState(false);
   const [missingMessage, setMissingMessage] = useState("");
 
@@ -70,6 +72,16 @@ export default function LikedItems() {
       checkCombo(updated);
       setToast("Item removed from liked.");
     } catch (e) { console.error(e); }
+  }
+
+  async function removeAll() {
+    setUnlikingAll(true);
+    try {
+      await Promise.all(items.map(i => deleteDoc(doc(db, "likedItems", i.id))));
+      setItems([]);
+      setToast("All items unliked.");
+    } catch(e) { console.error(e); }
+    setUnlikingAll(false);
   }
 
   function getTimeLeft(expiresAt) {
@@ -221,6 +233,22 @@ export default function LikedItems() {
           )}
       <TabBar active="liked" type="client" />
       {toast && <Toast message={toast} onDone={() => setToast("")} />}
+      {showUnlikeConfirm && (
+        <div className="modal-overlay" onClick={() => setShowUnlikeConfirm(false)}>
+          <div className="modal-sheet" onClick={e => e.stopPropagation()}>
+            <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>Unlike all items?</div>
+            <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 20 }}>
+              This will remove all {items.length} liked items. This cannot be undone.
+            </div>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button className="btn-outline btn-sm" onClick={() => setShowUnlikeConfirm(false)} style={{ flex: 1, marginTop: 0 }}>Cancel</button>
+              <button onClick={() => { setShowUnlikeConfirm(false); removeAll(); }} disabled={unlikingAll} style={{ flex: 1, padding: "10px", background: "var(--danger)", border: "none", borderRadius: "var(--radius-sm)", color: "white", cursor: "pointer", fontSize: 13, fontWeight: 500, fontFamily: "inherit" }}>
+                {unlikingAll ? "Removing..." : "Unlike all"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

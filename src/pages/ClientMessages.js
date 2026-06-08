@@ -176,7 +176,7 @@ export default function ClientMessages() {
               onClick={() => openConversation(conv)}
               style={{
                 background: conv.unread > 0 ? "var(--pink-light)" : "var(--bg-card)",
-                border: `0.5px solid ${conv.unread > 0 ? "#f4c0d1" : "var(--border)"}`,
+                border: `${conv.unread > 0 ? '1.5px' : '0.5px'} solid ${conv.unread > 0 ? 'var(--pink)' : 'var(--border)'}`,
                 borderRadius: "var(--radius)", padding: 14, marginBottom: 10,
                 cursor: "pointer", display: "flex", alignItems: "center", gap: 12,
               }}
@@ -199,7 +199,7 @@ export default function ClientMessages() {
               {/* Content */}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 3 }}>
-                  <div style={{ fontSize: 14, fontWeight: conv.unread > 0 ? 600 : 500 }}>
+                  <div style={{ fontSize: 14, fontWeight: conv.unread > 0 ? 700 : 500 }}>
                     {conv.stylist?.name || "Stylist"}
                   </div>
                   <div style={{ fontSize: 11, color: "var(--text-tertiary)", flexShrink: 0 }}>
