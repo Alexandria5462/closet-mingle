@@ -113,7 +113,17 @@ export default function LikedItems() {
             <em>closet</em><span>mingle</span>
           </div>
         </div>
-        <span className="badge badge-pink">{items.length} liked</span>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          {items.length > 0 && (
+            <button
+              onClick={() => setShowUnlikeConfirm(true)}
+              style={{ background: "none", border: "1px solid var(--danger)", borderRadius: 20, padding: "5px 12px", color: "var(--danger)", cursor: "pointer", fontSize: 11, fontWeight: 500, fontFamily: "inherit" }}
+            >
+              Unlike all
+            </button>
+          )}
+          <span className="badge badge-pink">{items.length} liked</span>
+        </div>
       </div>
 
       <div className="screen">

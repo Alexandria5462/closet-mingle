@@ -10,60 +10,60 @@ const QUESTIONS = [
  id: "vibe",
  question: "What best describes your everyday style vibe?",
  options: [
- { label: "Clean and minimal", value: "minimalist", emoji: "" },
- { label: "Bold and expressive", value: "bold", emoji: "" },
- { label: "Relaxed and casual", value: "casual", emoji: "" },
- { label: "Polished and professional", value: "professional", emoji: "" },
+ { label: "Clean and minimal", value: "minimalist" },
+ { label: "Bold and expressive", value: "bold" },
+ { label: "Relaxed and casual", value: "casual" },
+ { label: "Polished and professional", value: "professional" },
  ],
  },
  {
  id: "occasion",
  question: "What do you dress for most often?",
  options: [
- { label: "Work or office", value: "work", emoji: "" },
- { label: "Going out and events", value: "social", emoji: "" },
- { label: "Everyday errands", value: "everyday", emoji: "️" },
- { label: "Special occasions", value: "special", emoji: "" },
+ { label: "Work or office", value: "work" },
+ { label: "Going out and events", value: "social" },
+ { label: "Everyday errands", value: "everyday" },
+ { label: "Special occasions", value: "special" },
  ],
  },
  {
  id: "color",
  question: "What colors do you gravitate toward?",
  options: [
- { label: "Neutrals — black, white, grey, beige", value: "neutrals", emoji: "" },
- { label: "Earth tones — brown, olive, rust, tan", value: "earth", emoji: "" },
- { label: "Bold colors — red, cobalt, fuchsia", value: "bold_colors", emoji: "" },
- { label: "Pastels — blush, lavender, mint", value: "pastels", emoji: "" },
+ { label: "Neutrals — black, white, grey, beige", value: "neutrals" },
+ { label: "Earth tones — brown, olive, rust, tan", value: "earth" },
+ { label: "Bold colors — red, cobalt, fuchsia", value: "bold_colors" },
+ { label: "Pastels — blush, lavender, mint", value: "pastels" },
  ],
  },
  {
  id: "pattern",
  question: "How do you feel about patterns?",
  options: [
- { label: "I prefer solids only", value: "solids", emoji: "⬛" },
- { label: "Subtle patterns like stripes or plaid", value: "subtle", emoji: "〰️" },
- { label: "I love mixing patterns", value: "mixed", emoji: "" },
- { label: "Statement prints — florals, animal print", value: "statement", emoji: "" },
+ { label: "I prefer solids only", value: "solids" },
+ { label: "Subtle patterns like stripes or plaid", value: "subtle" },
+ { label: "I love mixing patterns", value: "mixed" },
+ { label: "Statement prints — florals, animal print", value: "statement" },
  ],
  },
  {
  id: "fit",
  question: "What silhouette do you prefer?",
  options: [
- { label: "Fitted and structured", value: "fitted", emoji: "" },
- { label: "Relaxed and oversized", value: "oversized", emoji: "" },
- { label: "Flowy and feminine", value: "flowy", emoji: "" },
- { label: "Mix — fitted top, loose bottom", value: "mix", emoji: "⚖️" },
+ { label: "Fitted and structured", value: "fitted" },
+ { label: "Relaxed and oversized", value: "oversized" },
+ { label: "Flowy and feminine", value: "flowy" },
+ { label: "Mix — fitted top, loose bottom", value: "mix" },
  ],
  },
  {
  id: "budget",
  question: "What is your typical styling budget per session?",
  options: [
- { label: "Just outfit ideas, no shopping", value: "no_shopping", emoji: "" },
- { label: "Under $50", value: "budget", emoji: "" },
- { label: "$50 to $200", value: "mid_range", emoji: "" },
- { label: "$200 and above", value: "luxury", emoji: "" },
+ { label: "Just outfit ideas, no shopping", value: "no_shopping" },
+ { label: "Under $50", value: "budget" },
+ { label: "$50 to $200", value: "mid_range" },
+ { label: "$200 and above", value: "luxury" },
  ],
  },
 ];
@@ -87,7 +87,8 @@ function buildStyleProfile(a) {
 
 export default function StyleQuiz() {
  const nav = useNavigate();
- const { currentUser } = useAuth();
+ const { currentUser, userProfile } = useAuth();
+  const isStylist = userProfile?.accountType === "stylist";
  const [currentQ, setCurrentQ] = useState(0);
  const [answers, setAnswers] = useState({});
  const [submitting, setSubmitting] = useState(false);
@@ -184,15 +185,15 @@ export default function StyleQuiz() {
  </div>
 
  <div style={{ background: "#d1fae5", border: "1px solid #6ee7b7", borderRadius: "var(--radius)", padding: "12px 14px", marginBottom: 16, fontSize: 13, color: "#065f46" }}>
- ✅ Your style profile has been saved! Stylists will use this to personalize their recommendations for you.
+ Your style profile has been saved! Stylists will use this to personalize their recommendations for you.
  </div>
 
  {/* Go to stylist page — the main purpose of the quiz */}
  <button className="btn-pink" onClick={() => nav("/find-stylist")} style={{ marginBottom: 10 }}>
  Find My Perfect Stylist →
  </button>
- <button className="btn-outline" onClick={() => nav("/account")}>
- Back to Profile
+ <button className="btn-outline" onClick={() => nav(isStylist ? "/stylist" : "/home")}>
+ Back
  </button>
  </div>
  </div>
@@ -210,7 +211,7 @@ export default function StyleQuiz() {
  <div className="header">
  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
  <button
- onClick={() => currentQ === 0 ? nav("/account") : back()}
+ onClick={() => currentQ === 0 ? nav(isStylist ? "/stylist" : "/home") : back()}
  style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-secondary)" }}
  >
  <i className="ti ti-arrow-left" style={{ fontSize: 20 }} aria-hidden="true"></i>
@@ -252,7 +253,7 @@ export default function StyleQuiz() {
  transition: "all 0.15s",
  }}
  >
- <span style={{ fontSize: 24, flexShrink: 0 }}>{opt.emoji}</span>
+ <span style={{ fontSize: 24, flexShrink: 0 }}></span>
  <span style={{ fontSize: 14, fontWeight: answers[q.id] === opt.value ? 500 : 400, color: "var(--text-primary)", flex: 1 }}>
  {opt.label}
  </span>

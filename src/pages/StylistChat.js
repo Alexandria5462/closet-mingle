@@ -51,9 +51,33 @@ export default function StylistChat() {
 
   const conversationId = [currentUser?.uid, clientId].sort().join("_");
 
+  // Mark all messages as read when stylist opens this chat
+  async function markAllRead() {
+    try {
+      const unreadSnap = await getDocs(
+        query(collection(db, "messages"),
+          where("conversationId", "==", conversationId),
+          where("read", "==", false)
+        )
+      );
+      if (!unreadSnap.empty) {
+        const { writeBatch } = await import("firebase/firestore");
+        const batch = writeBatch(db);
+        unreadSnap.docs.forEach(d => {
+          if (d.data().senderId !== currentUser?.uid) {
+            batch.update(d.ref, { read: true });
+          }
+        });
+        await batch.commit();
+      }
+    } catch(e) { console.error("markAllRead error:", e); }
+  }
+
   useEffect(() => {
     loadClient();
     loadSession();
+    // Mark all unread messages as read immediately when chat opens
+    markAllRead();
     const q = query(
       collection(db, "messages"),
       where("conversationId", "==", conversationId)
@@ -162,18 +186,9 @@ export default function StylistChat() {
       read: false,
     });
     setText("");
-    // Notify client of new message
+    // Notify client of new message (stylist → client relationship only)
     if (type === "text") {
-      try {
-        await addDoc(collection(db, "notifications"), {
-          userId: clientId,
-          title: "Message from your stylist",
-          body: `${userProfile?.name || "Your stylist"}: ${content.slice(0, 60)}`,
-          type: "message",
-          read: false,
-          createdAt: new Date().toISOString(),
-        });
-      } catch (e) { /* non-critical */ }
+      notifyClientNewMessage(clientId, userProfile?.name || "Your stylist", content);
     }
     setSending(false);
   }
@@ -228,6 +243,9 @@ export default function StylistChat() {
         type: "session_ended",
         createdAt: new Date().toISOString(),
       });
+
+      // Notify client session ended
+      notifyClientSessionEnded(clientId, userProfile?.name || "Your stylist");
 
       // Update stylist analytics
       await updateDoc(doc(db, "users", currentUser.uid), {

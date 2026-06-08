@@ -185,14 +185,14 @@ export default function StylistMessages() {
           {/* ── Filter row — horizontal scroll only ── */}
           <div style={{ display: "flex", gap: 8, marginBottom: 14, overflowX: "auto", overflowY: "hidden", scrollbarWidth: "none", WebkitOverflowScrolling: "touch", paddingBottom: 2 }}>
             {[
-              { key: "sort-newest", label: "Newest", group: "sort", val: "newest" },
-              { key: "sort-oldest", label: "Oldest", group: "sort", val: "oldest" },
-              { key: "sort-unread", label: "Most unread", group: "sort", val: "unread" },
-              { key: "sort-name",   label: "Name A–Z",   group: "sort", val: "name" },
-              { key: "filter-all",    label: "All",     group: "filter", val: "all" },
-              { key: "filter-unread", label: "Unread",  group: "filter", val: "unread" },
-              { key: "filter-active", label: "Active",  group: "filter", val: "active" },
-              { key: "filter-ended",  label: "Ended",   group: "filter", val: "ended" },
+              { key: "filter-all",    label: "All",          group: "filter", val: "all" },
+              { key: "filter-unread", label: "Unread",       group: "filter", val: "unread" },
+              { key: "filter-active", label: "Active",       group: "filter", val: "active" },
+              { key: "filter-ended",  label: "Ended",        group: "filter", val: "ended" },
+              { key: "sort-newest",   label: "Newest first", group: "sort",   val: "newest" },
+              { key: "sort-oldest",   label: "Oldest first", group: "sort",   val: "oldest" },
+              { key: "sort-unread",   label: "Most unread",  group: "sort",   val: "unread" },
+              { key: "sort-name",     label: "Name A–Z",     group: "sort",   val: "name" },
             ].map(f => {
               const isActive = f.group === "sort" ? sortBy === f.val : filterBy === f.val;
               return (

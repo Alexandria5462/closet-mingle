@@ -148,6 +148,25 @@ export default function ClientHome() {
             </div>
           </div>
 
+          {/* My Messages */}
+          <div
+            onClick={() => nav("/my-messages")}
+            style={{ background: "var(--bg-card)", border: "0.5px solid var(--border)", borderRadius: "var(--radius)", padding: 14, marginBottom: 14, cursor: "pointer" }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--pink-light)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <i className="ti ti-message-circle" style={{ fontSize: 18, color: "var(--pink)" }} aria-hidden="true"></i>
+                </div>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 500 }}>My Messages</div>
+                  <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 1 }}>View conversations with your stylists</div>
+                </div>
+              </div>
+              <i className="ti ti-arrow-right" style={{ fontSize: 18, color: "var(--text-tertiary)" }} aria-hidden="true"></i>
+            </div>
+          </div>
+
           {/* My Closet */}
           <div className="card" style={{ cursor: "pointer" }} onClick={() => nav("/closet")}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>

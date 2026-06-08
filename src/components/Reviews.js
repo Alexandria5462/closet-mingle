@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { collection, query, where, getDocs, addDoc, doc, updateDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { useAuth } from "../lib/AuthContext";
+import { notifyStylistNewReview, notifyClientReviewReply } from "../lib/notifications";
 
 export default function Reviews({ targetUserId, targetUserName }) {
   const { currentUser, userProfile } = useAuth();
@@ -28,6 +29,11 @@ export default function Reviews({ targetUserId, targetUserName }) {
         repliedAt: new Date().toISOString(),
       });
       setReviews(prev => prev.map(r => r.id === reviewId ? { ...r, reply: replyText.trim() } : r));
+      // Notify client their review was replied to
+      const reviewData = reviews.find(r => r.id === reviewId);
+      if (reviewData?.reviewerId) {
+        notifyClientReviewReply(reviewData.reviewerId, userProfile?.name || "Your stylist");
+      }
       setReplyingTo(null);
       setReplyText("");
     } catch(e) { console.error(e); }
@@ -77,6 +83,9 @@ export default function Reviews({ targetUserId, targetUserName }) {
         rating: newAvg,
         reviewCount: allRatings.length,
       });
+
+      // Notify stylist of new review (client → stylist only)
+      notifyStylistNewReview(targetUserId, userProfile?.name || "A client", rating);
 
       setSubmitted(true);
       setShowForm(false);

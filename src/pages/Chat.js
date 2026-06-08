@@ -11,6 +11,7 @@ import VideoCall from "../components/VideoCall";
 import Toast from "../components/Toast";
 import TipModal from "../components/TipModal";
 import Reviews from "../components/Reviews";
+import { notifyStylistNewMessage, notifyStylistNewClient } from "../lib/notifications";
 
 const CLOUD_NAME = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME;
 const UPLOAD_PRESET = process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET;
@@ -163,16 +164,21 @@ export default function Chat() {
           });
         }
       } catch(e) { /* non-critical */ }
-      // Notify stylist
+      // Notify stylist of new message (client → stylist relationship only)
       if (type === "text") {
+        notifyStylistNewMessage(stylistId, userProfile?.name || "A client", msgContent);
+        // If first message, also send new_client notification
         try {
-          const { addDoc: addN, collection: colN } = await import("firebase/firestore");
-          await addDoc(collection(db, "notifications"), {
-            userId: stylistId, title: "New message",
-            body: `${userProfile?.name || "A client"}: ${msgContent.slice(0, 60)}`,
-            type: "message", read: false, createdAt: new Date().toISOString(),
-          });
-        } catch (e) {}
+          const existingMsgs = await getDocs(
+            query(collection(db, "messages"),
+              where("conversationId", "==", conversationId),
+              where("senderId", "==", currentUser.uid)
+            )
+          );
+          if (existingMsgs.size <= 1) {
+            notifyStylistNewClient(stylistId, userProfile?.name || "A client");
+          }
+        } catch(e) {}
       }
     } catch (e) {
       console.error("Send message error:", e);

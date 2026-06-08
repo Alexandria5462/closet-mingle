@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { addDoc, collection } from "firebase/firestore";
+import { notifyStylistTipReceived } from "../lib/notifications";
 import { db } from "../lib/firebase";
 import { useAuth } from "../lib/AuthContext";
 

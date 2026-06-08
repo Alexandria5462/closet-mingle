@@ -6,6 +6,7 @@ import { useAuth } from "../lib/AuthContext";
 import Reviews from "../components/Reviews";
 import TabBar from "../components/TabBar";
 import { SkeletonList } from "../components/SkeletonLoader";
+import { notifyStylistNewFollower } from "../lib/notifications";
 
 export default function StylistProfile() {
   const { stylistId } = useParams();
@@ -84,17 +85,8 @@ export default function StylistProfile() {
         });
         setIsFollowing(true);
         setFollowDocId(newFollow.id);
-        // Notify stylist
-        try {
-          await addDoc(collection(db, "notifications"), {
-            userId: stylistId,
-            title: "New follower",
-            body: `${userProfile?.name || "Someone"} started following you`,
-            type: "follow",
-            read: false,
-            createdAt: new Date().toISOString(),
-          });
-        } catch (e) { /* notification failure is non-critical */ }
+        // Notify stylist of new follower
+        notifyStylistNewFollower(stylistId, userProfile?.name || "Someone");
       }
     } catch (e) { console.error(e); }
     setFollowLoading(false);
