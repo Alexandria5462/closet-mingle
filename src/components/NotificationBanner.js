@@ -26,6 +26,28 @@ export default function NotificationBanner() {
   const [visible, setVisible] = useState(null);
   const [queue, setQueue] = useState([]);
 
+  // On mount: clear any notifications older than 24 hours automatically
+  useEffect(() => {
+    if (!currentUser?.uid) return;
+    const cleanup = async () => {
+      try {
+        const allUnread = await (await import("firebase/firestore")).getDocs(
+          (await import("firebase/firestore")).query(
+            collection(db, "notifications"),
+            where("userId", "==", currentUser.uid),
+            where("read", "==", false)
+          )
+        );
+        const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+        const oldOnes = allUnread.docs.filter(d => d.data().createdAt < oneDayAgo);
+        if (oldOnes.length > 0) {
+          await Promise.all(oldOnes.map(d => updateDoc(doc(db, "notifications", d.id), { read: true })));
+        }
+      } catch(e) {}
+    };
+    cleanup();
+  }, [currentUser]);
+
   useEffect(() => {
     if (!currentUser?.uid) return;
 

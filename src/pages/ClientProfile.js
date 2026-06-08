@@ -63,11 +63,19 @@ export default function ClientProfile() {
       });
       setSessions(allSessions.sort((a, b) => new Date(b.startedAt) - new Date(a.startedAt)));
 
-      // Load style quiz result
-      const quizSnap = await getDocs(
-        query(collection(db, "styleQuiz"), where("userId", "==", clientId))
-      );
-      if (!quizSnap.empty) setQuizResult(quizSnap.docs[0].data());
+      // Load style quiz - try two field names for compatibility
+      let quizData = null;
+      try {
+        const quizSnap = await getDocs(
+          query(collection(db, "styleQuiz"), where("userId", "==", clientId))
+        );
+        if (!quizSnap.empty) {
+          quizData = quizSnap.docs[0].data();
+        }
+      } catch(quizErr) {
+        console.error("Quiz load error:", quizErr);
+      }
+      setQuizResult(quizData);
 
     } catch(e) { console.error(e); }
     setLoading(false);
@@ -273,14 +281,14 @@ export default function ClientProfile() {
               {/* ── Style Quiz tab ── */}
               {activeTab === "style" && (
                 <div>
-                  {(!quizResult || (!quizResult.styleProfile && !quizResult.answers)) ? (
+                  {!quizResult ? (
                     <div style={{ textAlign: "center", padding: "40px 20px", color: "var(--text-secondary)" }}>
                       <div style={{ fontSize: 14 }}>Client hasn't taken the style quiz yet</div>
                     </div>
                   ) : (
                     <div className="card">
                       <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 12 }}>Style Profile</div>
-                      {Object.entries(quizResult.styleProfile || quizResult.answers || {}).map(([key, value]) => (
+                      {Object.entries(quizResult.styleProfile || quizResult.answers || quizResult || {}).map(([key, value]) => (
                         <div key={key} style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 8, paddingBottom: 8, borderBottom: "0.5px solid var(--border)" }}>
                           <span style={{ color: "var(--text-secondary)", textTransform: "capitalize" }}>{key.replace(/_/g, " ")}</span>
                           <span style={{ fontWeight: 500, textTransform: "capitalize" }}>{Array.isArray(value) ? value.join(", ") : value}</span>

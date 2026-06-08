@@ -59,7 +59,7 @@ export default function TabBar({ active, type = "client" }) {
             where("read", "==", false)
           )
         );
-        if (notifSnap.size > 0) newBadges.home = notifSnap.size;
+        // Home badge removed - use Messages tab badge instead
 
       } else {
         // ── Client: unread messages from stylists ─────────
@@ -82,7 +82,7 @@ export default function TabBar({ active, type = "client" }) {
             where("read", "==", false)
           )
         );
-        if (notifSnap.size > 0) newBadges.home = notifSnap.size;
+        // Home badge removed - use Account tab badge instead
       }
     } catch(e) { console.error(e); }
 

@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
-  collection, addDoc, query, where, orderBy,
-  onSnapshot, doc, getDoc, updateDoc, getDocs
+  collection, addDoc, query, where,
+  onSnapshot, doc, getDoc, updateDoc, getDocs, writeBatch
 } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { useAuth } from "../lib/AuthContext";
@@ -61,7 +61,6 @@ export default function StylistChat() {
         )
       );
       if (!unreadSnap.empty) {
-        const { writeBatch } = await import("firebase/firestore");
         const batch = writeBatch(db);
         unreadSnap.docs.forEach(d => {
           if (d.data().senderId !== currentUser?.uid) {

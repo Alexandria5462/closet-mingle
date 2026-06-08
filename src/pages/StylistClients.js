@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { collection, query, where, getDocs, doc, getDoc, addDoc, deleteDoc } from "firebase/firestore";
+import {
+  collection, query, where, getDocs,
+  doc, getDoc, addDoc, deleteDoc
+} from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { useAuth } from "../lib/AuthContext";
 import TabBar from "../components/TabBar";
@@ -12,11 +15,11 @@ export default function StylistClients() {
   const { currentUser } = useAuth();
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("all");
   const [blockedIds, setBlockedIds] = useState(new Set());
   const [blockingId, setBlockingId] = useState(null);
   const [toast, setToast] = useState("");
-  const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("all"); // all | active | past
 
   useEffect(() => {
     if (currentUser?.uid) {
@@ -27,105 +30,115 @@ export default function StylistClients() {
 
   async function loadClients() {
     setLoading(true);
+    const clientMap = {};
+
     try {
-      // Source 1: chatSessions collection
+      // ── SOURCE 1: chatSessions collection ──────────────────
       const sessionSnap = await getDocs(
-        query(collection(db, "chatSessions"), where("stylistId", "==", currentUser.uid))
+        query(collection(db, "chatSessions"),
+          where("stylistId", "==", currentUser.uid)
+        )
       );
-
-      const clientMap = {};
-
-      // Add all clients from sessions
       sessionSnap.docs.forEach(d => {
         const data = d.data();
-        if (data.clientId && !clientMap[data.clientId]) {
+        if (!data.clientId) return;
+        if (!clientMap[data.clientId]) {
           clientMap[data.clientId] = {
             clientId: data.clientId,
-            sessions: [],
-            lastSessionAt: data.startedAt,
             isActive: data.status === "active",
+            lastSessionAt: data.startedAt || new Date().toISOString(),
+            sessions: [],
           };
         }
-        if (data.clientId && clientMap[data.clientId]) {
-          clientMap[data.clientId].sessions.push(data);
-          if (data.status === "active") clientMap[data.clientId].isActive = true;
-          if (new Date(data.startedAt) > new Date(clientMap[data.clientId].lastSessionAt)) {
-            clientMap[data.clientId].lastSessionAt = data.startedAt;
-          }
+        clientMap[data.clientId].sessions.push(data);
+        if (data.status === "active") clientMap[data.clientId].isActive = true;
+      });
+
+      // ── SOURCE 2: messages collection ──────────────────────
+      // Get ALL messages, find ones in this stylist's conversations
+      // A conversationId = [clientUid, stylistUid].sort().join("_")
+      // So it always contains the stylist's UID
+      let allMessages = [];
+      try {
+        const msgSnap = await getDocs(collection(db, "messages"));
+        allMessages = msgSnap.docs.map(d => d.data());
+      } catch(e) {
+        console.error("Could not read messages:", e);
+      }
+
+      // Find unique clients from messages
+      const newClientIds = new Set();
+      allMessages.forEach(data => {
+        const convId = data.conversationId || "";
+        if (!convId.includes(currentUser.uid)) return;
+        if (data.senderId === currentUser.uid) return;
+        const clientId = data.senderId;
+        if (!clientId) return;
+        if (!clientMap[clientId]) {
+          newClientIds.add(clientId);
+          clientMap[clientId] = {
+            clientId,
+            isActive: false,
+            lastSessionAt: data.createdAt || new Date().toISOString(),
+            sessions: [],
+          };
         }
       });
 
-      // Source 2: scan ALL messages and find ones in this stylist's conversations
-      // conversationId format: [uid1, uid2].sort().join("_")
-      // So any conversationId containing currentUser.uid is this stylist's
-      // Scan messages to find clients - try filtered query first
-      try {
-        const msgSnap = await getDocs(
-          query(collection(db, "messages"),
-            where("conversationId", ">=", currentUser.uid.substring(0, 10)),
-          )
-        );
-        msgSnap.docs.forEach(d => {
-          const data = d.data();
-          const convId = data.conversationId || "";
-          if (!convId.includes(currentUser.uid)) return;
-          if (data.senderId === currentUser.uid) return;
-          const clientId = data.senderId;
-          if (!clientId || clientMap[clientId]) return;
-          clientMap[clientId] = {
-            clientId,
-            sessions: [],
-            lastSessionAt: data.createdAt || new Date().toISOString(),
-            isActive: false,
-          };
-        });
-      } catch(msgErr) {
-        // Fallback: scan all messages
+      // ── SOURCE 3: Create missing chatSessions for new clients ─
+      // This fixes clients who messaged before auto-register was deployed
+      for (const clientId of newClientIds) {
         try {
-          const allMsgSnap = await getDocs(collection(db, "messages"));
-          allMsgSnap.docs.forEach(d => {
-            const data = d.data();
-            const convId = data.conversationId || "";
-            if (!convId.includes(currentUser.uid)) return;
-            if (data.senderId === currentUser.uid) return;
-            const clientId = data.senderId;
-            if (!clientId || clientMap[clientId]) return;
-            clientMap[clientId] = {
+          const conversationId = [clientId, currentUser.uid].sort().join("_");
+          const existing = await getDocs(
+            query(collection(db, "chatSessions"),
+              where("conversationId", "==", conversationId)
+            )
+          );
+          if (existing.empty) {
+            // Create missing session so this client always shows up
+            await addDoc(collection(db, "chatSessions"), {
+              conversationId,
               clientId,
-              sessions: [],
-              lastSessionAt: data.createdAt || new Date().toISOString(),
-              isActive: false,
-            };
-          });
-        } catch(e2) { console.error("Message scan failed:", e2); }
+              stylistId: currentUser.uid,
+              status: "active",
+              startedAt: clientMap[clientId].lastSessionAt,
+            });
+          }
+        } catch(e) { /* non-critical */ }
       }
 
-      // Load user profiles for all clients
+      // ── Load user profiles ──────────────────────────────────
       const withProfiles = await Promise.all(
         Object.values(clientMap).map(async c => {
           try {
             const userSnap = await getDoc(doc(db, "users", c.clientId));
-            const user = userSnap.exists() ? userSnap.data() : null;
+            const user = userSnap.exists() ? { uid: c.clientId, ...userSnap.data() } : null;
             return { ...c, user };
-          } catch(e) { return { ...c, user: null }; }
+          } catch(e) {
+            return { ...c, user: null };
+          }
         })
       );
 
-      // Filter out stylists and null profiles, sort by most recent
+      // Only show clients (not other stylists), filter nulls
       const validClients = withProfiles
-        .filter(c => c.user && c.user.accountType !== "stylist")
+        .filter(c => c.user !== null && c.user?.accountType !== "stylist")
         .sort((a, b) => new Date(b.lastSessionAt) - new Date(a.lastSessionAt));
 
       setClients(validClients);
-    } catch(e) { console.error("loadClients error:", e); }
+    } catch(e) {
+      console.error("loadClients error:", e);
+    }
     setLoading(false);
   }
 
-  
   async function loadBlocked() {
     try {
       const snap = await getDocs(
-        query(collection(db, "blockedUsers"), where("stylistId", "==", currentUser.uid))
+        query(collection(db, "blockedUsers"),
+          where("stylistId", "==", currentUser.uid)
+        )
       );
       setBlockedIds(new Set(snap.docs.map(d => d.data().clientId)));
     } catch(e) {}
@@ -138,7 +151,8 @@ export default function StylistClients() {
         const snap = await getDocs(
           query(collection(db, "blockedUsers"),
             where("stylistId", "==", currentUser.uid),
-            where("clientId", "==", clientId))
+            where("clientId", "==", clientId)
+          )
         );
         for (const d of snap.docs) await deleteDoc(doc(db, "blockedUsers", d.id));
         setBlockedIds(prev => { const n = new Set(prev); n.delete(clientId); return n; });
@@ -163,33 +177,32 @@ export default function StylistClients() {
     })
     .filter(c => {
       if (!search) return true;
-      const name = c.user?.name?.toLowerCase() || "";
-      return name.includes(search.toLowerCase());
+      const q = search.toLowerCase();
+      return (c.user?.name || "").toLowerCase().includes(q) ||
+             (c.user?.username || "").toLowerCase().includes(q);
     });
-
-  function getLastActive(dateStr) {
-    if (!dateStr) return "Unknown";
-    const diff = Date.now() - new Date(dateStr).getTime();
-    const days = Math.floor(diff / 86400000);
-    if (days === 0) return "Today";
-    if (days === 1) return "Yesterday";
-    if (days < 7) return `${days} days ago`;
-    return new Date(dateStr).toLocaleDateString("en-US", { month: "short", day: "numeric" });
-  }
 
   return (
     <>
       <div className="header">
-        <div className="logo" style={{ cursor: "pointer" }} onClick={() => nav("/stylist")}>
-          <em>closet</em><span>mingle</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <button onClick={() => nav("/stylist")} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-secondary)" }}>
+            <i className="ti ti-arrow-left" style={{ fontSize: 20 }} aria-hidden="true"></i>
+          </button>
+          <div className="logo" onClick={() => nav("/stylist")} style={{ cursor: "pointer" }}>
+            <em>closet</em><span>mingle</span>
+          </div>
         </div>
-        <span className="badge badge-pink">{clients.length} clients</span>
+        <span className="badge" style={{ background: "var(--pink-light)", color: "var(--pink-dark)" }}>
+          {clients.length} client{clients.length !== 1 ? "s" : ""}
+        </span>
       </div>
 
       <div className="screen">
         <div className="body">
+
           {/* Search */}
-          <div style={{ position: "relative", marginBottom: 12 }}>
+          <div style={{ position: "relative", marginBottom: 10 }}>
             <i className="ti ti-search" style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--text-tertiary)", fontSize: 16 }} aria-hidden="true"></i>
             <input
               className="input-field"
@@ -201,14 +214,14 @@ export default function StylistClients() {
           </div>
 
           {/* Filter tabs */}
-          <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
+          <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
             {["all", "active", "past"].map(f => (
               <button key={f} onClick={() => setFilter(f)} style={{
-                padding: "5px 16px", borderRadius: 20, fontSize: 12, fontWeight: 500,
-                border: "1px solid", cursor: "pointer", textTransform: "capitalize",
+                padding: "6px 16px", borderRadius: 20, fontSize: 12, fontWeight: 500,
+                border: `1px solid ${filter === f ? "var(--pink)" : "var(--border)"}`,
                 background: filter === f ? "var(--pink)" : "var(--bg-card)",
-                borderColor: filter === f ? "var(--pink)" : "var(--border)",
                 color: filter === f ? "white" : "var(--text-secondary)",
+                cursor: "pointer", textTransform: "capitalize",
               }}>{f}</button>
             ))}
           </div>
@@ -217,68 +230,70 @@ export default function StylistClients() {
             <SkeletonList count={4} />
           ) : filtered.length === 0 ? (
             <div style={{ textAlign: "center", padding: "60px 20px" }}>
-              <div style={{ fontSize: 32, marginBottom: 12, color: "var(--text-tertiary)" }}><i className="ti ti-users" style={{ fontSize: 48 }} aria-hidden="true"></i></div>
+              <i className="ti ti-users" style={{ fontSize: 48, color: "var(--text-tertiary)", display: "block", marginBottom: 12 }} aria-hidden="true"></i>
               <div style={{ fontSize: 16, fontWeight: 500, marginBottom: 8 }}>
-                {clients.length === 0 ? "No clients yet" : "No clients match your search"}
+                {search ? "No clients match your search" : "No clients yet"}
               </div>
               <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>
-                {clients.length === 0
-                  ? "Turn on your availability so clients can find and book you"
-                  : "Try a different search term"
-                }
+                {search ? "Try a different name" : "Clients appear here when they message you"}
               </div>
             </div>
           ) : filtered.map(c => (
             <div
               key={c.clientId}
-              onClick={() => nav(`/stylist/chat/${c.clientId}`)}
-              style={{ background: "var(--bg-card)", border: `0.5px solid ${c.isActive ? "#6ee7b7" : "var(--border)"}`, borderRadius: "var(--radius)", padding: 14, marginBottom: 10, cursor: "pointer" }}
+              style={{
+                background: blockedIds.has(c.clientId) ? "var(--bg)" : "var(--bg-card)",
+                border: `0.5px solid ${c.isActive ? "#6ee7b7" : "var(--border)"}`,
+                borderRadius: "var(--radius)", padding: 14, marginBottom: 10,
+                opacity: blockedIds.has(c.clientId) ? 0.6 : 1,
+              }}
             >
-              <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-                <div className="avatar" onClick={() => nav(`/stylist/client/${c.clientId}`)} style={{ width: 48, height: 48, background: "var(--pink-light)", color: "var(--pink-dark)", fontSize: 15, overflow: "hidden", flexShrink: 0, cursor: "pointer" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                {/* Avatar — tap to view profile */}
+                <div
+                  className="avatar"
+                  onClick={() => nav(`/stylist/client/${c.clientId}`)}
+                  style={{ width: 48, height: 48, background: "var(--pink-light)", color: "var(--pink-dark)", fontSize: 15, overflow: "hidden", flexShrink: 0, cursor: "pointer" }}
+                >
                   {c.user?.photoUrl
                     ? <img src={c.user.photoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                    : c.user?.name?.split(" ").map(n => n[0]).join("").slice(0, 2) || "?"
+                    : (c.user?.name || "?").split(" ").map(n => n[0]).join("").slice(0, 2)
                   }
                 </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
-                    <div style={{ fontSize: 14, fontWeight: 500 }}>{c.user?.name || "Client"}</div>
-                  {c.user?.username && <div style={{ fontSize: 11, color: "var(--text-tertiary)" }}>@{c.user.username}</div>}
-                    {c.isActive && (
-                      <span style={{ fontSize: 9, background: "#d1fae5", border: "1px solid #6ee7b7", borderRadius: 10, padding: "1px 6px", color: "#065f46" }}>Active</span>
-                    )}
-                  </div>
-                  {c.user?.city && (
-                    <div style={{ fontSize: 11, color: "var(--text-tertiary)" }}>{c.user.city}</div>
-                  )}
-                  <div style={{ fontSize: 11, color: "var(--text-secondary)", marginTop: 4 }}>
-                    {c.completedSessions} session{c.completedSessions !== 1 ? "s" : ""} completed · Last active: {getLastActive(c.lastSessionAt)}
-                  </div>
 
-                  {/* Style quiz summary */}
-                  {c.quiz?.styleProfile && (
-                    <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 6 }}>
-                      {[c.quiz.styleProfile.primaryStyle, c.quiz.styleProfile.colorPreference].filter(Boolean).map((tag, i) => (
-                        <span key={i} style={{ fontSize: 10, background: "var(--pink-light)", border: "1px solid #f4c0d1", borderRadius: 10, padding: "1px 8px", color: "var(--pink-dark)" }}>
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
+                {/* Info */}
+                <div style={{ flex: 1, minWidth: 0 }} onClick={() => nav(`/stylist/client/${c.clientId}`)}>
+                  <div style={{ fontSize: 14, fontWeight: 500, cursor: "pointer" }}>
+                    {c.user?.name || "Client"}
+                  </div>
+                  {c.user?.username && (
+                    <div style={{ fontSize: 12, color: "var(--text-tertiary)" }}>@{c.user.username}</div>
                   )}
+                  <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 3 }}>
+                    <span style={{
+                      width: 6, height: 6, borderRadius: "50%",
+                      background: c.isActive ? "var(--success)" : "var(--text-tertiary)",
+                      display: "inline-block"
+                    }} />
+                    <span style={{ fontSize: 11, color: c.isActive ? "var(--success)" : "var(--text-tertiary)" }}>
+                      {c.isActive ? "Active" : "Past"}
+                    </span>
+                  </div>
                 </div>
+
+                {/* Buttons */}
                 <div style={{ display: "flex", flexDirection: "column", gap: 6, flexShrink: 0 }}>
                   <button
-                    onClick={e => { e.stopPropagation(); nav(`/stylist/chat/${c.clientId}`); }}
+                    onClick={() => nav(`/stylist/chat/${c.clientId}`)}
                     className="btn-pink btn-sm"
                     style={{ fontSize: 11 }}
                   >Chat</button>
                   <button
-                    onClick={e => { e.stopPropagation(); toggleBlock(c.clientId, c.user?.name || "Client"); }}
+                    onClick={() => toggleBlock(c.clientId, c.user?.name || "Client")}
                     disabled={blockingId === c.clientId}
                     style={{
-                      padding: "5px 10px", fontSize: 11, fontFamily: "inherit", cursor: "pointer",
-                      background: "none", borderRadius: "var(--radius-sm)",
+                      padding: "5px 10px", fontSize: 11, fontFamily: "inherit",
+                      cursor: "pointer", background: "none", borderRadius: "var(--radius-sm)",
                       border: `1px solid ${blockedIds.has(c.clientId) ? "var(--success)" : "var(--danger)"}`,
                       color: blockedIds.has(c.clientId) ? "var(--success)" : "var(--danger)",
                     }}
