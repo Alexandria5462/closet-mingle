@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, getDocs, addDoc, updateDoc, deleteDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { useAuth } from "../lib/AuthContext";
 import TabBar from "../components/TabBar";
+import Toast from "../components/Toast";
 import { SkeletonList } from "../components/SkeletonLoader";
 
 export default function ClientProfile() {
@@ -18,6 +19,13 @@ export default function ClientProfile() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("about");
   const [lightboxIndex, setLightboxIndex] = useState(null);
+  const [isBlocked, setIsBlocked] = useState(false);
+  const [blocking, setBlocking] = useState(false);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState("");
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [toast, setToast] = useState("");
 
   useEffect(() => {
     if (clientId) loadAll();
@@ -77,8 +85,64 @@ export default function ClientProfile() {
       }
       setQuizResult(quizData);
 
+      // Check if this client is blocked by this stylist
+      if (isStylist) {
+        const blockSnap = await getDocs(
+          query(collection(db, "blockedUsers"),
+            where("stylistId", "==", currentUser.uid),
+            where("clientId", "==", clientId)
+          )
+        );
+        setIsBlocked(!blockSnap.empty);
+      }
     } catch(e) { console.error(e); }
     setLoading(false);
+  }
+
+  async function toggleBlock() {
+    setBlocking(true);
+    try {
+      if (isBlocked) {
+        const snap = await getDocs(
+          query(collection(db, "blockedUsers"),
+            where("stylistId", "==", currentUser.uid),
+            where("clientId", "==", clientId)
+          )
+        );
+        for (const d of snap.docs) await deleteDoc(doc(db, "blockedUsers", d.id));
+        setIsBlocked(false);
+        setToast("Client unblocked");
+      } else {
+        await addDoc(collection(db, "blockedUsers"), {
+          stylistId: currentUser.uid,
+          clientId,
+          clientName: client?.name || "",
+          createdAt: new Date().toISOString(),
+        });
+        setIsBlocked(true);
+        setToast("Client blocked");
+      }
+    } catch(e) { setToast("Failed. Try again."); }
+    setBlocking(false);
+  }
+
+  async function submitClientReview() {
+    if (!reviewComment.trim()) return;
+    setSubmittingReview(true);
+    try {
+      await addDoc(collection(db, "clientReviews"), {
+        reviewerId: currentUser.uid,
+        reviewerName: userProfile?.name || "Stylist",
+        targetUserId: clientId,
+        rating: reviewRating,
+        comment: reviewComment.trim(),
+        createdAt: new Date().toISOString(),
+      });
+      setShowReviewForm(false);
+      setReviewComment("");
+      setToast("Review submitted");
+    } catch(e) { setToast("Failed. Try again."); }
+    setSubmittingReview(false);
   }
 
   function timeAgo(dateStr) {
@@ -92,7 +156,7 @@ export default function ClientProfile() {
   }
 
   const initials = client?.name?.split(" ").map(n => n[0]).join("").slice(0, 2) || "?";
-  const TABS = ["about", "closet", "sessions", "style"];
+  const TABS = isStylist ? ["about", "closet", "sessions", "style", "review"] : ["about", "closet", "sessions", "style"];
 
   return (
     <>
@@ -106,13 +170,30 @@ export default function ClientProfile() {
           </div>
         </div>
         {/* Message button */}
-        <button
-          className="btn-pink btn-sm"
-          onClick={() => nav(`/stylist/chat/${clientId}`)}
-          style={{ fontSize: 12 }}
-        >
-          Message
-        </button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button
+            className="btn-pink btn-sm"
+            onClick={() => nav(`/stylist/chat/${clientId}`)}
+            style={{ fontSize: 12 }}
+          >
+            Message
+          </button>
+          {isStylist && (
+            <button
+              onClick={toggleBlock}
+              disabled={blocking}
+              style={{
+                padding: "6px 12px", fontSize: 12, fontFamily: "inherit",
+                cursor: "pointer", borderRadius: "var(--radius-sm)",
+                background: "none",
+                border: `1px solid ${isBlocked ? "var(--success)" : "var(--danger)"}`,
+                color: isBlocked ? "var(--success)" : "var(--danger)",
+              }}
+            >
+              {blocking ? "..." : isBlocked ? "Unblock" : "Block"}
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="screen">
@@ -332,7 +413,50 @@ export default function ClientProfile() {
         </div>
       )}
 
+      {/* Review tab */}
+      {activeTab === "review" && isStylist && (
+        <div>
+          {!showReviewForm ? (
+            <div style={{ textAlign: "center", padding: "30px 20px" }}>
+              <div style={{ fontSize: 14, color: "var(--text-secondary)", marginBottom: 16 }}>
+                Leave a review for {client?.name || "this client"}
+              </div>
+              <button className="btn-pink" onClick={() => setShowReviewForm(true)} style={{ width: "auto", padding: "10px 24px" }}>
+                Write a review
+              </button>
+            </div>
+          ) : (
+            <div className="card">
+              <div style={{ fontSize: 14, fontWeight: 500, marginBottom: 12 }}>Your review</div>
+              {/* Stars */}
+              <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
+                {[1,2,3,4,5].map(s => (
+                  <button key={s} onClick={() => setReviewRating(s)}
+                    style={{ background: "none", border: "none", cursor: "pointer", fontSize: 24,
+                      color: s <= reviewRating ? "#f59e0b" : "var(--border)" }}>★</button>
+                ))}
+              </div>
+              <textarea
+                className="input-field"
+                placeholder="Share your experience working with this client..."
+                value={reviewComment}
+                onChange={e => setReviewComment(e.target.value)}
+                rows={4}
+                style={{ resize: "none", fontFamily: "inherit", fontSize: 13, marginBottom: 10 }}
+              />
+              <div style={{ display: "flex", gap: 8 }}>
+                <button className="btn-outline btn-sm" onClick={() => setShowReviewForm(false)} style={{ flex: 1, marginTop: 0 }}>Cancel</button>
+                <button className="btn-pink btn-sm" onClick={submitClientReview} disabled={submittingReview || !reviewComment.trim()} style={{ flex: 1 }}>
+                  {submittingReview ? "Posting..." : "Post review"}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       <TabBar active="clients" type="stylist" />
+      {toast && <Toast message={toast} onDone={() => setToast("")} />}
     </>
   );
 }

@@ -23,6 +23,10 @@ export default function StylistProfile() {
   const [followLoading, setFollowLoading] = useState(false);
 
   const canChoose = userProfile?.subscriptionTier === "premium_plus";
+  const canChat = userProfile?.subscriptionTier === "monthly" ||
+                  userProfile?.subscriptionTier === "premium_plus" ||
+                  userProfile?.subscriptionTier === "session";
+  const isFreeClient = !isStylist && !canChat;
 
   useEffect(() => {
     loadStylist();
@@ -191,13 +195,25 @@ export default function StylistProfile() {
 
           {/* Chat + Follow buttons */}
           <div style={{ display: "flex", gap: 10, marginBottom: 8 }}>
-            <button
-              className="btn-pink"
-              onClick={() => nav(`/chat/${stylistId}`)}
-              style={{ flex: 2, marginBottom: 0 }}
-            >
-              {canChoose ? "Chat with this stylist" : "Start a session"}
-            </button>
+            {/* Only show chat button to paying clients, not free users or stylists */}
+            {!isStylist && !isFreeClient && (
+              <button
+                className="btn-pink"
+                onClick={() => nav(`/chat/${stylistId}`)}
+                style={{ flex: 2, marginBottom: 0 }}
+              >
+                {canChoose ? "Chat with this stylist" : "Start a session"}
+              </button>
+            )}
+            {!isStylist && isFreeClient && (
+              <button
+                className="btn-pink"
+                onClick={() => nav("/plans")}
+                style={{ flex: 2, marginBottom: 0 }}
+              >
+                Upgrade to chat
+              </button>
+            )}
             <button
               onClick={toggleFollow}
               disabled={followLoading}

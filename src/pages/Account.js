@@ -221,8 +221,22 @@ export default function Account() {
   function handlePhotoSelect(e) {
     const file = e.target.files[0];
     if (!file) return;
-    setPhotoFile(file);
-    setPhotoPreview(URL.createObjectURL(file));
+    // Show cropper first before setting the photo
+    const reader = new FileReader();
+    reader.onload = ev => setCropSrc(ev.target.result);
+    reader.readAsDataURL(file);
+  }
+
+  function handleCropDone(croppedDataUrl) {
+    setCropSrc(null);
+    // Convert cropped data URL to file
+    fetch(croppedDataUrl)
+      .then(r => r.blob())
+      .then(blob => {
+        const croppedFile = new File([blob], "profile.jpg", { type: "image/jpeg" });
+        setPhotoFile(croppedFile);
+        setPhotoPreview(croppedDataUrl);
+      });
   }
 
   async function loadPortfolio() {
@@ -455,6 +469,21 @@ export default function Account() {
           {/* ── Settings section ── */}
           {activeSection === "settings" && (
             <>
+              {/* Notifications */}
+              <div className="card" style={{ cursor: "pointer", marginBottom: 10 }} onClick={() => nav("/notifications")}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <div style={{ fontSize: 14, fontWeight: 500 }}>Notifications</div>
+                  <i className="ti ti-bell" style={{ color: "var(--text-tertiary)" }} aria-hidden="true"></i>
+                </div>
+              </div>
+              {isStylist && (
+                <div className="card" style={{ cursor: "pointer", marginBottom: 10 }} onClick={() => nav("/blocked-users")}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <div style={{ fontSize: 14, fontWeight: 500 }}>Blocked Clients</div>
+                    <i className="ti ti-shield-off" style={{ color: "var(--text-tertiary)" }} aria-hidden="true"></i>
+                  </div>
+                </div>
+              )}
               {/* Dark mode */}
               <div style={{ marginBottom: 10 }}>
                 <DarkModeToggle />
@@ -500,24 +529,6 @@ export default function Account() {
                     <div>
                       <div style={{ fontSize: 14, fontWeight: 500 }}>Closet Privacy</div>
                       <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 2 }}>Control which items stylists can see</div>
-                    </div>
-                    <i className="ti ti-chevron-right" style={{ color: "var(--text-tertiary)" }} aria-hidden="true"></i>
-                  </div>
-                </div>
-              )}
-
-              {/* Messages — client only */}
-              {!isStylist && (
-                <div className="card" style={{ cursor: "pointer" }} onClick={() => nav("/my-messages")}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <div style={{ fontSize: 14, fontWeight: 500 }}>My Messages</div>
-                        {unreadMsgCount > 0 && (
-                          <span style={{ background: "var(--pink)", color: "white", borderRadius: 20, padding: "1px 7px", fontSize: 10, fontWeight: 600 }}>{unreadMsgCount}</span>
-                        )}
-                      </div>
-                      <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 2 }}>View all stylist conversations</div>
                     </div>
                     <i className="ti ti-chevron-right" style={{ color: "var(--text-tertiary)" }} aria-hidden="true"></i>
                   </div>
@@ -654,6 +665,32 @@ export default function Account() {
             </>
           )}
 
+          {/* ── My Messages & Following — client only, under Profile ── */}
+          {activeSection === "profile" && !isStylist && (
+            <div style={{ marginTop: 16 }}>
+              {/* My Messages link */}
+              <div className="card" style={{ cursor: "pointer", marginBottom: 10 }} onClick={() => nav("/my-messages")}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 500 }}>My Messages</div>
+                    <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 2 }}>View conversations with your stylists</div>
+                  </div>
+                  <i className="ti ti-chevron-right" style={{ color: "var(--text-tertiary)" }} aria-hidden="true"></i>
+                </div>
+              </div>
+              {/* Following link */}
+              <div className="card" style={{ cursor: "pointer" }} onClick={() => nav("/following")}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 500 }}>Following</div>
+                    <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 2 }}>Stylists you follow</div>
+                  </div>
+                  <i className="ti ti-chevron-right" style={{ color: "var(--text-tertiary)" }} aria-hidden="true"></i>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* ── Portfolio section — stylists only ── */}
           {activeSection === "portfolio" && isStylist && (
             <>
@@ -706,6 +743,13 @@ export default function Account() {
       {showPasswordModal && <ChangePasswordModal onClose={() => setShowPasswordModal(false)} changePassword={changePassword} />}
       {showDeleteModal && <DeleteAccountModal onClose={() => setShowDeleteModal(false)} deleteAccount={deleteAccount} />}
       {toast && <Toast message={toast} onDone={() => setToast("")} />}
+      {cropSrc && (
+        <ImageCropper
+          imageSrc={cropSrc}
+          onCrop={handleCropDone}
+          onCancel={() => setCropSrc(null)}
+        />
+      )}
     </>
   );
 }

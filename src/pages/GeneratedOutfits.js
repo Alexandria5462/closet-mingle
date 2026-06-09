@@ -301,7 +301,7 @@ export default function GeneratedOutfits() {
                 </div>
 
                 {outfit.colorStory && (
-                  <div style={{ background: "var(--pink-light)", borderRadius: 8, padding: "8px 12px", marginBottom: 8, fontSize: 12, color: "var(--pink-dark)" }}>
+                  <div style={{ background: "var(--bg)", borderRadius: 8, border: "0.5px solid var(--border)", padding: "8px 12px", marginBottom: 8, fontSize: 12, color: "var(--pink-dark)" }}>
                     <strong>Color story:</strong> {outfit.colorStory}
                   </div>
                 )}

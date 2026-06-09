@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { collection, query, where, getDocs, deleteDoc, doc } from "firebase/firestore";
+import { collection, query, where, getDocs, deleteDoc, doc, updateDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { useAuth } from "../lib/AuthContext";
 import TabBar from "../components/TabBar";
@@ -14,6 +14,10 @@ export default function SavedOutfits() {
   const [loading, setLoading] = useState(true);
   const [dayFilter, setDayFilter] = useState("All");
   const [search, setSearch] = useState("");
+  const [editingId, setEditingId] = useState(null);
+  const [editName, setEditName] = useState("");
+  const [editDay, setEditDay] = useState("");
+  const DAYS = ["No specific day", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
   const [activeSearch, setActiveSearch] = useState("");
   const [toast, setToast] = useState("");
 
@@ -68,6 +72,19 @@ export default function SavedOutfits() {
       setOutfits(prev => prev.filter(o => o.id !== id));
       setToast("Outfit removed.");
     } catch (e) { console.error(e); }
+  }
+
+  async function saveEdit(id) {
+    try {
+      await updateDoc(doc(db, "savedOutfits", id), {
+        outfitName: editName.trim() || "Untitled",
+        dayOfWeek: editDay,
+      });
+      setOutfits(prev => prev.map(o =>
+        o.id === id ? { ...o, outfitName: editName.trim() || "Untitled", dayOfWeek: editDay } : o
+      ));
+      setEditingId(null);
+    } catch(e) { console.error(e); }
   }
 
   function getTimeLeft(expiresAt) {

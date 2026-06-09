@@ -10,27 +10,27 @@ export default function Welcome() {
       {/* Hero */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 32px", textAlign: "center" }}>
 
-        {/* Logo mark */}
+        {/* Logo */}
         <div style={{ marginBottom: 32 }}>
           {/* Wordmark */}
           <div style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 44, color: "var(--text-primary)", letterSpacing: -1, lineHeight: 1 }}>
             <span style={{ fontWeight: 300, fontStyle: "italic" }}>closet</span>
             <span style={{ fontWeight: 800 }}>mingle</span>
           </div>
-          {/* Terracotta rule line */}
-          <div style={{ height: 1.5, background: "var(--pink)", margin: "10px 0 8px" }} />
+          {/* Terracotta rule */}
+          <div style={{ height: 1.5, background: "#c4745a", margin: "10px 0 8px" }} />
           {/* Tagline */}
           <div style={{ fontFamily: "-apple-system, sans-serif", fontSize: 11, color: "var(--text-tertiary)", letterSpacing: 4, textTransform: "uppercase" }}>
             Wardrobe&nbsp;&bull;&nbsp;Style&nbsp;&bull;&nbsp;You
           </div>
         </div>
 
-        {/* Feature list */}
+        {/* Feature tiles */}
         <div style={{ width: "100%", maxWidth: 320, marginBottom: 12 }}>
           {[
-            { icon: "ti-sparkles", text: "AI builds outfits from your closet" },
+            { icon: "ti-sparkles", text: "Outfits built from your own closet" },
             { icon: "ti-scissors", text: "Chat with real personal stylists" },
-            { icon: "ti-palette", text: "Color-matched, trend-aware looks" },
+            { icon: "ti-palette", text: "Color-matched, curated looks" },
           ].map(f => (
             <div key={f.text} style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10, background: "var(--bg-card)", borderRadius: "var(--radius)", padding: "12px 16px", border: "0.5px solid var(--border)" }}>
               <i className={`ti ${f.icon}`} style={{ fontSize: 18, color: "var(--pink)", flexShrink: 0 }} aria-hidden="true"></i>

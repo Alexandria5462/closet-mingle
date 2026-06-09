@@ -5,7 +5,7 @@ html { -webkit-text-size-adjust: 100%; }
 /* ── Light theme (default) ───────────────────────────────── */
 :root {
   --pink: #c4745a;
-  --pink-light: #f5ede6;
+  --pink-light: #f9f4ef;
   --pink-dark: #8a4a35;
   --bg: #f4f0e8;
   --bg-card: #fdfaf6;

@@ -50,9 +50,9 @@ export default function ClientHome() {
   const MILESTONES = [
     { label: "Upload 1 top item to get started", done: topsCount >= 1, tip: "Go to Closet → Tops" },
     { label: "Upload 1 bottom item or 1 dress", done: bottomsCount >= 1 || dressCount >= 1, tip: "Go to Closet → Bottoms or Dresses" },
-    { label: "Upload 5 tops, 5 bottoms or dresses", done: topsCount >= 5 && (bottomsCount >= 5 || dressCount >= 5), tip: "AI needs variety to build great outfits" },
+    { label: "Upload 5 tops, 5 bottoms or dresses", done: topsCount >= 5 && (bottomsCount >= 5 || dressCount >= 5), tip: "Add more variety for better outfit suggestions" },
     { label: "Add accessories, shoes and outerwear", done: closetCount >= 15, tip: "Completes your full wardrobe" },
-    { label: "Generate your first AI outfit", done: savedCount >= 1, tip: "Like items then tap Generate" },
+    { label: "Generate your first outfit", done: savedCount >= 1, tip: "Like items then tap Generate" },
     { label: "Chat with a personal stylist", done: tier.hasStylist, tip: tier.hasStylist ? "You have access!" : "Upgrade to unlock" },
   ];
   const completed = MILESTONES.filter(m => m.done).length;
@@ -71,6 +71,7 @@ export default function ClientHome() {
       <div className="header">
         <div className="logo" style={{ cursor: "pointer" }} onClick={() => nav("/home")}><em>closet</em><span>mingle</span></div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <button onClick={() => nav("/notifications")} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-secondary)", padding: 4 }}><i className="ti ti-bell" style={{ fontSize: 20 }} aria-hidden="true"></i></button>
           {tier.isPaid && <span className="badge" style={{ background: tier.color, color: "var(--pink-dark)", fontSize: 10 }}>{tier.label}</span>}
           <div className="avatar" style={{ background: "var(--pink-light)", color: "var(--pink-dark)", width: 36, height: 36, fontSize: 13, overflow: "hidden", cursor: "pointer" }} onClick={() => nav("/account")}>
             {userProfile?.photoUrl
@@ -151,7 +152,7 @@ export default function ClientHome() {
           {/* My Messages */}
           <div
             onClick={() => nav("/my-messages")}
-            style={{ background: "var(--bg-card)", border: "0.5px solid var(--border)", borderRadius: "var(--radius)", padding: 14, marginBottom: 14, cursor: "pointer" }}
+            style={{ background: "var(--bg-card)", border: "0.5px solid var(--border)", borderRadius: "var(--radius)", padding: 14, marginBottom: 10, cursor: "pointer" }}
           >
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -160,7 +161,26 @@ export default function ClientHome() {
                 </div>
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 500 }}>My Messages</div>
-                  <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 1 }}>View conversations with your stylists</div>
+                  <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 1 }}>Conversations with your stylists</div>
+                </div>
+              </div>
+              <i className="ti ti-arrow-right" style={{ fontSize: 18, color: "var(--text-tertiary)" }} aria-hidden="true"></i>
+            </div>
+          </div>
+
+          {/* Following */}
+          <div
+            onClick={() => nav("/following")}
+            style={{ background: "var(--bg-card)", border: "0.5px solid var(--border)", borderRadius: "var(--radius)", padding: 14, marginBottom: 14, cursor: "pointer" }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--pink-light)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <i className="ti ti-heart" style={{ fontSize: 18, color: "var(--pink)" }} aria-hidden="true"></i>
+                </div>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 500 }}>Following</div>
+                  <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 1 }}>Stylists you follow</div>
                 </div>
               </div>
               <i className="ti ti-arrow-right" style={{ fontSize: 18, color: "var(--text-tertiary)" }} aria-hidden="true"></i>
@@ -178,12 +198,12 @@ export default function ClientHome() {
             </div>
           </div>
 
-          {/* AI Outfit Builder */}
+          {/* Outfit Builder */}
           <div className="card" style={{ cursor: "pointer" }} onClick={() => nav("/outfits")}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <div>
-                <div style={{ fontSize: 14, fontWeight: 500 }}>AI Outfit Builder</div>
-                <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 2 }}>Swipe items to build AI outfits</div>
+                <div style={{ fontSize: 14, fontWeight: 500 }}>Outfit Builder</div>
+                <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 2 }}>Swipe items to discover outfit ideas</div>
               </div>
               <i className="ti ti-sparkles" style={{ fontSize: 22, color: "var(--pink)" }} aria-hidden="true"></i>
             </div>

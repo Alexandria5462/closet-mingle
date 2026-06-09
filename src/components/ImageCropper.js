@@ -145,7 +145,7 @@ export default function ImageCropper({ imageSrc, onCrop, onCancel }) {
             src={imageSrc}
             alt="crop preview"
             onLoad={() => setImgLoaded(true)}
-            style={{ width: "100%", display: "block", borderRadius: 8 }}
+            style={{ width: "100%", height: "auto", maxHeight: "60vh", objectFit: "contain", display: "block", borderRadius: 8 }}
             draggable={false}
           />
 

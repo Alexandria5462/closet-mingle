@@ -10,7 +10,7 @@ const OCCASIONS = ["All","Casual","Work / Office","Date Night","Brunch","Formal"
 const SESSION_HOURS = 6;
 
 // ─── Swipe Card Component ─────────────────────────────────────
-function SwipeCard({ item, onSwipe, isTop, position }) {
+function SwipeCard({ item, onSwipe, isTop, position, isFreeAccount }) {
   const cardRef = useRef(null);
   const startX = useRef(0);
   const startY = useRef(0);
@@ -95,7 +95,28 @@ function SwipeCard({ item, onSwipe, isTop, position }) {
       {stamp === "pass" && (
         <div style={{ position:"absolute", top:28, right:16, padding:"5px 14px", borderRadius:8, fontSize:20, fontWeight:700, border:"3px solid #ef4444", color:"#ef4444", transform:"rotate(20deg)", background:"rgba(255,255,255,0.92)" }}>✕ PASS</div>
       )}
-      <div style={{ padding:"10px 14px 4px" }}>
+      {isFreeAccount && (
+        <div style={{ position: "absolute", bottom: 52, left: "50%", transform: "translateX(-50%)", background: "rgba(196,116,90,0.72)", padding: "3px 12px", borderRadius: 12, pointerEvents: "none", whiteSpace: "nowrap" }}>
+          <span style={{ fontFamily: "Georgia, serif", fontSize: 10, color: "white", fontStyle: "italic", fontWeight: 300 }}>close</span>
+          <span style={{ fontFamily: "Georgia, serif", fontSize: 10, color: "white", fontWeight: 800 }}>tmingle</span>
+        </div>
+      )}
+      {isFreeAccount && (
+        <div style={{
+          position:"absolute", bottom:56, left:"50%", transform:"translateX(-50%)",
+          background:"rgba(196,116,90,0.70)", padding:"3px 12px", borderRadius:12,
+          pointerEvents:"none", whiteSpace:"nowrap",
+        }}>
+          <span style={{ fontFamily:"Georgia,serif", fontSize:10, color:"white", fontStyle:"italic", fontWeight:300 }}>closet</span>
+          <span style={{ fontFamily:"Georgia,serif", fontSize:10, color:"white", fontWeight:800 }}>mingle</span>
+        </div>
+      )}
+      <div style={{       {isFreeAccount && (
+        <div style={{ position:"absolute", bottom:56, left:"50%", transform:"translateX(-50%)", background:"rgba(196,116,90,0.70)", padding:"3px 12px", borderRadius:12, pointerEvents:"none", whiteSpace:"nowrap" }}>
+          <span style={{ fontFamily:"Georgia,serif", fontSize:10, color:"white", fontStyle:"italic", fontWeight:300 }}>closet</span><span style={{ fontFamily:"Georgia,serif", fontSize:10, color:"white", fontWeight:800 }}>mingle</span>
+        </div>
+      )}
+padding:"10px 14px 4px" }}>
         <div style={{ fontSize:14, fontWeight:600, color:"var(--text-primary)", marginBottom:2 }}>{item.name}</div>
         <div style={{ display:"flex", gap:6, alignItems:"center" }}>
           <span style={{ fontSize:11, background:"var(--bg-card)", borderRadius:20, padding:"3px 12px", border:"1px solid var(--border)", textTransform:"capitalize", color:"var(--text-primary)", fontWeight:500 }}>{item.category}</span>
@@ -157,6 +178,26 @@ export default function SwipeOutfits() {
     return () => clearInterval(interval);
   }, [resetsAt]);
 
+  async function loadDislikedIds() {
+    // Returns set of itemIds that are still on cooldown
+    try {
+      const snap = await getDocs(
+        query(collection(db, "dislikedItems"),
+          where("userId", "==", userProfile.uid)
+        )
+      );
+      const now = new Date();
+      const cooledDown = new Set();
+      snap.docs.forEach(d => {
+        const data = d.data();
+        if (new Date(data.returnsAt) > now) {
+          cooledDown.add(data.itemId);
+        }
+      });
+      return cooledDown;
+    } catch(e) { return new Set(); }
+  }
+
   async function loadEverything() {
     if (!userProfile?.uid) return;
     setLoading(true);
@@ -213,7 +254,10 @@ export default function SwipeOutfits() {
             return tags.includes(occasionFilter) || tags.length === 0;
           });
       const shuffled = [...occasionFiltered].sort(() => Math.random() - 0.5);
-      setDeck(shuffled);
+      // Filter items currently on dislike cooldown
+    const dislikedCooldown = await loadDislikedIds();
+    const filtered = shuffled.filter(item => !dislikedCooldown.has(item.id));
+    setDeck(filtered);
       setAllDone(shuffled.length === 0 && allItems.length > 0);
 
       // ── 4. Load liked items count ─────────────────────────
@@ -313,7 +357,7 @@ export default function SwipeOutfits() {
         });
         const newCount = likedCount + 1;
         setLikedCount(newCount);
-        setToast(`Liked ${item.name}!`);
+        setToast("Liked");
 
         // Reload liked items to check combo
         const lSnap = await getDocs(
@@ -327,7 +371,19 @@ export default function SwipeOutfits() {
         console.error("Like save error:", err);
       }
     } else {
-      setToast("Passed!");
+      // Store disliked item with 6hr cooldown (all accounts)
+      // Free accounts: items return after 24hrs
+      // Paid accounts: never return
+      try {
+        const cooldownHours = isFreeAccount ? 24 : 6;
+        await addDoc(collection(db, "dislikedItems"), {
+          userId: userProfile.uid,
+          itemId: item.id,
+          dislikedAt: now.toISOString(),
+          returnsAt: new Date(now.getTime() + cooldownHours * 60 * 60 * 1000).toISOString(),
+          isFreeAccount,
+        });
+      } catch(e) { /* non-critical */ }
     }
   }
 
@@ -440,6 +496,8 @@ export default function SwipeOutfits() {
                     isTop={i === 0}
                     position={i}
                     onSwipe={handleSwipe}
+                    isFreeAccount={isFreeAccount}
+                    isFreeAccount={isFreeAccount}
                   />
                 ))}
               </div>
@@ -462,7 +520,7 @@ export default function SwipeOutfits() {
                   color: "rgba(212,83,126,0.07)", transform: "rotate(-30deg)",
                   letterSpacing: 2, whiteSpace: "nowrap", userSelect: "none",
                 }}>
-                  ClosetMingle Free Plan · Upgrade to remove watermark ·&nbsp;
+                   · Upgrade to remove watermark ·&nbsp;
                 </div>
               ))}
             </div>
