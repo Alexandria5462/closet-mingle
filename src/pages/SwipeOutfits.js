@@ -111,12 +111,7 @@ function SwipeCard({ item, onSwipe, isTop, position, isFreeAccount }) {
           <span style={{ fontFamily:"Georgia,serif", fontSize:10, color:"white", fontWeight:800 }}>mingle</span>
         </div>
       )}
-      <div style={{       {isFreeAccount && (
-        <div style={{ position:"absolute", bottom:56, left:"50%", transform:"translateX(-50%)", background:"rgba(196,116,90,0.70)", padding:"3px 12px", borderRadius:12, pointerEvents:"none", whiteSpace:"nowrap" }}>
-          <span style={{ fontFamily:"Georgia,serif", fontSize:10, color:"white", fontStyle:"italic", fontWeight:300 }}>closet</span><span style={{ fontFamily:"Georgia,serif", fontSize:10, color:"white", fontWeight:800 }}>mingle</span>
-        </div>
-      )}
-padding:"10px 14px 4px" }}>
+      <div style={{ padding:"10px 14px 4px" }}>
         <div style={{ fontSize:14, fontWeight:600, color:"var(--text-primary)", marginBottom:2 }}>{item.name}</div>
         <div style={{ display:"flex", gap:6, alignItems:"center" }}>
           <span style={{ fontSize:11, background:"var(--bg-card)", borderRadius:20, padding:"3px 12px", border:"1px solid var(--border)", textTransform:"capitalize", color:"var(--text-primary)", fontWeight:500 }}>{item.category}</span>
