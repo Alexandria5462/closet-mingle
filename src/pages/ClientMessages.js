@@ -183,7 +183,7 @@ export default function ClientMessages() {
             >
               {/* Avatar */}
               <div style={{ position: "relative", flexShrink: 0 }}>
-                <div className="avatar" style={{ width: 48, height: 48, background: "var(--pink-light)", color: "var(--pink-dark)", fontSize: 16, overflow: "hidden" }}>
+                <div className="avatar" style={{ width: 48, height: 48, background: "var(--avatar-bg)", color: "var(--pink-dark)", fontSize: 16, overflow: "hidden" }}>
                   {conv.stylist?.photoUrl
                     ? <img src={conv.stylist.photoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     : conv.stylist?.name?.split(" ").map(n => n[0]).join("").slice(0, 2) || "ST"

@@ -5,6 +5,7 @@ import { db } from "../lib/firebase";
 import { useAuth } from "../lib/AuthContext";
 import TabBar from "../components/TabBar";
 import Toast from "../components/Toast";
+import ShareOutfit from "../components/ShareOutfit";
 
 export default function SavedOutfits() {
   const nav = useNavigate();
@@ -15,6 +16,7 @@ export default function SavedOutfits() {
   const [dayFilter, setDayFilter] = useState("All");
   const [search, setSearch] = useState("");
   const [editingId, setEditingId] = useState(null);
+  const [shareOutfit, setShareOutfit] = useState(null);
   const [editName, setEditName] = useState("");
   const [editDay, setEditDay] = useState("");
   const DAYS = ["No specific day", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
@@ -176,6 +178,7 @@ export default function SavedOutfits() {
                 <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
                   Showing results for <strong>"{activeSearch}"</strong>
                   <button onClick={() => { setSearch(""); setActiveSearch(""); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-tertiary)", fontSize: 12 }}>× Clear</button>
+                  </div>
                 </div>
               )}
 
@@ -209,8 +212,26 @@ export default function SavedOutfits() {
             <div key={outfit.id} className="card" style={{ padding: 0, overflow: "hidden", marginBottom: 14 }}>
               <div style={{ padding: "12px 14px 8px", borderBottom: "0.5px solid var(--border)" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-                  <div style={{ fontSize: 15, fontWeight: 600 }}>{outfit.outfitName || "Saved Outfit"}</div>
-                  <button onClick={() => deleteOutfit(outfit.id)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-tertiary)", fontSize: 18 }}>×</button>
+                  {editingId === outfit.id ? (
+                    <div style={{ flex: 1, marginRight: 8 }}>
+                      <input className="input-field" value={editName} onChange={e => setEditName(e.target.value)} style={{ marginBottom: 6, fontSize: 13 }} placeholder="Outfit name" autoFocus />
+                      <select value={editDay} onChange={e => setEditDay(e.target.value)} className="input-field" style={{ marginBottom: 6, fontSize: 13 }}>
+                        {["No specific day","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"].map(d => <option key={d} value={d}>{d}</option>)}
+                      </select>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button className="btn-outline btn-sm" onClick={() => setEditingId(null)} style={{ flex: 1, marginTop: 0 }}>Cancel</button>
+                        <button className="btn-pink btn-sm" onClick={() => saveEdit(outfit.id)} style={{ flex: 1 }}>Save</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <div style={{ fontSize: 15, fontWeight: 600 }}>{outfit.outfitName || "Saved Outfit"}</div>
+                      <button onClick={() => { setEditingId(outfit.id); setEditName(outfit.outfitName || ""); setEditDay(outfit.dayOfWeek || "No specific day"); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-tertiary)", padding: 2 }} title="Edit"><i className="ti ti-pencil" style={{ fontSize: 13 }} aria-hidden="true"></i></button>
+                    </div>
+                  )}
+                  <div style={{ display: "flex", gap: 4 }}>
+                    <button onClick={() => setShareOutfit(outfit)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-secondary)", padding: 4 }}><i className="ti ti-share" style={{ fontSize: 16 }} aria-hidden="true"></i></button>
+                    <button onClick={() => deleteOutfit(outfit.id)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-tertiary)", fontSize: 18 }}>×</button>
                 </div>
                 <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                   {outfit.occasion && <span className="badge badge-pink" style={{ fontSize: 10 }}>{outfit.occasion}</span>}
@@ -279,6 +300,7 @@ export default function SavedOutfits() {
               ))}
             </div>
           )}
+      {shareOutfit && <ShareOutfit outfit={shareOutfit} onClose={() => setShareOutfit(null)} />}
       <TabBar active="saved" type="client" />
       {toast && <Toast message={toast} onDone={() => setToast("")} />}
     </>

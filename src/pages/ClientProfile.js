@@ -211,7 +211,7 @@ export default function ClientProfile() {
               <div style={{ textAlign: "center", marginBottom: 20 }}>
                 <div className="avatar" style={{
                   width: 88, height: 88, margin: "0 auto 12px",
-                  background: "var(--pink-light)", color: "var(--pink-dark)",
+                  background: "var(--avatar-bg)", color: "var(--pink-dark)",
                   fontSize: 28, overflow: "hidden",
                 }}>
                   {client.photoUrl
@@ -288,6 +288,35 @@ export default function ClientProfile() {
                   </div>
                 </div>
               )}
+
+              {/* ── Stylist review on client — shown on About tab ── */}
+
+              {activeTab === "review" && isStylist && (
+                <div>
+                  {!showReviewForm ? (
+                    <div style={{ textAlign: "center", padding: "30px 20px" }}>
+                      <i className="ti ti-star" style={{ fontSize: 40, color: "var(--pink)", display: "block", marginBottom: 12 }} aria-hidden="true"></i>
+                      <div style={{ fontSize: 15, fontWeight: 500, marginBottom: 8 }}>Leave a review</div>
+                      <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 20 }}>Share your experience with {client?.name || "this client"}</div>
+                      <button className="btn-pink" onClick={() => setShowReviewForm(true)} style={{ width: "auto", padding: "10px 32px" }}>Write a review</button>
+                    </div>
+                  ) : (
+                    <div className="card">
+                      <div style={{ fontSize: 14, fontWeight: 500, marginBottom: 14 }}>Your review</div>
+                      <div style={{ display: "flex", gap: 8, marginBottom: 14, justifyContent: "center" }}>
+                        {[1,2,3,4,5].map(s => (
+                          <button key={s} onClick={() => setReviewRating(s)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 28, color: s <= reviewRating ? "#f59e0b" : "var(--border)", padding: 2 }}>star</button>
+                        ))}
+                      </div>
+                      <textarea className="input-field" placeholder="Share your experience..." value={reviewComment} onChange={e => setReviewComment(e.target.value)} rows={4} style={{ resize: "none", fontFamily: "inherit", fontSize: 13, marginBottom: 12 }} />
+                      <div style={{ display: "flex", gap: 10 }}>
+                        <button className="btn-outline btn-sm" onClick={() => setShowReviewForm(false)} style={{ flex: 1, marginTop: 0 }}>Cancel</button>
+                        <button className="btn-pink btn-sm" onClick={submitClientReview} disabled={submittingReview || !reviewComment.trim()} style={{ flex: 1 }}>{submittingReview ? "Posting..." : "Post review"}</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}}
 
               {/* ── Closet tab ── */}
               {activeTab === "closet" && (
@@ -414,47 +443,7 @@ export default function ClientProfile() {
         </div>
       )}
 
-      {/* Review tab */}
-      {activeTab === "review" && isStylist && (
-        <div>
-          {!showReviewForm ? (
-            <div style={{ textAlign: "center", padding: "30px 20px" }}>
-              <div style={{ fontSize: 14, color: "var(--text-secondary)", marginBottom: 16 }}>
-                Leave a review for {client?.name || "this client"}
-              </div>
-              <button className="btn-pink" onClick={() => setShowReviewForm(true)} style={{ width: "auto", padding: "10px 24px" }}>
-                Write a review
-              </button>
-            </div>
-          ) : (
-            <div className="card">
-              <div style={{ fontSize: 14, fontWeight: 500, marginBottom: 12 }}>Your review</div>
-              {/* Stars */}
-              <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
-                {[1,2,3,4,5].map(s => (
-                  <button key={s} onClick={() => setReviewRating(s)}
-                    style={{ background: "none", border: "none", cursor: "pointer", fontSize: 24,
-                      color: s <= reviewRating ? "#f59e0b" : "var(--border)" }}>★</button>
-                ))}
-              </div>
-              <textarea
-                className="input-field"
-                placeholder="Share your experience working with this client..."
-                value={reviewComment}
-                onChange={e => setReviewComment(e.target.value)}
-                rows={4}
-                style={{ resize: "none", fontFamily: "inherit", fontSize: 13, marginBottom: 10 }}
-              />
-              <div style={{ display: "flex", gap: 8 }}>
-                <button className="btn-outline btn-sm" onClick={() => setShowReviewForm(false)} style={{ flex: 1, marginTop: 0 }}>Cancel</button>
-                <button className="btn-pink btn-sm" onClick={submitClientReview} disabled={submittingReview || !reviewComment.trim()} style={{ flex: 1 }}>
-                  {submittingReview ? "Posting..." : "Post review"}
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
+      
 
       <TabBar active="clients" type="stylist" />
       {toast && <Toast message={toast} onDone={() => setToast("")} />}

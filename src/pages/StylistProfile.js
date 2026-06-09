@@ -147,7 +147,7 @@ export default function StylistProfile() {
         <div className="body">
           {/* Profile header */}
           <div style={{ textAlign: "center", marginBottom: 20 }}>
-            <div className="avatar" style={{ width: 80, height: 80, background: "var(--pink-light)", color: "var(--pink-dark)", fontSize: 24, overflow: "hidden", margin: "0 auto 12px", border: "2px solid var(--border)" }}>
+            <div className="avatar" style={{ width: 80, height: 80, background: "var(--avatar-bg)", color: "var(--pink-dark)", fontSize: 24, overflow: "hidden", margin: "0 auto 12px", border: "2px solid var(--border)" }}>
               {stylist.photoUrl
                 ? <img src={stylist.photoUrl} alt={stylist.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 : initials

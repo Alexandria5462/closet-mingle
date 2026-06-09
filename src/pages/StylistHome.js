@@ -121,7 +121,7 @@ export default function StylistHome() {
           <button onClick={() => nav("/notifications")} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-secondary)", padding: 4 }}>
             <i className="ti ti-bell" style={{ fontSize: 20 }} aria-hidden="true"></i>
           </button>
-          <div className="avatar" style={{ background: "var(--pink-light)", color: "var(--pink-dark)", width: 36, height: 36, fontSize: 13, overflow: "hidden", cursor: "pointer" }} onClick={() => nav("/account")}>
+          <div className="avatar" style={{ background: "var(--avatar-bg)", color: "var(--pink-dark)", width: 36, height: 36, fontSize: 13, overflow: "hidden", cursor: "pointer" }} onClick={() => nav("/account")}>
             {userProfile?.photoUrl
               ? <img src={userProfile.photoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
               : userProfile?.name?.split(" ").map(n => n[0]).join("").slice(0, 2)
@@ -253,7 +253,7 @@ export default function StylistHome() {
             </div>
           ) : recentConvs.map((c, i) => (
             <div key={i} onClick={() => nav(`/stylist/chat/${c.clientId}`)} style={{ background: "var(--bg-card)", border: "0.5px solid var(--border)", borderRadius: "var(--radius)", padding: 12, marginBottom: 8, cursor: "pointer", display: "flex", alignItems: "center", gap: 10 }}>
-              <div className="avatar" style={{ width: 40, height: 40, background: "var(--pink-light)", color: "var(--pink-dark)", fontSize: 13, overflow: "hidden", flexShrink: 0 }}>
+              <div className="avatar" style={{ width: 40, height: 40, background: "var(--avatar-bg)", color: "var(--pink-dark)", fontSize: 13, overflow: "hidden", flexShrink: 0 }}>
                 {c.client?.photoUrl
                   ? <img src={c.client.photoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   : c.client?.name?.split(" ").map(n => n[0]).join("").slice(0, 2) || "?"

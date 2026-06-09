@@ -152,7 +152,7 @@ export default function ClientSessions() {
               style={{ background: "var(--bg-card)", border: `0.5px solid ${s.status === "active" ? "#6ee7b7" : "var(--border)"}`, borderRadius: "var(--radius)", padding: 14, marginBottom: 10, cursor: "pointer" }}
             >
               <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-                <div className="avatar" style={{ width: 48, height: 48, background: "var(--pink-light)", color: "var(--pink-dark)", fontSize: 15, overflow: "hidden", flexShrink: 0 }}>
+                <div className="avatar" style={{ width: 48, height: 48, background: "var(--avatar-bg)", color: "var(--pink-dark)", fontSize: 15, overflow: "hidden", flexShrink: 0 }}>
                   {s.stylist?.photoUrl
                     ? <img src={s.stylist.photoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     : s.stylist?.name?.split(" ").map(n => n[0]).join("").slice(0, 2) || "ST"

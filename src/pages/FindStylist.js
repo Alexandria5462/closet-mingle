@@ -226,7 +226,7 @@ export default function FindStylist() {
             >
               <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
                 {/* Avatar */}
-                <div className="avatar" style={{ width: 52, height: 52, background: "var(--pink-light)", color: "var(--pink-dark)", fontSize: 16, overflow: "hidden", flexShrink: 0 }}>
+                <div className="avatar" style={{ width: 52, height: 52, background: "var(--avatar-bg)", color: "var(--pink-dark)", fontSize: 16, overflow: "hidden", flexShrink: 0 }}>
                   {s.photoUrl
                     ? <img src={s.photoUrl} alt={s.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     : s.name?.split(" ").map(n => n[0]).join("").slice(0, 2)

@@ -73,7 +73,7 @@ export default function ClientHome() {
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <button onClick={() => nav("/notifications")} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-secondary)", padding: 4 }}><i className="ti ti-bell" style={{ fontSize: 20 }} aria-hidden="true"></i></button>
           {tier.isPaid && <span className="badge" style={{ background: tier.color, color: "var(--pink-dark)", fontSize: 10 }}>{tier.label}</span>}
-          <div className="avatar" style={{ background: "var(--pink-light)", color: "var(--pink-dark)", width: 36, height: 36, fontSize: 13, overflow: "hidden", cursor: "pointer" }} onClick={() => nav("/account")}>
+          <div className="avatar" style={{ background: "var(--avatar-bg)", color: "var(--pink-dark)", width: 36, height: 36, fontSize: 13, overflow: "hidden", cursor: "pointer" }} onClick={() => nav("/account")}>
             {userProfile?.photoUrl
               ? <img src={userProfile.photoUrl} alt="profile" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
               : userProfile?.name?.split(" ").map(n => n[0]).join("").slice(0, 2)
@@ -160,7 +160,14 @@ export default function ClientHome() {
                   <i className="ti ti-message-circle" style={{ fontSize: 18, color: "var(--pink)" }} aria-hidden="true"></i>
                 </div>
                 <div>
-                  <div style={{ fontSize: 14, fontWeight: 500 }}>My Messages</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <div style={{ fontSize: 14, fontWeight: 500 }}>My Messages</div>
+                    {unreadMsgCount > 0 && (
+                      <span style={{ background: "#e53935", color: "white", borderRadius: "50%", minWidth: 20, height: 20, fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 4px" }}>
+                        {unreadMsgCount > 9 ? "9+" : unreadMsgCount}
+                      </span>
+                    )}
+                  </div>
                   <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 1 }}>Conversations with your stylists</div>
                 </div>
               </div>

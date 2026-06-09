@@ -36,56 +36,25 @@ export default function TabBar({ active, type = "client" }) {
   async function loadBadges() {
     if (!currentUser?.uid) return;
     const newBadges = {};
-
     try {
+      const msgSnap = await getDocs(collection(db, "messages"));
+      let unreadMsgs = 0;
+      msgSnap.docs.forEach(d => {
+        const data = d.data();
+        if (data.conversationId?.includes(currentUser.uid) && data.senderId !== currentUser.uid && !data.read) unreadMsgs++;
+      });
       if (type === "stylist") {
-        // ── Stylist: unread messages count ───────────────
-        const msgSnap = await getDocs(collection(db, "messages"));
-        let unreadMsgs = 0;
-        msgSnap.docs.forEach(d => {
-          const data = d.data();
-          if (
-            data.conversationId?.includes(currentUser.uid) &&
-            data.senderId !== currentUser.uid &&
-            !data.read
-          ) unreadMsgs++;
-        });
         if (unreadMsgs > 0) newBadges.messages = unreadMsgs;
-
-        // ── Stylist: unread notifications ─────────────────
-        const notifSnap = await getDocs(
-          query(collection(db, "notifications"),
-            where("userId", "==", currentUser.uid),
-            where("read", "==", false)
-          )
-        );
-        // Home badge removed - use Messages tab badge instead
-
       } else {
-        // ── Client: unread messages from stylists ─────────
-        const msgSnap = await getDocs(collection(db, "messages"));
-        let unreadMsgs = 0;
-        msgSnap.docs.forEach(d => {
-          const data = d.data();
-          if (
-            data.conversationId?.includes(currentUser.uid) &&
-            data.senderId !== currentUser.uid &&
-            !data.read
-          ) unreadMsgs++;
-        });
         if (unreadMsgs > 0) newBadges.account = unreadMsgs;
-
-        // ── Client: unread notifications ─────────────────
-        const notifSnap = await getDocs(
-          query(collection(db, "notifications"),
-            where("userId", "==", currentUser.uid),
-            where("read", "==", false)
-          )
-        );
-        // Home badge removed - use Account tab badge instead
       }
+      try {
+        const notifSnap = await getDocs(query(collection(db, "notifications"), where("userId", "==", currentUser.uid), where("read", "==", false)));
+        const cutoff = new Date(Date.now() - 7*24*60*60*1000).toISOString();
+        const recent = notifSnap.docs.filter(d => (d.data().createdAt||"") > cutoff).length;
+        if (recent > 0) newBadges.home = recent;
+      } catch(e) {}
     } catch(e) { console.error(e); }
-
     setBadges(newBadges);
   }
 

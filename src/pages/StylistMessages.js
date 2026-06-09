@@ -307,7 +307,7 @@ export default function StylistMessages() {
                 <div
                   className="avatar"
                   onClick={e => { e.stopPropagation(); nav(`/stylist/client/${conv.clientId}`); }}
-                  style={{ width: 48, height: 48, background: "var(--pink-light)", color: "var(--pink-dark)", fontSize: 16, overflow: "hidden", cursor: "pointer" }}
+                  style={{ width: 48, height: 48, background: "var(--avatar-bg)", color: "var(--pink-dark)", fontSize: 16, overflow: "hidden", cursor: "pointer" }}
                   title="View client profile"
                 >
                   {conv.client?.photoUrl

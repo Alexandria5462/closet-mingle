@@ -8,6 +8,25 @@ const TIP_AMOUNTS = [2, 5, 10, 20];
 
 export default function TipModal({ stylistId, stylistName, conversationId, onClose }) {
   const { currentUser, userProfile } = useAuth();
+
+  // When modal opens, mark any stale tip notifications as read
+  // so they dont show as new when user is just browsing tip options
+  React.useEffect(() => {
+    if (!currentUser?.uid) return;
+    const cleanup = async () => {
+      try {
+        const { collection, query, where, getDocs, updateDoc, doc } = await import("firebase/firestore");
+        const { db: fdb } = await import("../lib/firebase");
+        const snap = await getDocs(query(collection(fdb, "notifications"),
+          where("userId", "==", currentUser.uid),
+          where("type", "==", "tip_received"),
+          where("read", "==", false)
+        ));
+        await Promise.all(snap.docs.map(d => updateDoc(doc(fdb, "notifications", d.id), { read: true })));
+      } catch(e) {}
+    };
+    cleanup();
+  }, []);
   const [amount, setAmount] = useState(5);
   const [custom, setCustom] = useState("");
   const [useCustom, setUseCustom] = useState(false);
@@ -32,6 +51,8 @@ export default function TipModal({ stylistId, stylistName, conversationId, onClo
         createdAt: new Date().toISOString(),
         status: "pending",
       });
+      // Notify stylist ONLY when tip is actually sent
+      notifyStylistTipReceived(stylistId, userProfile?.name || "A client", finalAmount.toFixed(2));
       setDone(true);
     } catch (e) {
       console.error("Tip error:", e);

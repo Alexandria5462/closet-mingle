@@ -60,7 +60,7 @@ export default function Following() {
             <em>closet</em><span>mingle</span>
           </div>
         </div>
-        <span className="badge" style={{ background: "var(--pink-light)", color: "var(--pink-dark)" }}>
+        <span className="badge" style={{ background: "var(--avatar-bg)", color: "var(--pink-dark)" }}>
           {following.length} following
         </span>
       </div>
@@ -91,7 +91,7 @@ export default function Following() {
                 <div
                   className="avatar"
                   onClick={() => nav(`/stylist/${f.stylistId}`)}
-                  style={{ width: 52, height: 52, background: "var(--pink-light)", color: "var(--pink-dark)", fontSize: 16, overflow: "hidden", flexShrink: 0, cursor: "pointer" }}
+                  style={{ width: 52, height: 52, background: "var(--avatar-bg)", color: "var(--pink-dark)", fontSize: 16, overflow: "hidden", flexShrink: 0, cursor: "pointer" }}
                 >
                   {f.stylist?.photoUrl
                     ? <img src={f.stylist.photoUrl} alt={f.stylist.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />

@@ -165,7 +165,7 @@ export default function Reviews({ targetUserId, targetUserName }) {
       ) : reviews.map(r => (
         <div key={r.id} style={{ borderBottom: "0.5px solid var(--border)", paddingBottom: 12, marginBottom: 12 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-            <div className="avatar" style={{ width: 32, height: 32, background: "var(--pink-light)", color: "var(--pink-dark)", fontSize: 11, overflow: "hidden", flexShrink: 0 }}>
+            <div className="avatar" style={{ width: 32, height: 32, background: "var(--avatar-bg)", color: "var(--pink-dark)", fontSize: 11, overflow: "hidden", flexShrink: 0 }}>
               {r.reviewerPhoto
                 ? <img src={r.reviewerPhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 : r.reviewerName?.charAt(0)

@@ -5,7 +5,8 @@ html { -webkit-text-size-adjust: 100%; }
 /* ── Light theme (default) ───────────────────────────────── */
 :root {
   --pink: #c4745a;
-  --pink-light: #f9f4ef;
+  --pink-light: #f4f0e8;
+  --avatar-bg: #ebe7e0;
   --pink-dark: #8a4a35;
   --bg: #f4f0e8;
   --bg-card: #fdfaf6;
@@ -24,7 +25,8 @@ html { -webkit-text-size-adjust: 100%; }
 /* ── Dark theme ──────────────────────────────────────────── */
 [data-theme="dark"] {
   --pink: #d4856a;
-  --pink-light: #2d1a12;
+  --pink-light: #f4f0e8;
+  --avatar-bg: #ebe7e0;
   --pink-dark: #e8a88e;
   --bg: #0e0c0a;
   --bg-card: #1a1612;

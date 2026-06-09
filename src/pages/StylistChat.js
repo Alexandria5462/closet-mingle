@@ -337,7 +337,7 @@ export default function StylistChat() {
           <div
             className="avatar"
             onClick={() => nav(`/stylist/client/${clientId}`)}
-            style={{ background: "var(--pink-light)", color: "var(--pink-dark)", width: 36, height: 36, fontSize: 13, overflow: "hidden", cursor: "pointer" }}
+            style={{ background: "var(--avatar-bg)", color: "var(--pink-dark)", width: 36, height: 36, fontSize: 13, overflow: "hidden", cursor: "pointer" }}
             title="View client profile"
           >
             {client?.photoUrl
@@ -453,7 +453,7 @@ export default function StylistChat() {
         {messages.map(m => (
           <div key={m.id} className={`msg-row${m.senderId === currentUser?.uid ? " me" : ""}`}>
             {m.senderId !== currentUser?.uid && (
-              <div className="avatar" style={{ background: "var(--pink-light)", color: "var(--pink-dark)", width: 28, height: 28, fontSize: 11, flexShrink: 0, overflow: "hidden" }}>
+              <div className="avatar" style={{ background: "var(--avatar-bg)", color: "var(--pink-dark)", width: 28, height: 28, fontSize: 11, flexShrink: 0, overflow: "hidden" }}>
                 {client?.photoUrl
                   ? <img src={client.photoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   : initials

@@ -193,7 +193,7 @@ export default function StylistClients() {
             <em>closet</em><span>mingle</span>
           </div>
         </div>
-        <span className="badge" style={{ background: "var(--pink-light)", color: "var(--pink-dark)" }}>
+        <span className="badge" style={{ background: "var(--avatar-bg)", color: "var(--pink-dark)" }}>
           {clients.length} client{clients.length !== 1 ? "s" : ""}
         </span>
       </div>
@@ -253,7 +253,7 @@ export default function StylistClients() {
                 <div
                   className="avatar"
                   onClick={() => nav(`/stylist/client/${c.clientId}`)}
-                  style={{ width: 48, height: 48, background: "var(--pink-light)", color: "var(--pink-dark)", fontSize: 15, overflow: "hidden", flexShrink: 0, cursor: "pointer" }}
+                  style={{ width: 48, height: 48, background: "var(--avatar-bg)", color: "var(--pink-dark)", fontSize: 15, overflow: "hidden", flexShrink: 0, cursor: "pointer" }}
                 >
                   {c.user?.photoUrl
                     ? <img src={c.user.photoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />

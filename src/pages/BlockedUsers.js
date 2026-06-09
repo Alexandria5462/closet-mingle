@@ -82,7 +82,7 @@ export default function BlockedUsers() {
             </div>
           ) : blocked.map(b => (
             <div key={b.id} style={{ background: "var(--bg-card)", border: "0.5px solid var(--border)", borderRadius: "var(--radius)", padding: 14, marginBottom: 10, display: "flex", alignItems: "center", gap: 12 }}>
-              <div className="avatar" style={{ width: 44, height: 44, background: "var(--pink-light)", color: "var(--pink-dark)", fontSize: 14, overflow: "hidden", flexShrink: 0 }}>
+              <div className="avatar" style={{ width: 44, height: 44, background: "var(--avatar-bg)", color: "var(--pink-dark)", fontSize: 14, overflow: "hidden", flexShrink: 0 }}>
                 {b.user?.photoUrl
                   ? <img src={b.user.photoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   : (b.user?.name || b.clientName || "?").split(" ").map(n => n[0]).join("").slice(0, 2)

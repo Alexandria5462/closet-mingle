@@ -228,7 +228,7 @@ export default function Chat() {
           <button onClick={() => nav(-1)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-secondary)" }}>
             <i className="ti ti-arrow-left" style={{ fontSize: 20 }} aria-hidden="true"></i>
           </button>
-          <div className="avatar" style={{ background: "var(--pink-light)", color: "var(--pink-dark)", width: 36, height: 36, fontSize: 13, overflow: "hidden" }}>
+          <div className="avatar" style={{ background: "var(--avatar-bg)", color: "var(--pink-dark)", width: 36, height: 36, fontSize: 13, overflow: "hidden" }}>
             {stylist?.photoUrl
               ? <img src={stylist.photoUrl} alt={stylist.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
               : initials
@@ -291,7 +291,7 @@ export default function Chat() {
         {messages.map(m => (
           <div key={m.id} className={`msg-row${m.senderId === currentUser?.uid ? " me" : ""}`}>
             {m.senderId !== currentUser?.uid && (
-              <div className="avatar" style={{ background: "var(--pink-light)", color: "var(--pink-dark)", width: 28, height: 28, fontSize: 11, flexShrink: 0, overflow: "hidden" }}>
+              <div className="avatar" style={{ background: "var(--avatar-bg)", color: "var(--pink-dark)", width: 28, height: 28, fontSize: 11, flexShrink: 0, overflow: "hidden" }}>
                 {stylist?.photoUrl
                   ? <img src={stylist.photoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   : initials
