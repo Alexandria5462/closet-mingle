@@ -231,6 +231,7 @@ export default function SavedOutfits() {
                   <div style={{ display: "flex", gap: 4 }}>
                     <button onClick={() => setShareOutfit(outfit)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-secondary)", padding: 4 }}><i className="ti ti-share" style={{ fontSize: 16 }} aria-hidden="true"></i></button>
                     <button onClick={() => deleteOutfit(outfit.id)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-tertiary)", fontSize: 18 }}>×</button>
+                    </div>
                 </div>
                 <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                   {outfit.occasion && <span className="badge badge-pink" style={{ fontSize: 10 }}>{outfit.occasion}</span>}
