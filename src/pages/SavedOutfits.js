@@ -178,7 +178,6 @@ export default function SavedOutfits() {
                 <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
                   Showing results for <strong>"{activeSearch}"</strong>
                   <button onClick={() => { setSearch(""); setActiveSearch(""); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-tertiary)", fontSize: 12 }}>× Clear</button>
-                  </div>
                 </div>
               )}
 
