@@ -42,6 +42,17 @@ export default function ClientHome() {
         const oSnap = await getDocs(query(collection(db, "savedOutfits"), where("userId", "==", userProfile.uid)));
         setSavedCount(oSnap.docs.filter(d => { const data = d.data(); return !data.expiresAt || new Date(data.expiresAt) > now; }).length);
       } catch (e) { console.error(e); }
+      // Load unread message count
+      try {
+        const msgSnap = await getDocs(collection(db, "messages"));
+        let unread = 0;
+        msgSnap.docs.forEach(d => {
+          const data = d.data();
+          if (data.conversationId?.includes(userProfile.uid) &&
+              data.senderId !== userProfile.uid && !data.read) unread++;
+        });
+        setUnreadMsgCount(unread);
+      } catch(e) {}
     }
     fetchStats();
   }, [userProfile]);
@@ -56,6 +67,7 @@ export default function ClientHome() {
     { label: "Chat with a personal stylist", done: tier.hasStylist, tip: tier.hasStylist ? "You have access!" : "Upgrade to unlock" },
   ];
   const completed = MILESTONES.filter(m => m.done).length;
+  const [unreadMsgCount, setUnreadMsgCount] = React.useState(0);
   const [guideDismissed, setGuideDismissed] = React.useState(() => {
     try { return localStorage.getItem("cm_guide_dismissed") === "true"; } catch(e) { return false; }
   });
