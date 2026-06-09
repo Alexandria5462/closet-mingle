@@ -118,12 +118,15 @@ export default function StylistHome() {
           <em>closet</em><span>mingle</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <button onClick={() => nav("/notifications")} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-secondary)", padding: 4 }}><i className="ti ti-bell" style={{ fontSize: 20 }} aria-hidden="true"></i></button>
+          <button onClick={() => nav("/notifications")} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-secondary)", padding: 4 }}>
+            <i className="ti ti-bell" style={{ fontSize: 20 }} aria-hidden="true"></i>
+          </button>
           <div className="avatar" style={{ background: "var(--pink-light)", color: "var(--pink-dark)", width: 36, height: 36, fontSize: 13, overflow: "hidden", cursor: "pointer" }} onClick={() => nav("/account")}>
-          {userProfile?.photoUrl
-            ? <img src={userProfile.photoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            : userProfile?.name?.split(" ").map(n => n[0]).join("").slice(0, 2)
-          }
+            {userProfile?.photoUrl
+              ? <img src={userProfile.photoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              : userProfile?.name?.split(" ").map(n => n[0]).join("").slice(0, 2)
+            }
+          </div>
         </div>
       </div>
 
