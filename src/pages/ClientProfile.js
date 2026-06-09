@@ -10,7 +10,8 @@ import { SkeletonList } from "../components/SkeletonLoader";
 export default function ClientProfile() {
   const { clientId } = useParams();
   const nav = useNavigate();
-  const { currentUser } = useAuth();
+  const { currentUser, userProfile } = useAuth();
+  const isStylist = userProfile?.accountType === "stylist";
 
   const [client, setClient] = useState(null);
   const [closetItems, setClosetItems] = useState([]);

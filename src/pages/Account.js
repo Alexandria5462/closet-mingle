@@ -7,6 +7,7 @@ import { db } from "../lib/firebase";
 import TabBar from "../components/TabBar";
 import Reviews from "../components/Reviews";
 import DarkModeToggle from "../components/DarkModeToggle";
+import ImageCropper from "../components/ImageCropper";
 import Toast from "../components/Toast";
 
 const CLOUD_NAME = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME;
@@ -169,6 +170,7 @@ export default function Account() {
   const [specialty, setSpecialty] = useState(userProfile?.specialty || "");
   const [phone, setPhone] = useState(userProfile?.phone || "");
   const [photoFile, setPhotoFile] = useState(null);
+  const [cropSrc, setCropSrc] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(userProfile?.photoUrl || null);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState("");
