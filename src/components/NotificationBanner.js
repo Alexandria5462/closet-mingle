@@ -58,8 +58,10 @@ export default function NotificationBanner() {
     );
 
     const unsub = onSnapshot(q, snap => {
+      const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
       const notes = snap.docs
         .map(d => ({ id: d.id, ...d.data() }))
+        .filter(d => (d.createdAt || "") > fiveMinAgo)
         .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
       if (notes.length > 0) {

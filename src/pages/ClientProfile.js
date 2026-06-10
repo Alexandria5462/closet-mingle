@@ -157,7 +157,8 @@ export default function ClientProfile() {
   }
 
   const initials = client?.name?.split(" ").map(n => n[0]).join("").slice(0, 2) || "?";
-  const TABS = isStylist ? ["about", "closet", "sessions", "style", "review"] : ["about", "closet", "sessions", "style"];
+  const baseTabs = ["about", "closet", "sessions", "style"];
+  const TABS = isStylist ? [...baseTabs, "review"] : baseTabs;
 
   return (
     <>
@@ -298,7 +299,7 @@ export default function ClientProfile() {
                       <i className="ti ti-star" style={{ fontSize: 40, color: "var(--pink)", display: "block", marginBottom: 12 }} aria-hidden="true"></i>
                       <div style={{ fontSize: 15, fontWeight: 500, marginBottom: 8 }}>Leave a review</div>
                       <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 20 }}>Share your experience with {client?.name || "this client"}</div>
-                      <button className="btn-pink" onClick={() => setShowReviewForm(true)} style={{ width: "auto", padding: "10px 32px" }}>Write a review</button>
+                      <button className="btn-pink" onClick={() => setShowReviewForm(true)} style={{ width: "auto", padding: "12px 40px", fontSize: 15, display: "block", margin: "0 auto" }}>Write a review</button>
                     </div>
                   ) : (
                     <div className="card">

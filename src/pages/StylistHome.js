@@ -45,7 +45,7 @@ export default function StylistHome() {
 
       // Recent conversations
       const msgSnap = await getDocs(
-        query(collection(db, "messages"), where("conversationId", ">=", currentUser.uid))
+        collection(db, "messages")
       );
 
       const convMap = {};

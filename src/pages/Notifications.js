@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { collection, query, where, getDocs, updateDoc, doc, deleteDoc, orderBy } from "firebase/firestore";
+import { collection, query, where, getDocs, onSnapshot, updateDoc, doc, deleteDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { useAuth } from "../lib/AuthContext";
 import TabBar from "../components/TabBar";
@@ -26,24 +26,24 @@ export default function Notifications() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (currentUser?.uid) loadNotifications();
-  }, [currentUser]);
-
-  async function loadNotifications() {
+    if (!currentUser?.uid) return;
     setLoading(true);
-    try {
-      const snap = await getDocs(
-        query(collection(db, "notifications"),
-          where("userId", "==", currentUser.uid)
-        )
-      );
-      const items = snap.docs
-        .map(d => ({ id: d.id, ...d.data() }))
-        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      setNotifications(items);
-    } catch(e) { console.error(e); }
-    setLoading(false);
-  }
+    // Use live listener so notifications update in real time for both client and stylist
+    const unsub = onSnapshot(
+      query(collection(db, "notifications"),
+        where("userId", "==", currentUser.uid)
+      ),
+      (snap) => {
+        const items = snap.docs
+          .map(d => ({ id: d.id, ...d.data() }))
+          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        setNotifications(items);
+        setLoading(false);
+      },
+      (err) => { console.error(err); setLoading(false); }
+    );
+    return unsub; // cleanup listener on unmount
+  }, [currentUser]);
 
   async function markRead(id) {
     try {

@@ -67,12 +67,15 @@ export default function StylistClients() {
       }
 
       // Find unique clients from messages
+      // conversationId = [clientUid, stylistUid].sort().join("_")
+      // Extract the OTHER party (not the stylist) from each conversation
       const newClientIds = new Set();
       allMessages.forEach(data => {
         const convId = data.conversationId || "";
         if (!convId.includes(currentUser.uid)) return;
-        if (data.senderId === currentUser.uid) return;
-        const clientId = data.senderId;
+        // Get the client id = the part of convId that isn't the stylist
+        const parts = convId.split("_");
+        const clientId = parts.find(id => id !== currentUser.uid);
         if (!clientId) return;
         if (!clientMap[clientId]) {
           newClientIds.add(clientId);
@@ -82,6 +85,11 @@ export default function StylistClients() {
             lastSessionAt: data.createdAt || new Date().toISOString(),
             sessions: [],
           };
+        } else {
+          // Update last activity
+          if (data.createdAt > clientMap[clientId].lastSessionAt) {
+            clientMap[clientId].lastSessionAt = data.createdAt;
+          }
         }
       });
 
@@ -121,9 +129,14 @@ export default function StylistClients() {
         })
       );
 
-      // Only show clients (not other stylists), filter nulls
+      // Show all clients — only exclude confirmed stylists
+      // If profile failed to load, still show with fallback (don't drop them)
       const validClients = withProfiles
-        .filter(c => c.user !== null && c.user?.accountType !== "stylist")
+        .filter(c => c.user?.accountType !== "stylist")
+        .map(c => ({
+          ...c,
+          user: c.user || { uid: c.clientId, name: "Client", accountType: "client" }
+        }))
         .sort((a, b) => new Date(b.lastSessionAt) - new Date(a.lastSessionAt));
 
       setClients(validClients);

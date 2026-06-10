@@ -48,7 +48,7 @@ export default function Referral() {
   }
 
   const shareUrl = `https://closetmingle.com?ref=${referralCode}`;
-  const shareText = `Join me on ClosetMingle — AI-powered personal styling! Use my code ${referralCode} and get 72 hours of Premium free! 💗\n${shareUrl}`;
+  const shareText = `Join me on ClosetMingle — personal styling from your own wardrobe! Use my code ${referralCode} and get 72 hours of Premium free when you sign up!\n${shareUrl}`;
 
   async function copyCode() {
     try {
@@ -84,7 +84,7 @@ export default function Referral() {
             <div style={{ fontSize: 56, marginBottom: 12 }}>🎁</div>
             <div style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>Invite friends</div>
             <div style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.6, maxWidth: 300, margin: "0 auto" }}>
-              Share your code and both you and your friend get <strong>72 hours of Premium free!</strong>
+              Share your code — the person who signs up gets <strong>72 hours of Premium free</strong>. New accounts only, one use per email.
             </div>
           </div>
 
@@ -122,7 +122,7 @@ export default function Referral() {
             {[
               { step: "1", text: "Share your unique code with friends" },
               { step: "2", text: "Friend signs up using your code" },
-              { step: "3", text: "Both of you get 72 hours of Premium free!" },
+              { step: "3", text: "They get 72 hours of Premium free — new accounts only, one use per email" },
             ].map(s => (
               <div key={s.step} style={{ display: "flex", gap: 12, marginBottom: 10, alignItems: "flex-start" }}>
                 <div style={{ width: 24, height: 24, borderRadius: "50%", background: "var(--pink)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 600, flexShrink: 0 }}>{s.step}</div>
