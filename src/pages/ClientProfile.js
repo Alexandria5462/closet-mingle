@@ -162,8 +162,8 @@ export default function ClientProfile() {
         setToast(`${client?.name || "Client"} added to your active clients`);
       }
     } catch(e) {
-      console.error(e);
-      setToast("Failed. Try again.");
+      console.error("toggleMyClient error:", e?.code, e?.message, e);
+      setToast(`Failed: ${e?.code || e?.message || "unknown error"}`);
     }
     setAddingClient(false);
   }
