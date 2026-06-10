@@ -92,7 +92,7 @@ export default function Notifications() {
     <>
       <div className="header">
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <button onClick={() => nav(-1)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-secondary)" }}>
+          <button onClick={() => nav(isStylist ? "/stylist" : "/home")} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-secondary)" }}>
             <i className="ti ti-arrow-left" style={{ fontSize: 20 }} aria-hidden="true"></i>
           </button>
           <div className="logo" onClick={() => nav(isStylist ? "/stylist" : "/home")} style={{ cursor: "pointer" }}>

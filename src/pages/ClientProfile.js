@@ -317,7 +317,7 @@ export default function ClientProfile() {
                     </div>
                   )}
                 </div>
-              )}}
+              )}
 
               {/* ── Closet tab ── */}
               {activeTab === "closet" && (

@@ -153,32 +153,35 @@ export default function Chat() {
         read: false,
       });
       setText("");
+    } catch (e) {
+      console.error("Send message error:", e);
+      setToast("Failed to send message. Please try again.");
+    }
+    setSending(false);
 
-      // Auto-register this client under the stylist when they send first message
-      // This ensures client always appears in stylist's client list
-      try {
-        const existingSession = await getDocs(
-          query(collection(db, "chatSessions"),
-            where("conversationId", "==", conversationId),
-            where("clientId", "==", currentUser.uid)
-          )
-        );
-        if (existingSession.empty) {
-          await addDoc(collection(db, "chatSessions"), {
-            conversationId,
-            clientId: currentUser.uid,
-            clientName: userProfile?.name || "",
-            stylistId,
-            status: "active",
-            startedAt: new Date().toISOString(),
-          });
-        }
-      } catch(e) { /* non-critical */ }
-      // Notify stylist of new message (client → stylist relationship only)
-      if (type === "text") {
-        notifyStylistNewMessage(stylistId, userProfile?.name || "A client", msgContent);
-        // If first message, also send new_client notification
+    // Run registration and notifications async — don't block the input
+    if (type === "text") {
+      (async () => {
         try {
+          const existingSession = await getDocs(
+            query(collection(db, "chatSessions"),
+              where("conversationId", "==", conversationId),
+              where("clientId", "==", currentUser.uid)
+            )
+          );
+          if (existingSession.empty) {
+            await addDoc(collection(db, "chatSessions"), {
+              conversationId,
+              clientId: currentUser.uid,
+              clientName: userProfile?.name || "",
+              stylistId,
+              status: "active",
+              startedAt: new Date().toISOString(),
+            });
+          }
+        } catch(e) {}
+        try {
+          notifyStylistNewMessage(stylistId, userProfile?.name || "A client", msgContent);
           const existingMsgs = await getDocs(
             query(collection(db, "messages"),
               where("conversationId", "==", conversationId),
@@ -189,12 +192,8 @@ export default function Chat() {
             notifyStylistNewClient(stylistId, userProfile?.name || "A client");
           }
         } catch(e) {}
-      }
-    } catch (e) {
-      console.error("Send message error:", e);
-      setToast("Failed to send message. Please try again.");
+      })();
     }
-    setSending(false);
   }
 
   async function handlePhoto(file) {

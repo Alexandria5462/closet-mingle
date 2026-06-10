@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  collection, query, where, getDocs,
+  collection, query, where, getDocs, onSnapshot,
   doc, getDoc, addDoc, deleteDoc
 } from "firebase/firestore";
 import { db } from "../lib/firebase";
@@ -22,10 +22,30 @@ export default function StylistClients() {
   const [toast, setToast] = useState("");
 
   useEffect(() => {
-    if (currentUser?.uid) {
-      loadClients();
-      loadBlocked();
-    }
+    if (!currentUser?.uid) return;
+    loadClients();
+    loadBlocked();
+
+    // Live listener — add client instantly when they send a message
+    const unsub = onSnapshot(collection(db, "messages"), async (snap) => {
+      const newClientIds = new Set();
+      snap.docs.forEach(d => {
+        const data = d.data();
+        const convId = data.conversationId || "";
+        if (!convId.includes(currentUser.uid)) return;
+        const parts = convId.split("_");
+        const clientId = parts.find(id => id !== currentUser.uid);
+        if (clientId) newClientIds.add(clientId);
+      });
+      // If any new clients found not currently in state, reload
+      setClients(prev => {
+        const existingIds = new Set(prev.map(c => c.clientId));
+        const hasNew = [...newClientIds].some(id => !existingIds.has(id));
+        if (hasNew) { loadClients(); }
+        return prev;
+      });
+    });
+    return unsub;
   }, [currentUser]);
 
   async function loadClients() {
