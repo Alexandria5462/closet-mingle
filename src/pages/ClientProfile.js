@@ -98,15 +98,17 @@ export default function ClientProfile() {
         );
         setIsBlocked(!blockSnap.empty);
 
-        // Check if already an active client (chatSession with active status)
+        // Check if already an active client (chatSession exists with active status)
+        // Use simple 2-field query to avoid composite index requirement
         const clientSnap2 = await getDocs(
           query(collection(db, "chatSessions"),
             where("stylistId", "==", currentUser.uid),
-            where("clientId", "==", clientId),
-            where("status", "==", "active")
+            where("clientId", "==", clientId)
           )
         );
-        setIsMyClient(!clientSnap2.empty);
+        // Check status client-side to avoid needing a composite Firestore index
+        const activeSession = clientSnap2.docs.find(d => d.data().status === "active");
+        setIsMyClient(!!activeSession);
       }
     } catch(e) { console.error(e); }
     setLoading(false);
@@ -237,48 +239,6 @@ export default function ClientProfile() {
             <em>closet</em><span>mingle</span>
           </div>
         </div>
-        {/* Message button */}
-        <div style={{ display: "flex", gap: 8 }}>
-          {/* Add/Remove as client — stylist only */}
-          {isStylist && (
-            <button
-              onClick={toggleMyClient}
-              disabled={addingClient}
-              style={{
-                padding: "6px 12px", fontSize: 12, fontFamily: "inherit",
-                cursor: "pointer", borderRadius: "var(--radius-sm)",
-                background: isMyClient ? "var(--bg-card)" : "var(--pink)",
-                border: `1px solid ${isMyClient ? "var(--border)" : "var(--pink)"}`,
-                color: isMyClient ? "var(--text-secondary)" : "white",
-                fontWeight: 500,
-              }}
-            >
-              {addingClient ? "..." : isMyClient ? "Active Client ✓" : "+ Add Client"}
-            </button>
-          )}
-          <button
-            className="btn-pink btn-sm"
-            onClick={() => nav(`/stylist/chat/${clientId}`)}
-            style={{ fontSize: 12 }}
-          >
-            Message
-          </button>
-          {isStylist && (
-            <button
-              onClick={toggleBlock}
-              disabled={blocking}
-              style={{
-                padding: "6px 12px", fontSize: 12, fontFamily: "inherit",
-                cursor: "pointer", borderRadius: "var(--radius-sm)",
-                background: "none",
-                border: `1px solid ${isBlocked ? "var(--success)" : "var(--danger)"}`,
-                color: isBlocked ? "var(--success)" : "var(--danger)",
-              }}
-            >
-              {blocking ? "..." : isBlocked ? "Unblock" : "Block"}
-            </button>
-          )}
-        </div>
       </div>
 
       <div className="screen">
@@ -304,9 +264,40 @@ export default function ClientProfile() {
                   }
                 </div>
                 <div style={{ fontSize: 22, fontWeight: 600, marginBottom: 4 }}>{client.name}</div>
-                {client.username && (
-                  <div style={{ fontSize: 14, color: "var(--text-tertiary)", marginBottom: 6 }}>@{client.username}</div>
-                )}
+                {/* Username + action buttons inline */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, flexWrap: "wrap", marginBottom: 6 }}>
+                  {client.username && (
+                    <div style={{ fontSize: 13, color: "var(--text-tertiary)" }}>@{client.username}</div>
+                  )}
+                  {isStylist && (
+                    <>
+                      {/* Message button */}
+                      <button
+                        onClick={() => nav(`/stylist/chat/${clientId}`)}
+                        style={{ padding: "3px 10px", fontSize: 11, fontFamily: "inherit", cursor: "pointer", borderRadius: 20, background: "var(--pink)", border: "none", color: "white", fontWeight: 500 }}
+                      >
+                        <i className="ti ti-message-circle" style={{ fontSize: 11, marginRight: 3 }} aria-hidden="true"></i>
+                        Message
+                      </button>
+                      {/* Add/Remove client button */}
+                      <button
+                        onClick={toggleMyClient}
+                        disabled={addingClient}
+                        style={{ padding: "3px 10px", fontSize: 11, fontFamily: "inherit", cursor: "pointer", borderRadius: 20, background: isMyClient ? "var(--bg-card)" : "transparent", border: `1px solid ${isMyClient ? "var(--success)" : "var(--pink)"}`, color: isMyClient ? "var(--success)" : "var(--pink)", fontWeight: 500 }}
+                      >
+                        {addingClient ? "..." : isMyClient ? "✓ Active Client" : "+ Add Client"}
+                      </button>
+                      {/* Block button */}
+                      <button
+                        onClick={toggleBlock}
+                        disabled={blocking}
+                        style={{ padding: "3px 10px", fontSize: 11, fontFamily: "inherit", cursor: "pointer", borderRadius: 20, background: "transparent", border: `1px solid ${isBlocked ? "var(--success)" : "var(--danger)"}`, color: isBlocked ? "var(--success)" : "var(--danger)", fontWeight: 500 }}
+                      >
+                        {blocking ? "..." : isBlocked ? "Unblock" : "Block"}
+                      </button>
+                    </>
+                  )}
+                </div>
                 {/* Stats row */}
                 <div style={{ display: "flex", justifyContent: "center", gap: 24, marginTop: 10 }}>
                   <div style={{ textAlign: "center" }}>
