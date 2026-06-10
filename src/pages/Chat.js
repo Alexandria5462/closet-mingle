@@ -45,6 +45,7 @@ export default function Chat() {
   const [toast, setToast] = useState("");
   const [showTip, setShowTip] = useState(false);
   const [showReviewPrompt, setShowReviewPrompt] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
   const bottomRef = useRef(null);
 
   // Build consistent conversationId — always sort so both sides get same ID
@@ -85,6 +86,14 @@ export default function Chat() {
     try {
       const s = await getDoc(doc(db, "users", stylistId));
       if (s.exists()) setStylist(s.data());
+      // Check if this client is blocked by the stylist
+      const blockSnap = await getDocs(
+        query(collection(db, "blockedUsers"),
+          where("stylistId", "==", stylistId),
+          where("clientId", "==", currentUser.uid)
+        )
+      );
+      setIsBlocked(!blockSnap.empty);
     } catch (e) { console.error(e); }
   }
 
@@ -131,6 +140,7 @@ export default function Chat() {
   async function sendMessage(msgContent, type = "text") {
     if (!msgContent?.trim() && type === "text") return;
     if (sessionStatus === "ended") return;
+    if (isBlocked) { setToast("You cannot message this stylist."); return; }
     setSending(true);
     try {
       await addDoc(collection(db, "messages"), {
@@ -223,6 +233,15 @@ export default function Chat() {
     <>
       {videoRoomUrl && <VideoCall roomUrl={videoRoomUrl} onEnd={() => setVideoRoomUrl(null)} />}
 
+      {/* Blocked banner — shown when stylist has blocked this client */}
+      {isBlocked && (
+        <div style={{ background: "#fee2e2", borderBottom: "0.5px solid #fca5a5", padding: "12px 16px", textAlign: "center" }}>
+          <div style={{ fontSize: 13, color: "#991b1b", fontWeight: 500 }}>
+            You are unable to message this stylist.
+          </div>
+        </div>
+      )}
+
       <div className="header">
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <button onClick={() => nav(-1)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-secondary)" }}>
@@ -259,7 +278,7 @@ export default function Chat() {
             {sessionClosed ? "This stylist has closed your relationship" : "Your session has ended"}
           </div>
           <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={() => setShowReviewPrompt(true)} style={{ flex: 1, padding: "8px 12px", background: "var(--pink-light)", border: "1px solid var(--pink)", borderRadius: "var(--radius-sm)", cursor: "pointer", fontSize: 12, color: "var(--pink-dark)", fontFamily: "inherit", fontWeight: 500 }}>Leave a review</button>
+            <button onClick={() => setShowReviewPrompt(true)} style={{ flex: 1, padding: "8px 12px", background: "var(--avatar-bg)", border: "1px solid var(--pink)", borderRadius: "var(--radius-sm)", cursor: "pointer", fontSize: 12, color: "var(--pink-dark)", fontFamily: "inherit", fontWeight: 500 }}>Leave a review</button>
             <button onClick={() => nav("/plans")} style={{ flex: 1, padding: "8px 12px", background: "var(--pink)", border: "none", borderRadius: "var(--radius-sm)", cursor: "pointer", fontSize: 12, color: "white", fontFamily: "inherit", fontWeight: 500 }}>Upgrade</button>
           </div>
         </div>
@@ -302,7 +321,7 @@ export default function Chat() {
               {m.type === "image" ? (
                 <img src={m.content} alt="shared" style={{ maxWidth: 200, borderRadius: 12, display: "block" }} />
               ) : m.type === "video_invite" ? (
-                <div style={{ background: "var(--pink-light)", border: "1px solid #f4c0d1", borderRadius: 12, padding: "10px 14px" }}>
+                <div style={{ background: "var(--avatar-bg)", border: "1px solid #f4c0d1", borderRadius: 12, padding: "10px 14px" }}>
                   <div style={{ fontSize: 13, color: "var(--pink-dark)", marginBottom: 8 }}>Video call started</div>
                   <button className="btn-pink btn-sm" onClick={() => {
                     const url = m.content.split("Join here: ")[1];
@@ -366,7 +385,8 @@ export default function Chat() {
           stylistId={stylistId}
           stylistName={stylist.name}
           conversationId={conversationId}
-          onClose={() => { setShowTip(false); setToast("Tip sent!"); }}
+          onClose={() => setShowTip(false)}
+          onSuccess={() => { setShowTip(false); setToast("Tip sent!"); }}
         />
       )}
     </>

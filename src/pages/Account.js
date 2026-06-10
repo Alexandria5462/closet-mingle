@@ -343,7 +343,7 @@ export default function Account() {
 
           {/* Profile header */}
           <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 20 }}>
-            <div onClick={() => editing && fileRef.current.click()} style={{ width: 72, height: 72, borderRadius: "50%", overflow: "hidden", background: "var(--pink-light)", border: editing ? "2px dashed var(--pink)" : "2px solid var(--border)", cursor: editing ? "pointer" : "default", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div onClick={() => editing && fileRef.current.click()} style={{ width: 72, height: 72, borderRadius: "50%", overflow: "hidden", background: "var(--avatar-bg)", border: editing ? "2px dashed var(--pink)" : "2px solid var(--border)", cursor: editing ? "pointer" : "default", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
               {photoPreview
                 ? <img src={photoPreview} alt="profile" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 : <span style={{ fontSize: 22, fontWeight: 600, color: "var(--pink-dark)" }}>{initials}</span>
@@ -590,7 +590,7 @@ export default function Account() {
               {isStylist ? (
                 <>
                   {/* Stylist billing — show their plan options clearly */}
-                  <div className="card" style={{ background: "var(--pink-light)", border: "1px solid #f4c0d1" }}>
+                  <div className="card" style={{ background: "var(--avatar-bg)", border: "1px solid #f4c0d1" }}>
                     <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 4 }}>Your current stylist plan</div>
                     <div style={{ fontSize: 16, fontWeight: 600, color: "var(--pink-dark)", marginBottom: 4 }}>{stylistPlanLabel}</div>
                     <div style={{ fontSize: 12, color: "var(--pink-dark)", opacity: 0.8 }}>

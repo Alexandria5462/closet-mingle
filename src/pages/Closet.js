@@ -282,7 +282,7 @@ export default function Closet() {
         <div className="body">
           {/* Upload progress */}
           {uploading && uploadProgress && (
-            <div style={{ background: "var(--pink-light)", borderRadius: "var(--radius)", padding: "12px 14px", marginBottom: 12, fontSize: 13, color: "var(--pink-dark)", fontWeight: 500, display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ background: "var(--avatar-bg)", borderRadius: "var(--radius)", padding: "12px 14px", marginBottom: 12, fontSize: 13, color: "var(--pink-dark)", fontWeight: 500, display: "flex", alignItems: "center", gap: 8 }}>
               <span className="spinner" style={{ borderTopColor: "var(--pink)", borderColor: "rgba(212,83,126,0.2)", width: 16, height: 16 }}></span>
               {uploadProgress}
             </div>

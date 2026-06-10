@@ -111,14 +111,14 @@ export default function StylistAnalytics() {
               <div style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.7, maxWidth: 280, margin: "0 auto 24px" }}>
                 Complete sessions with clients and your earnings, ratings and session history will show up here
               </div>
-              <div style={{ background: "var(--pink-light)", border: "1px solid #f4c0d1", borderRadius: "var(--radius)", padding: "14px 16px", fontSize: 13, color: "var(--pink-dark)", textAlign: "left" }}>
+              <div style={{ background: "var(--avatar-bg)", border: "1px solid #f4c0d1", borderRadius: "var(--radius)", padding: "14px 16px", fontSize: 13, color: "var(--pink-dark)", textAlign: "left" }}>
                 <strong>Tip:</strong> Turn on your availability in your Profile tab so clients can find you!
               </div>
             </div>
           ) : (
             <>
               {/* Revenue highlight */}
-              <div style={{ background: "var(--pink-light)", border: "1px solid #f4c0d1", borderRadius: "var(--radius)", padding: 16, marginBottom: 14, textAlign: "center" }}>
+              <div style={{ background: "var(--avatar-bg)", border: "1px solid #f4c0d1", borderRadius: "var(--radius)", padding: 16, marginBottom: 14, textAlign: "center" }}>
                 <div style={{ fontSize: 12, color: "var(--pink-dark)", marginBottom: 4, fontWeight: 500 }}>Total earned</div>
                 <div style={{ fontSize: 36, fontWeight: 700, color: "var(--pink-dark)" }}>
                   ${stats.totalEarnings.toFixed(2)}

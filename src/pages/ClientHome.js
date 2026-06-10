@@ -168,7 +168,7 @@ export default function ClientHome() {
           >
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <div style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--pink-light)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <div style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--avatar-bg)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <i className="ti ti-message-circle" style={{ fontSize: 18, color: "var(--pink)" }} aria-hidden="true"></i>
                 </div>
                 <div>
@@ -194,7 +194,7 @@ export default function ClientHome() {
           >
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <div style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--pink-light)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <div style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--avatar-bg)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <i className="ti ti-heart" style={{ fontSize: 18, color: "var(--pink)" }} aria-hidden="true"></i>
                 </div>
                 <div>

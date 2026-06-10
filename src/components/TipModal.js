@@ -6,7 +6,7 @@ import { useAuth } from "../lib/AuthContext";
 
 const TIP_AMOUNTS = [2, 5, 10, 20];
 
-export default function TipModal({ stylistId, stylistName, conversationId, onClose }) {
+export default function TipModal({ stylistId, stylistName, conversationId, onClose, onSuccess }) {
   const { currentUser, userProfile } = useAuth();
 
   // When modal opens, mark any stale tip notifications as read
@@ -54,6 +54,7 @@ export default function TipModal({ stylistId, stylistName, conversationId, onClo
       // Notify stylist ONLY when tip is actually sent
       notifyStylistTipReceived(stylistId, userProfile?.name || "A client", finalAmount.toFixed(2));
       setDone(true);
+      if (onSuccess) onSuccess();
     } catch (e) {
       console.error("Tip error:", e);
     }

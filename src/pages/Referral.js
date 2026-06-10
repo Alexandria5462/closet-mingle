@@ -89,7 +89,7 @@ export default function Referral() {
           </div>
 
           {/* Referral code display */}
-          <div style={{ background: "var(--pink-light)", border: "2px dashed var(--pink)", borderRadius: "var(--radius)", padding: 20, textAlign: "center", marginBottom: 16 }}>
+          <div style={{ background: "var(--avatar-bg)", border: "2px dashed var(--pink)", borderRadius: "var(--radius)", padding: 20, textAlign: "center", marginBottom: 16 }}>
             <div style={{ fontSize: 11, color: "var(--pink-dark)", marginBottom: 6, fontWeight: 500, textTransform: "uppercase", letterSpacing: 1 }}>Your referral code</div>
             <div style={{ fontSize: 28, fontWeight: 700, color: "var(--pink-dark)", letterSpacing: 4 }}>{referralCode}</div>
           </div>

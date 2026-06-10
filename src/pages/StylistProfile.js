@@ -37,6 +37,12 @@ export default function StylistProfile() {
     try {
       const snap = await getDoc(doc(db, "users", stylistId));
       if (snap.exists()) setStylist(snap.data());
+      if (currentUser?.uid && !isStylist) {
+        try {
+          const blockSnap = await getDocs(query(collection(db, "blockedUsers"), where("stylistId", "==", stylistId), where("clientId", "==", currentUser.uid)));
+          if (!blockSnap.empty) { nav("/find-stylist", { replace: true }); return; }
+        } catch(e) {}
+      }
 
       // Load portfolio
       const portSnap = await getDocs(

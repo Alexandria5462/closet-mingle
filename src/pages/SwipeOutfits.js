@@ -403,7 +403,7 @@ export default function SwipeOutfits() {
         <div className="body">
           {/* Watermark banner for free accounts */}
           {isFreeAccount && (
-            <div style={{ background: "var(--pink-light)", border: "1px solid #f4c0d1", borderRadius: "var(--radius)", padding: "6px 12px", marginBottom: 10, fontSize: 11, color: "var(--pink-dark)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ background: "var(--avatar-bg)", border: "1px solid #f4c0d1", borderRadius: "var(--radius)", padding: "6px 12px", marginBottom: 10, fontSize: 11, color: "var(--pink-dark)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <span>📸 Screenshots include a ClosetMingle watermark on Free plan</span>
               <span onClick={() => {}} style={{ cursor: "pointer", textDecoration: "underline", fontSize: 11 }} onClick={() => window.location.href="/plans"}>Upgrade</span>
             </div>

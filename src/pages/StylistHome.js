@@ -27,6 +27,18 @@ export default function StylistHome() {
     }
   }, [currentUser]);
 
+  useEffect(() => {
+    if (!currentUser?.uid) return;
+    const unsub = onSnapshot(collection(db, "messages"), (snap) => {
+      const unread = snap.docs.filter(d => {
+        const data = d.data();
+        return (data.conversationId||"").includes(currentUser.uid) && data.senderId !== currentUser.uid && !data.read;
+      }).length;
+      setTodayStats(prev => ({...prev, unread}));
+    });
+    return unsub;
+  }, [currentUser]);
+
   async function loadDashboard() {
     setLoading(true);
     try {

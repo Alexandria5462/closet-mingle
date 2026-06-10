@@ -123,7 +123,7 @@ export default function SavedOutfits() {
         <div className="body">
           {/* Watermark notice for free accounts */}
           {isFreeAccount && (
-            <div style={{ background: "var(--pink-light)", border: "1px solid #f4c0d1", borderRadius: "var(--radius)", padding: "6px 12px", marginBottom: 10, fontSize: 11, color: "var(--pink-dark)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ background: "var(--avatar-bg)", border: "1px solid #f4c0d1", borderRadius: "var(--radius)", padding: "6px 12px", marginBottom: 10, fontSize: 11, color: "var(--pink-dark)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <span>📸 Screenshots include a ClosetMingle watermark on Free plan</span>
               <span style={{ cursor: "pointer", textDecoration: "underline" }} onClick={() => window.location.href="/plans"}>Upgrade</span>
             </div>
@@ -255,7 +255,7 @@ export default function SavedOutfits() {
                 </div>
 
                 {outfit.colorStory && (
-                  <div style={{ background: "var(--pink-light)", borderRadius: 8, padding: "6px 10px", marginBottom: 6, fontSize: 12, color: "var(--pink-dark)" }}>
+                  <div style={{ background: "var(--avatar-bg)", borderRadius: 8, padding: "6px 10px", marginBottom: 6, fontSize: 12, color: "var(--pink-dark)" }}>
                     {outfit.colorStory}
                   </div>
                 )}

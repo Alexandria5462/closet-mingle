@@ -5,7 +5,6 @@ import { db } from "../lib/firebase";
 import { useAuth } from "../lib/AuthContext";
 import TabBar from "../components/TabBar";
 import Toast from "../components/Toast";
-import ShareOutfit from "../components/ShareOutfit";
 
 const OCCASIONS = ["Casual","Work / Office","Date Night","Brunch","Formal","Travel","Workout"];
 
@@ -26,11 +25,30 @@ async function generateOutfitsFromLiked(likedItems, occasion) {
     const response = await fetch("/api/generate-outfit", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ items: likedItems, occasion }),
+      body: JSON.stringify({
+        items: likedItems,
+        occasion,
+        userId: window.__cmUserId || "",
+        recentOutfitIds: (() => {
+          try {
+            const recent = JSON.parse(localStorage.getItem("cm_recent_outfits") || "[]");
+            const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+            return recent.filter(r => r.ts > cutoff).map(r => r.key);
+          } catch(e) { return []; }
+        })(),
+      }),
     });
     if (!response.ok) return [];
     const data = await response.json();
     const apiOutfits = data.outfits || [];
+    // Save generated outfit keys for 24hr dupe tracking
+    try {
+      const existing = JSON.parse(localStorage.getItem("cm_recent_outfits") || "[]");
+      const now = Date.now();
+      const newKeys = apiOutfits.map(o => ({ key: [...(o.selectedIds || [])].sort().join(","), ts: now }));
+      const updated = [...existing, ...newKeys].filter(r => r.ts > now - 24*60*60*1000).slice(-50);
+      localStorage.setItem("cm_recent_outfits", JSON.stringify(updated));
+    } catch(e) {}
     return apiOutfits.map(outfit => ({
       outfitName: outfit.outfitName,
       colorStory: outfit.colorStory,
@@ -99,7 +117,6 @@ export default function GeneratedOutfits() {
   const [savedIds, setSavedIds] = useState(new Set());
   const [error, setError] = useState("");
   const [namingOutfit, setNamingOutfit] = useState(null); // outfit index being named
-  const [sharingOutfit, setSharingOutfit] = useState(null); // outfit being shared
 
   // Determine expiry based on tier
   const isFreeAccount = !userProfile?.subscriptionTier || userProfile?.subscriptionTier === "free";
@@ -221,7 +238,7 @@ export default function GeneratedOutfits() {
 
           {/* Based on liked items */}
           {likedItems.length > 0 && (
-            <div style={{ background: "var(--pink-light)", border: "1px solid #f4c0d1", borderRadius: "var(--radius)", padding: "10px 14px", marginBottom: 14, fontSize: 12, color: "var(--pink-dark)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ background: "var(--avatar-bg)", border: "1px solid #f4c0d1", borderRadius: "var(--radius)", padding: "10px 14px", marginBottom: 14, fontSize: 12, color: "var(--pink-dark)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <span>Based on your {likedItems.length} liked items</span>
               <button onClick={() => nav("/liked")} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--pink)", fontSize: 12, fontWeight: 500 }}>Edit liked →</button>
             </div>
@@ -262,7 +279,7 @@ export default function GeneratedOutfits() {
             <div style={{ textAlign: "center", padding: "40px 20px" }}>
               <div style={{ fontSize: 40, marginBottom: 12 }}>😕</div>
               <div style={{ fontSize: 15, fontWeight: 500, marginBottom: 8 }}>Could not generate outfits</div>
-              <div style={{ background: "var(--pink-light)", border: "1px solid #f4c0d1", borderRadius: "var(--radius)", padding: "12px 14px", fontSize: 13, color: "var(--pink-dark)", marginBottom: 20, textAlign: "left" }}>{error}</div>
+              <div style={{ background: "var(--avatar-bg)", border: "1px solid #f4c0d1", borderRadius: "var(--radius)", padding: "12px 14px", fontSize: 13, color: "var(--pink-dark)", marginBottom: 20, textAlign: "left" }}>{error}</div>
               <button className="btn-pink" onClick={() => nav("/liked")} style={{ width: "auto", padding: "10px 24px" }}>← Back to liked items</button>
             </div>
           )}
@@ -362,8 +379,7 @@ export default function GeneratedOutfits() {
       )}
 
       {/* Share outfit modal */}
-      {sharingOutfit && (
-        <ShareOutfit outfit={sharingOutfit} onClose={() => setSharingOutfit(null)} />
+       />
       )}
     </>
   );

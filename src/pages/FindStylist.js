@@ -83,9 +83,17 @@ export default function FindStylist() {
         return { ...s, quizAnswers: sQuizAnswers, rating: liveRating, reviewCount: liveReviewCount };
       }));
 
-      const specs = ["All", ...new Set(withData.map(s => s.specialty).filter(Boolean))];
+      let filteredData = withData;
+      if (userProfile?.uid) {
+        try {
+          const blockSnap = await getDocs(query(collection(db, "blockedUsers"), where("clientId", "==", userProfile.uid)));
+          const blockedBy = new Set(blockSnap.docs.map(d => d.data().stylistId));
+          filteredData = withData.filter(s => !blockedBy.has(s.uid));
+        } catch(e) {}
+      }
+      const specs = ["All", ...new Set(filteredData.map(s => s.specialty).filter(Boolean))];
       setSpecialties(specs);
-      setStylists(withData);
+      setStylists(filteredData);
     } catch (e) {
       console.error("FindStylist load error:", e);
     }
@@ -145,7 +153,7 @@ export default function FindStylist() {
 
           {/* Free account banner — client only */}
           {isFree && !isStylist && (
-            <div style={{ background: "var(--pink-light)", border: "1px solid #f4c0d1", borderRadius: "var(--radius)", padding: "12px 14px", marginBottom: 14, fontSize: 13, color: "var(--pink-dark)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ background: "var(--avatar-bg)", border: "1px solid #f4c0d1", borderRadius: "var(--radius)", padding: "12px 14px", marginBottom: 14, fontSize: 13, color: "var(--pink-dark)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <span>Upgrade to chat with stylists</span>
               <button onClick={() => nav("/plans")} style={{ background: "var(--pink)", border: "none", borderRadius: 20, padding: "5px 14px", color: "white", cursor: "pointer", fontSize: 12, fontWeight: 500 }}>
                 Upgrade →
