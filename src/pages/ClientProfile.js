@@ -22,6 +22,8 @@ export default function ClientProfile() {
   const [lightboxIndex, setLightboxIndex] = useState(null);
   const [isBlocked, setIsBlocked] = useState(false);
   const [blocking, setBlocking] = useState(false);
+  const [isMyClient, setIsMyClient] = useState(false);
+  const [addingClient, setAddingClient] = useState(false);
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
@@ -95,9 +97,73 @@ export default function ClientProfile() {
           )
         );
         setIsBlocked(!blockSnap.empty);
+
+        // Check if already an active client (chatSession with active status)
+        const clientSnap2 = await getDocs(
+          query(collection(db, "chatSessions"),
+            where("stylistId", "==", currentUser.uid),
+            where("clientId", "==", clientId),
+            where("status", "==", "active")
+          )
+        );
+        setIsMyClient(!clientSnap2.empty);
       }
     } catch(e) { console.error(e); }
     setLoading(false);
+  }
+
+  async function toggleMyClient() {
+    setAddingClient(true);
+    try {
+      const conversationId = [clientId, currentUser.uid].sort().join("_");
+      const snap = await getDocs(
+        query(collection(db, "chatSessions"),
+          where("stylistId", "==", currentUser.uid),
+          where("clientId", "==", clientId)
+        )
+      );
+
+      if (isMyClient) {
+        // Mark as past — set status to "ended" so they appear under Past filter
+        if (!snap.empty) {
+          for (const d of snap.docs) {
+            await updateDoc(doc(db, "chatSessions", d.id), {
+              status: "ended",
+              endedAt: new Date().toISOString(),
+            });
+          }
+        }
+        setIsMyClient(false);
+        setToast(`${client?.name || "Client"} moved to past clients`);
+      } else {
+        if (!snap.empty) {
+          // Session exists but ended — reactivate it
+          for (const d of snap.docs) {
+            await updateDoc(doc(db, "chatSessions", d.id), {
+              status: "active",
+              reactivatedAt: new Date().toISOString(),
+            });
+          }
+        } else {
+          // No session yet — create one
+          await addDoc(collection(db, "chatSessions"), {
+            conversationId,
+            clientId,
+            clientName: client?.name || "",
+            stylistId: currentUser.uid,
+            status: "active",
+            startedAt: new Date().toISOString(),
+            addedManually: true,
+          });
+        }
+        setIsMyClient(true);
+        setToast(`${client?.name || "Client"} added to your active clients`);
+      }
+    } catch(e) {
+      console.error(e);
+      setToast("Failed. Try again.");
+    }
+    setAddingClient(false);
   }
 
   async function toggleBlock() {
@@ -173,6 +239,23 @@ export default function ClientProfile() {
         </div>
         {/* Message button */}
         <div style={{ display: "flex", gap: 8 }}>
+          {/* Add/Remove as client — stylist only */}
+          {isStylist && (
+            <button
+              onClick={toggleMyClient}
+              disabled={addingClient}
+              style={{
+                padding: "6px 12px", fontSize: 12, fontFamily: "inherit",
+                cursor: "pointer", borderRadius: "var(--radius-sm)",
+                background: isMyClient ? "var(--bg-card)" : "var(--pink)",
+                border: `1px solid ${isMyClient ? "var(--border)" : "var(--pink)"}`,
+                color: isMyClient ? "var(--text-secondary)" : "white",
+                fontWeight: 500,
+              }}
+            >
+              {addingClient ? "..." : isMyClient ? "Active Client ✓" : "+ Add Client"}
+            </button>
+          )}
           <button
             className="btn-pink btn-sm"
             onClick={() => nav(`/stylist/chat/${clientId}`)}
