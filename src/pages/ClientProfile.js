@@ -264,42 +264,40 @@ export default function ClientProfile() {
                   }
                 </div>
                 <div style={{ fontSize: 22, fontWeight: 600, marginBottom: 4 }}>{client.name}</div>
-                {/* Username + action buttons inline */}
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, flexWrap: "wrap", marginBottom: 6 }}>
-                  {client.username && (
-                    <div style={{ fontSize: 13, color: "var(--text-tertiary)" }}>@{client.username}</div>
-                  )}
-                  {isStylist && (
-                    <>
-                      {/* Message button */}
-                      <button
-                        onClick={() => nav(`/stylist/chat/${clientId}`)}
-                        style={{ padding: "3px 10px", fontSize: 11, fontFamily: "inherit", cursor: "pointer", borderRadius: 20, background: "var(--pink)", border: "none", color: "white", fontWeight: 500 }}
-                      >
-                        <i className="ti ti-message-circle" style={{ fontSize: 11, marginRight: 3 }} aria-hidden="true"></i>
-                        Message
-                      </button>
-                      {/* Add/Remove client button */}
-                      <button
-                        onClick={toggleMyClient}
-                        disabled={addingClient}
-                        style={{ padding: "3px 10px", fontSize: 11, fontFamily: "inherit", cursor: "pointer", borderRadius: 20, background: isMyClient ? "var(--bg-card)" : "transparent", border: `1px solid ${isMyClient ? "var(--success)" : "var(--pink)"}`, color: isMyClient ? "var(--success)" : "var(--pink)", fontWeight: 500 }}
-                      >
-                        {addingClient ? "..." : isMyClient ? "✓ Active Client" : "+ Add Client"}
-                      </button>
-                      {/* Block button */}
-                      <button
-                        onClick={toggleBlock}
-                        disabled={blocking}
-                        style={{ padding: "3px 10px", fontSize: 11, fontFamily: "inherit", cursor: "pointer", borderRadius: 20, background: "transparent", border: `1px solid ${isBlocked ? "var(--success)" : "var(--danger)"}`, color: isBlocked ? "var(--success)" : "var(--danger)", fontWeight: 500 }}
-                      >
-                        {blocking ? "..." : isBlocked ? "Unblock" : "Block"}
-                      </button>
-                    </>
-                  )}
-                </div>
+                {/* Username on its own line */}
+                {client.username && (
+                  <div style={{ fontSize: 13, color: "var(--text-tertiary)", marginBottom: 10 }}>@{client.username}</div>
+                )}
+
+                {/* Action buttons — own row, centered, below @ name, above stats */}
+                {isStylist && (
+                  <div style={{ display: "flex", justifyContent: "center", gap: 8, marginBottom: 14, flexWrap: "nowrap" }}>
+                    <button
+                      onClick={() => nav(`/stylist/chat/${clientId}`)}
+                      style={{ padding: "6px 14px", fontSize: 12, fontFamily: "inherit", cursor: "pointer", borderRadius: 20, background: "var(--pink)", border: "none", color: "white", fontWeight: 500, display: "flex", alignItems: "center", gap: 4 }}
+                    >
+                      <i className="ti ti-message-circle" style={{ fontSize: 13 }} aria-hidden="true"></i>
+                      Message
+                    </button>
+                    <button
+                      onClick={toggleMyClient}
+                      disabled={addingClient}
+                      style={{ padding: "6px 14px", fontSize: 12, fontFamily: "inherit", cursor: "pointer", borderRadius: 20, background: isMyClient ? "var(--bg-card)" : "transparent", border: `1px solid ${isMyClient ? "var(--success)" : "var(--pink)"}`, color: isMyClient ? "var(--success)" : "var(--pink)", fontWeight: 500 }}
+                    >
+                      {addingClient ? "..." : isMyClient ? "✓ Active Client" : "+ Add Client"}
+                    </button>
+                    <button
+                      onClick={toggleBlock}
+                      disabled={blocking}
+                      style={{ padding: "6px 14px", fontSize: 12, fontFamily: "inherit", cursor: "pointer", borderRadius: 20, background: "transparent", border: `1px solid ${isBlocked ? "var(--success)" : "var(--danger)"}`, color: isBlocked ? "var(--success)" : "var(--danger)", fontWeight: 500 }}
+                    >
+                      {blocking ? "..." : isBlocked ? "Unblock" : "Block"}
+                    </button>
+                  </div>
+                )}
+
                 {/* Stats row */}
-                <div style={{ display: "flex", justifyContent: "center", gap: 24, marginTop: 10 }}>
+                <div style={{ display: "flex", justifyContent: "center", gap: 24, marginTop: 4 }}>
                   <div style={{ textAlign: "center" }}>
                     <div style={{ fontSize: 18, fontWeight: 700 }}>{sessions.length}</div>
                     <div style={{ fontSize: 11, color: "var(--text-tertiary)" }}>Sessions</div>
