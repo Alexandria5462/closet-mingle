@@ -56,14 +56,15 @@ const CLIENT_PLANS = [
   },
   {
     id: "session",
-    name: "Try a Session",
-    price: "$9.99",
-    period: "/session",
-    badge: "Add-on",
+    name: "Book a Stylist",
+    price: "Varies",
+    period: "",
+    badge: "Flexible",
     features: [
-      "One 24-hour styling session",
+      "Pay the stylist's own rate",
+      "Monthly or per-session booking",
       "Text and video chat",
-      "Free add-on to any paid plan",
+      "Rate set by each stylist",
     ],
     limitations: [],
   },
@@ -172,9 +173,11 @@ export default function Plans() {
             <div style={{
               background: "#f0fdf4", border: "1px solid #6ee7b7",
               borderRadius: "var(--radius)", padding: "12px 14px",
-              fontSize: 13, color: "#065f46", marginBottom: 16
+              fontSize: 13, color: "#065f46", marginBottom: 16, lineHeight: 1.6,
             }}>
-              You keep <strong>70%</strong> of every session fee and tip. Closet Mingle keeps 30%.
+              💝 <strong>You keep 100% of all tips</strong> from clients<br />
+              💰 <strong>You keep 80%</strong> of every booking — you set your own rates<br />
+              📱 Your monthly plan gives you full platform access and unlimited clients
             </div>
           </div>
         )}

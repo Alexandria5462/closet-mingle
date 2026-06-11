@@ -233,14 +233,15 @@ export default function StylistChat() {
     if (!sessionDoc) return;
     setEnding(true);
     try {
-      // Mark session as ended in Firebase
+      // Record earnings based on stylist's own session rate (80% to stylist)
+      const sessionRate = userProfile?.sessionRate || null;
+      const stylistEarned = sessionRate ? parseFloat((sessionRate * 0.8).toFixed(2)) : 0;
       await updateDoc(doc(db, "chatSessions", sessionDoc.id), {
         status: "ended",
         endedAt: new Date().toISOString(),
         endedBy: currentUser.uid,
-        // Only record a fee for Pay Per Session clients ($9.99, 100% to stylist)
-        sessionFee: isSessionClient ? 9.99 : 0,
-        stylistEarned: isSessionClient ? 9.99 : 0,
+        sessionFee: sessionRate || 0,
+        stylistEarned,
       });
 
       // Send system message to client
@@ -288,9 +289,9 @@ export default function StylistChat() {
                 }
               </div>
             </div>
-            {isSessionClient && (
+            {isSessionClient && userProfile?.sessionRate && (
               <div style={{ background: "#f0fdf4", border: "1px solid #6ee7b7", borderRadius: "var(--radius)", padding: "10px 14px", marginBottom: 14, fontSize: 12, color: "#065f46" }}>
-                You will earn <strong>${(9.99 * 0.7).toFixed(2)}</strong> for this Pay Per Session (70% of $9.99 · ClosetMingle keeps $3.06)
+                You will earn <strong>${(userProfile.sessionRate * 0.8).toFixed(2)}</strong> for this session (80% of your ${userProfile.sessionRate} rate · ClosetMingle keeps 20%)
               </div>
             )}
             <div style={{ display: "flex", gap: 10 }}>

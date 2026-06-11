@@ -248,7 +248,7 @@ export default function Signup() {
             </div>
 
             <div style={{ background: "#f0fdf4", border: "1px solid #6ee7b7", borderRadius: "var(--radius)", padding: "10px 14px", marginBottom: 14, fontSize: 12, color: "#065f46" }}>
-              💝 Keep <strong>100%</strong> of every tip · 🎯 Keep <strong>70%</strong> of every "Try a Session" fee. Cancel anytime.
+              💝 Keep <strong>100%</strong> of every tip · 💰 Keep <strong>80%</strong> of every booking — you set your own rates. Cancel anytime.
             </div>
           </>
         )}

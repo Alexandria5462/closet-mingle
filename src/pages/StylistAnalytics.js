@@ -27,20 +27,18 @@ export default function StylistAnalytics() {
         const sessions = sessionSnap.docs.map(d => d.data());
         const totalClients = new Set(sessions.map(s => s.clientId)).size;
 
-        // Only Pay Per Session clients earn the stylist a fee
-        const completedSessionFees = sessions.filter(s =>
-          s.status === "ended" && s.clientTier === "session"
-        );
-        const sessionFeeEarnings = completedSessionFees.length * (9.99 * 0.7);
+        // Session earnings — use actual stylistEarned stored at End Session (80% of stylist's rate)
+        const completedSessionFees = sessions.filter(s => s.status === "ended" && s.stylistEarned > 0);
+        const sessionFeeEarnings = completedSessionFees.reduce((sum, s) => sum + (s.stylistEarned || 0), 0);
 
-        // Monthly breakdown by first contact date
+        // Monthly breakdown using actual earnings
         const monthly = {};
         sessions.forEach(s => {
           const month = new Date(s.startedAt).toLocaleDateString("en-US", { month: "short", year: "numeric" });
           if (!monthly[month]) monthly[month] = { sessions: 0, earnings: 0 };
           monthly[month].sessions++;
-          if (s.status === "ended" && s.clientTier === "session") {
-            monthly[month].earnings += 9.99 * 0.7;
+          if (s.status === "ended" && s.stylistEarned > 0) {
+            monthly[month].earnings += s.stylistEarned || 0;
           }
         });
         setMonthlyData(Object.entries(monthly).map(([month, data]) => ({ month, ...data })).slice(-6));

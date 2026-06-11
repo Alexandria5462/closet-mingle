@@ -7,10 +7,10 @@ import TabBar from "../components/TabBar";
 
 function getTierInfo(tier) {
   switch (tier) {
-    case "monthly": return { isPaid: true, hasStylist: true, hasVideo: false, canChoose: false, label: "Premium AI", color: "var(--pink-light)" };
-    case "premium_plus": return { isPaid: true, hasStylist: true, hasVideo: true, canChoose: true, label: "Premium Plus", color: "#ede9fe" };
-    case "session": return { isPaid: true, hasStylist: true, hasVideo: true, canChoose: false, label: "Pay Per Session", color: "#f0fdf4" };
-    default: return { isPaid: false, hasStylist: false, hasVideo: false, canChoose: false, label: "Free", color: "var(--bg)" };
+    case "monthly":      return { isPaid: true, hasStylist: true, label: "Premium AI",    color: "var(--pink-light)" };
+    case "premium_plus": return { isPaid: true, hasStylist: true, label: "Premium Plus",  color: "#ede9fe" };
+    case "session":      return { isPaid: true, hasStylist: true, label: "Session",        color: "#f0fdf4" };
+    default:             return { isPaid: false, hasStylist: false, label: "Free",         color: "var(--bg)" };
   }
 }
 
@@ -66,7 +66,7 @@ export default function ClientHome() {
     { label: "Upload 5 tops, 5 bottoms or dresses", done: topsCount >= 5 && (bottomsCount >= 5 || dressCount >= 5), tip: "Add more variety for better outfit suggestions" },
     { label: "Add accessories, shoes and outerwear", done: closetCount >= 15, tip: "Completes your full wardrobe" },
     { label: "Generate your first outfit", done: savedCount >= 1, tip: "Like items then tap Generate" },
-    { label: "Chat with a personal stylist", done: tier.hasStylist, tip: tier.hasStylist ? "You have access!" : "Upgrade to unlock" },
+    { label: "Book a personal stylist", done: tier.hasStylist, tip: tier.hasStylist ? "Browse stylists and book one!" : "Upgrade to unlock stylist bookings" },
   ];
   const completed = MILESTONES.filter(m => m.done).length;
   const [unreadMsgCount, setUnreadMsgCount] = React.useState(0);
@@ -152,7 +152,7 @@ export default function ClientHome() {
                 <div style={{ fontSize: 12, opacity: 0.9, lineHeight: 1.5 }}>
                   {tier.hasStylist
                     ? "Browse stylists matched to your style profile"
-                    : "Browse stylists — upgrade to chat with them"
+                    : "Browse stylists and book one to get started"
                   }
                 </div>
               </div>

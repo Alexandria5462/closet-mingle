@@ -88,10 +88,13 @@ export default function StylistHome() {
           .filter(d => (d.data().createdAt || "") > todayStart)
           .reduce((sum, d) => sum + (d.data().stylistAmount || d.data().amount || 0), 0);
 
-        // "Try a Session" completions today: stylist keeps 70% of $9.99
+        // Session fees: stylist keeps 80% of their own session rate
         sessionEarningsRef.current = snap.docs
-          .filter(d => false) // session earnings handled separately below
-          .reduce((sum) => sum, 0);
+          .filter(d => {
+            const data = d.data();
+            return (data.endedAt || "") > todayStart && data.stylistEarned > 0;
+          })
+          .reduce((sum, d) => sum + (d.data().stylistEarned || 0), 0);
 
         setTodayStats(prev => ({
           ...prev,
@@ -100,21 +103,17 @@ export default function StylistHome() {
       }
     );
 
-    // ── Live "Try a Session" completions ──────────────────────
-    // Only Pay Per Session clients generate a session fee for the stylist
+    // ── Live session fee earnings (from completed bookings) ───
     const unsubSessionFees = onSnapshot(
       query(collection(db, "chatSessions"),
         where("stylistId", "==", currentUser.uid),
         where("status", "==", "ended")
       ),
       (snap) => {
-        // Only count session-tier clients (Pay Per Session = $9.99 * 70%)
+        // Use stylistEarned field written at End Session time (80% of their rate)
         sessionEarningsRef.current = snap.docs
-          .filter(d => {
-            const data = d.data();
-            return (data.endedAt || "") > todayStart && data.clientTier === "session";
-          })
-          .length * (9.99 * 0.7);
+          .filter(d => (d.data().endedAt || "") > todayStart)
+          .reduce((sum, d) => sum + (d.data().stylistEarned || 0), 0);
         setTodayStats(prev => ({
           ...prev,
           earnings: tipEarningsRef.current + sessionEarningsRef.current,

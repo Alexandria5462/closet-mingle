@@ -39,7 +39,7 @@ export default function TermsOfService() {
           },
           {
             title: "5. Subscriptions and Payments",
-            content: `${APP} offers the following subscription tiers: Free (no charge), Premium AI ($9.99/month), Premium Plus ($19.99/month), Pay Per Session ($9.99/session), and Stylist Subscription ($20/month or $200/year). All payments are processed securely through Stripe. Subscriptions automatically renew unless cancelled before the renewal date. You may cancel your subscription at any time through your Account settings. Refunds are issued at our discretion and are not guaranteed.`
+            content: `${APP} offers the following plans: Free (no charge), Premium AI ($9.99/month), Premium Plus ($19.99/month), and Stylist Subscription ($20/month or $200/year). Stylists set their own booking rates for monthly and per-session bookings with clients. All payments are processed securely through Stripe. Subscriptions automatically renew unless cancelled before the renewal date. You may cancel at any time through your Account settings. Refunds are issued at our discretion.`
           },
           {
             title: "6. Stylist Revenue Share",
