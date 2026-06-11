@@ -43,7 +43,7 @@ export default function TermsOfService() {
           },
           {
             title: "6. Stylist Revenue Share",
-            content: "Stylists who conduct sessions through the App receive 70% of each session fee. The Company retains 30% as a platform fee. This revenue split applies to session fees and tips processed through the platform. Payments are subject to Stripe's terms and processing times."
+            content: "Stylists who conduct Pay Per Session ($9.99) sessions receive 70% of the session fee ($6.93); ClosetMingle retains 30% as a platform fee. Tips sent by clients are paid 100% to the stylist — ClosetMingle does not take any portion of tips. Monthly and Premium subscription fees paid by clients are platform revenue and are not shared with stylists. Payments are subject to Stripe's terms and processing times."
           },
           {
             title: "7. User Content",

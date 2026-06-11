@@ -103,6 +103,35 @@ export default function Signup() {
 
       // Small delay to let Firebase auth state settle before navigating
       await new Promise(resolve => setTimeout(resolve, 300));
+
+      // Apply referral promo — 72hr free trial for new user only
+      if (referrerId && acct === "client") {
+        try {
+          const { collection, query, where, getDocs, updateDoc, doc, addDoc } = await import("firebase/firestore");
+          const { db: fdb } = await import("../lib/firebase");
+          const { getAuth } = await import("firebase/auth");
+          const uid = getAuth().currentUser?.uid;
+          if (uid) {
+            // Mark referral as used
+            const refSnap = await getDocs(
+              query(collection(fdb, "referrals"), where("code", "==", promoCode.trim().toUpperCase()))
+            );
+            if (!refSnap.empty) {
+              await updateDoc(doc(fdb, "referrals", refSnap.docs[0].id), {
+                usedBy: uid,
+                usedAt: new Date().toISOString(),
+              });
+            }
+            // Give new user 72hr premium trial
+            const expiresAt = new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString();
+            await updateDoc(doc(fdb, "users", uid), {
+              subscriptionTier: "monthly",
+              promoTrialExpiry: expiresAt,
+            });
+          }
+        } catch(e) { console.error("Promo apply error:", e); }
+      }
+
       if (acct === "stylist") {
         nav("/stylist", { replace: true });
       } else {
@@ -219,7 +248,7 @@ export default function Signup() {
             </div>
 
             <div style={{ background: "#f0fdf4", border: "1px solid #6ee7b7", borderRadius: "var(--radius)", padding: "10px 14px", marginBottom: 14, fontSize: 12, color: "#065f46" }}>
-              You keep <strong>70%</strong> of every session. Closet Mingle keeps 30%. Cancel anytime.
+              💝 Keep <strong>100%</strong> of every tip · 🎯 Keep <strong>70%</strong> of every "Try a Session" fee. Cancel anytime.
             </div>
           </>
         )}
@@ -230,6 +259,33 @@ export default function Signup() {
           {" "}and{" "}
           <span style={{ color: "var(--pink)", cursor: "pointer" }} onClick={() => window.location.href = "/privacy"}>Privacy Policy</span>
         </p>
+        {/* Promo code — optional, client paid plans only */}
+        {acct === "client" && (
+          <div style={{ marginBottom: 14 }}>
+            <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 6 }}>
+              Promo / referral code <span style={{ color: "var(--text-tertiary)" }}>(optional)</span>
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <input
+                className="input-field"
+                placeholder="Enter code"
+                value={promoCode}
+                onChange={e => { setPromoCode(e.target.value.toUpperCase()); setPromoError(""); }}
+                style={{ marginBottom: 0, textTransform: "uppercase", letterSpacing: 1, flex: 1 }}
+                maxLength={12}
+              />
+            </div>
+            {promoError && (
+              <div style={{ fontSize: 12, color: "var(--danger)", marginTop: 4 }}>{promoError}</div>
+            )}
+            {promoApplied && (
+              <div style={{ fontSize: 12, color: "var(--success)", marginTop: 4 }}>
+                Code applied! You'll get a 72-hour free trial.
+              </div>
+            )}
+          </div>
+        )}
+
         <button className="btn-pink" onClick={handleSubmit} disabled={loading}>
           {loading ? <span className="spinner"></span> : "Create account"}
         </button>

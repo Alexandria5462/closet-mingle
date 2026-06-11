@@ -171,6 +171,9 @@ export default function Account() {
   const [phone, setPhone] = useState(userProfile?.phone || "");
   const [availabilityEnabled, setAvailabilityEnabled] = useState(userProfile?.availabilityEnabled || false);
   const [availabilityHours, setAvailabilityHours] = useState(userProfile?.availabilityHours || "");
+  const [monthlyRate, setMonthlyRate] = useState(userProfile?.monthlyRate || "");
+  const [sessionRate, setSessionRate] = useState(userProfile?.sessionRate || "");
+  const [stripeLoading, setStripeLoading] = useState(false);
   const [photoFile, setPhotoFile] = useState(null);
   const [cropSrc, setCropSrc] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(userProfile?.photoUrl || null);
@@ -214,6 +217,8 @@ export default function Account() {
       setPhone(userProfile.phone || "");
       setAvailabilityEnabled(userProfile.availabilityEnabled || false);
       setAvailabilityHours(userProfile.availabilityHours || "");
+      setMonthlyRate(userProfile.monthlyRate || "");
+      setSessionRate(userProfile.sessionRate || "");
       setPhotoPreview(userProfile.photoUrl || null);
       if (userProfile.notifPrefs) setNotifPrefs(userProfile.notifPrefs);
     }
@@ -284,6 +289,30 @@ export default function Account() {
       setToast("Verification request submitted! We will review your profile shortly.");
     } catch(e) { setToast("Failed to submit. Please try again."); }
     setRequestingVerification(false);
+  }
+
+  async function connectStripe() {
+    setStripeLoading(true);
+    try {
+      const res = await fetch("/api/create-connect-account", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          stylistId: currentUser.uid,
+          email: currentUser.email,
+          name: userProfile?.name || "",
+        }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        setToast(data.error || "Failed to connect Stripe. Try again.");
+      }
+    } catch(e) {
+      setToast("Failed to connect Stripe. Try again.");
+    }
+    setStripeLoading(false);
   }
 
   async function loadQuizResult() {
@@ -362,7 +391,13 @@ export default function Account() {
       let photoUrl = userProfile?.photoUrl || "";
       if (photoFile) photoUrl = await uploadPhoto(photoFile);
       if (!username || username.length < 3) { setToast("Username must be at least 3 characters."); setSaving(false); return; }
-      await updateDoc(doc(db, "users", currentUser.uid), { name, username: username.toLowerCase(), about, city, specialty, phone, availabilityEnabled, availabilityHours, photoUrl, updatedAt: new Date().toISOString() });
+      await updateDoc(doc(db, "users", currentUser.uid), {
+        name, username: username.toLowerCase(), about, city, specialty, phone,
+        availabilityEnabled, availabilityHours,
+        monthlyRate: monthlyRate ? parseFloat(monthlyRate) : null,
+        sessionRate: sessionRate ? parseFloat(sessionRate) : null,
+        photoUrl, updatedAt: new Date().toISOString()
+      });
       setToast("Profile updated!");
       setEditing(false);
     } catch (e) { setToast("Failed to save. Try again."); }
@@ -567,7 +602,107 @@ export default function Account() {
                 </div>
               )}
 
-              {/* Verification — stylist only */}
+              {/* Pricing — stylist only */}
+              {isStylist && (
+                <div className="card">
+                  <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 10 }}>Your rates</div>
+                  <div style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 12, lineHeight: 1.5 }}>
+                    Set what clients pay to work with you. You keep <strong>80%</strong> of every booking — ClosetMingle keeps 20%.
+                  </div>
+
+                  {/* Monthly rate */}
+                  <div style={{ marginBottom: 12 }}>
+                    <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 4 }}>
+                      Monthly rate <span style={{ fontSize: 11 }}>(unlimited messaging for 1 month)</span>
+                    </div>
+                    {editing ? (
+                      <div style={{ position: "relative" }}>
+                        <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--text-secondary)", fontSize: 14 }}>$</span>
+                        <input
+                          className="input-field"
+                          type="number"
+                          min="5"
+                          max="500"
+                          placeholder="e.g. 49"
+                          value={monthlyRate}
+                          onChange={e => setMonthlyRate(e.target.value)}
+                          style={{ paddingLeft: 28, marginBottom: 0 }}
+                        />
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: 14, fontWeight: 500, color: monthlyRate ? "var(--text-primary)" : "var(--text-tertiary)" }}>
+                        {monthlyRate ? `$${monthlyRate}/month` : "Not set — tap Edit to add"}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Session rate */}
+                  <div>
+                    <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 4 }}>
+                      Per-session rate <span style={{ fontSize: 11 }}>(single 24-hour session)</span>
+                    </div>
+                    {editing ? (
+                      <div style={{ position: "relative" }}>
+                        <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--text-secondary)", fontSize: 14 }}>$</span>
+                        <input
+                          className="input-field"
+                          type="number"
+                          min="5"
+                          max="500"
+                          placeholder="e.g. 25"
+                          value={sessionRate}
+                          onChange={e => setSessionRate(e.target.value)}
+                          style={{ paddingLeft: 28, marginBottom: 0 }}
+                        />
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: 14, fontWeight: 500, color: sessionRate ? "var(--text-primary)" : "var(--text-tertiary)" }}>
+                        {sessionRate ? `$${sessionRate}/session` : "Not set — tap Edit to add"}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Stripe Connect — stylist only */}
+              {isStylist && (
+                <div className="card" style={{ border: `1px solid ${userProfile?.stripeOnboardingComplete ? "#6ee7b7" : "var(--border)"}` }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
+                    <div style={{ fontSize: 28 }}>{userProfile?.stripeOnboardingComplete ? "✅" : "💳"}</div>
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 600 }}>
+                        {userProfile?.stripeOnboardingComplete ? "Payments connected" : "Connect Stripe to get paid"}
+                      </div>
+                      <div style={{ fontSize: 11, color: "var(--text-secondary)" }}>
+                        {userProfile?.stripeOnboardingComplete
+                          ? "You can receive bookings and payouts"
+                          : "Required before clients can book you"
+                        }
+                      </div>
+                    </div>
+                  </div>
+                  {!userProfile?.stripeOnboardingComplete && (
+                    <>
+                      <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 12, lineHeight: 1.5 }}>
+                        Stripe is how you receive payouts from client bookings. Setup takes about 5 minutes — you'll need your bank account details.
+                      </div>
+                      <button
+                        className="btn-pink"
+                        onClick={connectStripe}
+                        disabled={stripeLoading}
+                        style={{ marginBottom: 0 }}
+                      >
+                        {stripeLoading ? "Opening Stripe..." : "Set up payouts with Stripe →"}
+                      </button>
+                    </>
+                  )}
+                  {userProfile?.stripeOnboardingComplete && (
+                    <div style={{ fontSize: 12, color: "#065f46" }}>
+                      Payouts are sent automatically after each booking. You keep 80% of every booking.
+                    </div>
+                  )}
+                </div>
+              )}
               {isStylist && (
                 <div className="card" style={{ border: verificationStatus === "verified" ? "1px solid #6ee7b7" : verificationStatus === "eligible" ? "1px solid var(--pink)" : "0.5px solid var(--border)" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
@@ -800,7 +935,7 @@ export default function Account() {
 
                   <div className="card" style={{ background: "#f0fdf4", border: "1px solid #6ee7b7" }}>
                     <div style={{ fontSize: 13, color: "#065f46" }}>
-                      You keep <strong>70%</strong> of every session fee and tip. Closet Mingle keeps 30%.
+                      💝 You keep <strong>100%</strong> of every tip · 🎯 You keep <strong>70%</strong> of every "Try a Session" fee
                     </div>
                   </div>
 

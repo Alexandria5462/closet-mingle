@@ -3,13 +3,13 @@ export default async function handler(req, res) {
   try {
     const { amount, stylistId, clientId, conversationId } = req.body;
     if (!amount || !stylistId) return res.status(400).json({ error: "amount and stylistId required" });
-    // Stripe tip processing would go here when Stripe Connect is set up
-    // For now just return success and the app records it in Firebase
+    // Tips: stylist keeps 100% — ClosetMingle does not take a cut of tips
+    // Stripe Connect processing will be enabled when payment integration is activated
     return res.status(200).json({
       success: true,
       amount,
-      stylistAmount: parseFloat((amount * 0.7).toFixed(2)),
-      platformAmount: parseFloat((amount * 0.3).toFixed(2)),
+      stylistAmount: parseFloat(amount.toFixed(2)), // 100% to stylist
+      platformAmount: 0,                             // 0% platform cut on tips
       message: "Tip recorded. Payment processing will be enabled when Stripe Connect is activated."
     });
   } catch (err) {

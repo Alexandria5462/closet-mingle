@@ -238,26 +238,23 @@ export default function StylistChat() {
         status: "ended",
         endedAt: new Date().toISOString(),
         endedBy: currentUser.uid,
+        // Only record a fee for Pay Per Session clients ($9.99, 100% to stylist)
+        sessionFee: isSessionClient ? 9.99 : 0,
+        stylistEarned: isSessionClient ? 9.99 : 0,
       });
 
-      // Send a system message so client sees the session ended
+      // Send system message to client
       await addDoc(collection(db, "messages"), {
         conversationId,
         senderId: currentUser.uid,
         senderName: userProfile.name,
-        content: "Your stylist has completed your session. Thank you for using Closet Mingle! 💗",
+        content: "Your stylist has completed your session. Thank you for using ClosetMingle! 💗",
         type: "session_ended",
         createdAt: new Date().toISOString(),
       });
 
-      // Notify client session ended
+      // Notify client
       notifyClientSessionEnded(clientId, currentUser.uid, userProfile?.name || "Your stylist");
-
-      // Update stylist analytics
-      await updateDoc(doc(db, "users", currentUser.uid), {
-        totalSessions: (userProfile?.totalSessions || 0) + 1,
-        totalEarnings: (userProfile?.totalEarnings || 0) + (9.99 * 0.7),
-      });
 
       setSessionStatus("ended");
       setShowEndConfirm(false);
@@ -293,7 +290,7 @@ export default function StylistChat() {
             </div>
             {isSessionClient && (
               <div style={{ background: "#f0fdf4", border: "1px solid #6ee7b7", borderRadius: "var(--radius)", padding: "10px 14px", marginBottom: 14, fontSize: 12, color: "#065f46" }}>
-                You will earn <strong>${(9.99 * 0.7).toFixed(2)}</strong> for this session (70% of $9.99)
+                You will earn <strong>${(9.99 * 0.7).toFixed(2)}</strong> for this Pay Per Session (70% of $9.99 · ClosetMingle keeps $3.06)
               </div>
             )}
             <div style={{ display: "flex", gap: 10 }}>
