@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../lib/AuthContext";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { collection, query, where, getDocs, onSnapshot } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import TabBar from "../components/TabBar";
 
@@ -42,19 +42,21 @@ export default function ClientHome() {
         const oSnap = await getDocs(query(collection(db, "savedOutfits"), where("userId", "==", userProfile.uid)));
         setSavedCount(oSnap.docs.filter(d => { const data = d.data(); return !data.expiresAt || new Date(data.expiresAt) > now; }).length);
       } catch (e) { console.error(e); }
-      // Load unread message count
-      try {
-        const msgSnap = await getDocs(collection(db, "messages"));
-        let unread = 0;
-        msgSnap.docs.forEach(d => {
-          const data = d.data();
-          if (data.conversationId?.includes(userProfile.uid) &&
-              data.senderId !== userProfile.uid && !data.read) unread++;
-        });
-        setUnreadMsgCount(unread);
-      } catch(e) {}
     }
     fetchStats();
+
+    // Live unread message count
+    const unsubMsgs = onSnapshot(collection(db, "messages"), (snap) => {
+      let unread = 0;
+      snap.docs.forEach(d => {
+        const data = d.data();
+        if ((data.conversationId || "").includes(userProfile.uid) &&
+            data.senderId !== userProfile.uid && !data.read) unread++;
+      });
+      setUnreadMsgCount(unread);
+    });
+
+    return () => { unsubMsgs(); };
   }, [userProfile]);
 
   // Progress milestones with specific item guidance

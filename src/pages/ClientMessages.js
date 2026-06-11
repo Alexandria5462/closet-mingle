@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { collection, query, where, getDocs, writeBatch } from "firebase/firestore";
+import { collection, query, where, onSnapshot, getDocs, writeBatch, doc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { useAuth } from "../lib/AuthContext";
 import TabBar from "../components/TabBar";
@@ -13,63 +13,63 @@ export default function ClientMessages() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const localReadRef = useRef(new Set());
+  const stylistCacheRef = useRef({});
 
   useEffect(() => {
-    if (currentUser?.uid) loadConversations();
-  }, [currentUser]);
-
-  async function loadConversations() {
+    if (!currentUser?.uid) return;
     setLoading(true);
-    try {
-      const snap = await getDocs(collection(db, "messages"));
-      const convMap = {};
 
-      snap.docs.forEach(d => {
-        const data = d.data();
-        const convId = data.conversationId || "";
-        if (!convId.includes(currentUser.uid)) return;
-        if (!convMap[convId]) {
-          convMap[convId] = { id: convId, messages: [], unread: 0 };
-        }
-        convMap[convId].messages.push(data);
-        if (!data.read && data.senderId !== currentUser.uid) {
-          convMap[convId].unread++;
-        }
-      });
+    // Live listener — updates instantly when messages arrive or are read
+    const unsub = onSnapshot(
+      collection(db, "messages"),
+      async (snap) => {
+        const convMap = {};
+        snap.docs.forEach(d => {
+          const data = d.data();
+          const convId = data.conversationId || "";
+          if (!convId.includes(currentUser.uid)) return;
+          if (!convMap[convId]) convMap[convId] = { id: convId, messages: [], unread: 0 };
+          convMap[convId].messages.push(data);
+          if (!data.read && data.senderId !== currentUser.uid) convMap[convId].unread++;
+        });
 
-      // Load stylist info for each conversation
-      const convList = await Promise.all(
-        Object.values(convMap).map(async conv => {
-          const stylistId = conv.id.replace(currentUser.uid, "").replace("_", "");
-          try {
-            const stylistSnap = await getDocs(
-              query(collection(db, "users"), where("__name__", "==", stylistId))
-            );
-            const stylist = !stylistSnap.empty ? stylistSnap.docs[0].data() : null;
+        // Load stylist profiles (cached so we don't re-fetch on every message)
+        const convList = await Promise.all(
+          Object.values(convMap).map(async conv => {
+            const parts = conv.id.split("_");
+            const stylistId = parts.find(id => id !== currentUser.uid);
+            if (!stylistCacheRef.current[stylistId]) {
+              try {
+                const stylistSnap = await getDocs(
+                  query(collection(db, "users"), where("__name__", "==", stylistId))
+                );
+                stylistCacheRef.current[stylistId] = !stylistSnap.empty ? stylistSnap.docs[0].data() : null;
+              } catch(e) {}
+            }
+            const stylist = stylistCacheRef.current[stylistId];
             const sorted = conv.messages.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
             return {
               id: conv.id,
-              conversationId: conv.id,
               stylistId,
               stylist,
               lastMessage: sorted[0],
-              lastMessageAt: sorted[0]?.createdAt || "",
-              unread: localReadRef.current.has(conv.id) ? 0 : conv.unread,
-              messageCount: conv.messages.length,
+              unread: conv.unread,
             };
-          } catch(e) { return null; }
-        })
-      );
+          })
+        );
 
-      const valid = convList
-        .filter(Boolean)
-        .filter(c => c.stylist?.accountType === "stylist")
-        .sort((a, b) => new Date(b.lastMessageAt) - new Date(a.lastMessageAt));
+        setConversations(
+          convList
+            .filter(c => c.stylist)
+            .sort((a, b) => new Date(b.lastMessage?.createdAt) - new Date(a.lastMessage?.createdAt))
+        );
+        setLoading(false);
+      },
+      (err) => { console.error(err); setLoading(false); }
+    );
 
-      setConversations(valid);
-    } catch(e) { console.error(e); }
-    setLoading(false);
-  }
+    return unsub;
+  }, [currentUser]);
 
   async function openConversation(conv) {
     if (conv.unread > 0) {

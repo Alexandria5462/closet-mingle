@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { useAuth } from "../lib/AuthContext";
 import TabBar from "../components/TabBar";
@@ -14,76 +14,77 @@ export default function StylistAnalytics() {
   const [monthlyData, setMonthlyData] = useState([]);
 
   useEffect(() => {
-    if (currentUser?.uid) loadAnalytics();
+    if (!currentUser?.uid) return;
+
+    // Live sessions listener
+    const unsubSessions = onSnapshot(
+      query(collection(db, "chatSessions"),
+        where("stylistId", "==", currentUser.uid),
+        where("status", "==", "ended")
+      ),
+      (sessionSnap) => {
+        const sessions = sessionSnap.docs.map(d => d.data());
+        const totalSessions = sessions.length;
+        const totalEarnings = totalSessions * 9.99 * 0.7;
+        const totalRevenue = totalSessions * 9.99;
+
+        // Build monthly breakdown
+        const monthly = {};
+        sessions.forEach(s => {
+          const month = new Date(s.endedAt || s.startedAt).toLocaleDateString("en-US", { month: "short", year: "numeric" });
+          if (!monthly[month]) monthly[month] = { sessions: 0, earnings: 0 };
+          monthly[month].sessions++;
+          monthly[month].earnings += 9.99 * 0.7;
+        });
+        setMonthlyData(Object.entries(monthly).map(([month, data]) => ({ month, ...data })).slice(-6));
+
+        setStats(prev => ({ ...(prev || {}), totalSessions, totalEarnings, totalRevenue }));
+        setLoading(false);
+      },
+      (err) => { console.error(err); setLoading(false); }
+    );
+
+    // Live tips listener
+    const unsubTips = onSnapshot(
+      query(collection(db, "tips"), where("toStylistId", "==", currentUser.uid)),
+      (tipSnap) => {
+        const tips = tipSnap.docs.map(d => d.data());
+        const totalTips = tips.reduce((s, t) => s + (t.stylistAmount || 0), 0);
+        const totalTipCount = tips.length;
+        setStats(prev => ({ ...(prev || {}), totalTips, totalTipCount }));
+      }
+    );
+
+    // Live reviews listener
+    const unsubReviews = onSnapshot(
+      query(collection(db, "reviews"), where("targetUserId", "==", currentUser.uid)),
+      (reviewSnap) => {
+        const reviews = reviewSnap.docs.map(d => d.data());
+        const avgRating = reviews.length > 0
+          ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
+          : 0;
+        const reviewCount = reviews.length;
+        setStats(prev => ({ ...(prev || {}), avgRating, reviewCount }));
+      }
+    );
+
+    // Live followers listener
+    const unsubFollowers = onSnapshot(
+      query(collection(db, "follows"), where("stylistId", "==", currentUser.uid)),
+      (followSnap) => {
+        setStats(prev => ({ ...(prev || {}), followerCount: followSnap.size }));
+      }
+    );
+
+    return () => {
+      unsubSessions();
+      unsubTips();
+      unsubReviews();
+      unsubFollowers();
+    };
   }, [currentUser]);
 
-  async function loadAnalytics() {
-    setLoading(true);
-    try {
-      // Reviews
-      const reviewSnap = await getDocs(
-        query(collection(db, "reviews"), where("targetUserId", "==", currentUser.uid))
-      );
-      const reviews = reviewSnap.docs.map(d => d.data());
-      const avgRating = reviews.length > 0
-        ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
-        : 0;
-
-      // Sessions
-      const sessionSnap = await getDocs(
-        query(collection(db, "chatSessions"),
-          where("stylistId", "==", currentUser.uid),
-          where("status", "==", "ended")
-        )
-      );
-      const sessions = sessionSnap.docs.map(d => d.data());
-      const totalSessions = sessions.length;
-      const totalEarnings = totalSessions * 9.99 * 0.7;
-      const totalRevenue = totalSessions * 9.99;
-
-      // Tips
-      const tipSnap = await getDocs(
-        query(collection(db, "tips"), where("toStylistId", "==", currentUser.uid))
-      );
-      const tips = tipSnap.docs.map(d => d.data());
-      const totalTips = tips.reduce((s, t) => s + (t.stylistAmount || 0), 0);
-
-      // Build monthly breakdown
-      const monthly = {};
-      sessions.forEach(s => {
-        const month = new Date(s.endedAt || s.startedAt).toLocaleDateString("en-US", { month: "short", year: "numeric" });
-        if (!monthly[month]) monthly[month] = { sessions: 0, earnings: 0 };
-        monthly[month].sessions++;
-        monthly[month].earnings += 9.99 * 0.7;
-      });
-
-      const monthlyArr = Object.entries(monthly).map(([month, data]) => ({ month, ...data })).slice(-6);
-      setMonthlyData(monthlyArr);
-
-      // Completion rate
-      const allSessionSnap = await getDocs(
-        query(collection(db, "chatSessions"), where("stylistId", "==", currentUser.uid))
-      );
-      const completionRate = allSessionSnap.size > 0
-        ? Math.round((totalSessions / allSessionSnap.size) * 100)
-        : 0;
-
-      setStats({
-        totalSessions,
-        totalEarnings: totalEarnings + totalTips,
-        totalRevenue,
-        totalTips,
-        avgRating,
-        totalReviews: reviews.length,
-        completionRate,
-      });
-    } catch (e) {
-      console.error("Analytics error:", e);
-    }
-    setLoading(false);
-  }
-
-  const hasData = stats && (stats.totalSessions > 0 || stats.totalReviews > 0);
+  const hasData = stats && (stats.totalSessions > 0 || stats.reviewCount > 0);
   const maxEarnings = monthlyData.length > 0 ? Math.max(...monthlyData.map(m => m.earnings)) : 1;
 
   return (
@@ -131,12 +132,12 @@ export default function StylistAnalytics() {
               {/* Stats grid */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
                 {[
-                  { label: "Total Sessions", value: stats.totalSessions, icon: "💬" },
+                  { label: "Total Sessions", value: stats.totalSessions ?? 0, icon: "💬" },
                   { label: "Avg Rating", value: stats.avgRating > 0 ? `${stats.avgRating} ⭐` : "—", icon: "⭐" },
-                  { label: "Total Reviews", value: stats.totalReviews, icon: "📝" },
-                  { label: "Completion Rate", value: `${stats.completionRate}%`, icon: "✅" },
-                  { label: "Tips Earned", value: `$${stats.totalTips.toFixed(2)}`, icon: "💝" },
-                  { label: "Avg Per Session", value: stats.totalSessions > 0 ? `$${(stats.totalEarnings / stats.totalSessions).toFixed(2)}` : "—", icon: "💰" },
+                  { label: "Total Reviews", value: stats.reviewCount ?? 0, icon: "📝" },
+                  { label: "Tips Received", value: stats.totalTipCount ?? 0, icon: "✅" },
+                  { label: "Tips Earned", value: `$${(stats.totalTips || 0).toFixed(2)}`, icon: "💝" },
+                  { label: "Avg Per Session", value: stats.totalSessions > 0 ? `$${((stats.totalEarnings || 0) / stats.totalSessions).toFixed(2)}` : "—", icon: "💰" },
                 ].map(s => (
                   <div key={s.label} className="stat-card" style={{ background: "var(--bg-card)", border: "0.5px solid var(--border)", borderRadius: "var(--radius)" }}>
                     <div style={{ fontSize: 18, marginBottom: 4 }}>{s.icon}</div>
