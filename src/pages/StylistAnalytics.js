@@ -55,8 +55,10 @@ export default function StylistAnalytics() {
         }));
         setSessions(withNames.sort((a, b) => new Date(b.startedAt) - new Date(a.startedAt)));
 
-        const totalClients      = new Set(raw.map(s => s.clientId)).size;
-        const completed         = raw.filter(s => s.status === "ended" && s.stylistEarned > 0);
+        const totalClients       = new Set(raw.map(s => s.clientId)).size;
+        // completed = any session marked ended, whether or not it had a fee
+        const completed          = raw.filter(s => s.status === "ended");
+        const completedSessions  = completed.length;
         const sessionFeeEarnings = completed.reduce((sum, s) => sum + (s.stylistEarned || 0), 0);
 
         // Monthly breakdown
@@ -65,10 +67,10 @@ export default function StylistAnalytics() {
           const month = new Date(s.startedAt).toLocaleDateString("en-US", { month: "short", year: "numeric" });
           if (!monthly[month]) monthly[month] = { sessions: 0, earnings: 0 };
           monthly[month].sessions++;
-          if (s.status === "ended" && s.stylistEarned > 0) monthly[month].earnings += s.stylistEarned || 0;
+          if (s.status === "ended") monthly[month].earnings += s.stylistEarned || 0;
         });
         setMonthlyData(Object.entries(monthly).map(([month, data]) => ({ month, ...data })).slice(-6));
-        setStats(prev => ({ ...(prev || {}), totalClients, sessionFeeEarnings, completedSessions: completed.length }));
+        setStats(prev => ({ ...(prev || {}), totalClients, sessionFeeEarnings, completedSessions }));
         setLoading(false);
       },
       err => { console.error(err); setLoading(false); }
@@ -151,13 +153,13 @@ export default function StylistAnalytics() {
             {/* ── Quick stats ── */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 14 }}>
               {[
-                { label: "Clients",   value: stats.totalClients  ?? 0 },
-                { label: "Followers", value: stats.followerCount ?? 0 },
-                { label: "Reviews",   value: stats.reviewCount   ?? 0 },
+                { label: "Total Overall Clients", value: stats.totalClients  ?? 0 },
+                { label: "Followers",             value: stats.followerCount ?? 0 },
+                { label: "Reviews",               value: stats.reviewCount   ?? 0 },
               ].map(s => (
                 <div key={s.label} style={{ background: "var(--bg-card)", border: "0.5px solid var(--border)", borderRadius: "var(--radius)", padding: "10px 8px", textAlign: "center" }}>
                   <div style={{ fontSize: 20, fontWeight: 700 }}>{s.value}</div>
-                  <div style={{ fontSize: 10, color: "var(--text-tertiary)", marginTop: 2 }}>{s.label}</div>
+                  <div style={{ fontSize: 9, color: "var(--text-tertiary)", marginTop: 2, lineHeight: 1.3 }}>{s.label}</div>
                 </div>
               ))}
             </div>
@@ -172,7 +174,7 @@ export default function StylistAnalytics() {
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 600 }}>Sessions</div>
                     <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 2 }}>
-                      {stats.totalClients ?? 0} total · {stats.completedSessions ?? 0} completed · tap to expand
+                      {stats.totalClients ?? 0} clients · <strong style={{ color: "var(--success)" }}>{stats.completedSessions ?? 0} completed</strong> · tap to expand
                     </div>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
