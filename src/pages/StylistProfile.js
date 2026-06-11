@@ -23,6 +23,7 @@ export default function StylistProfile() {
   const [followDocId, setFollowDocId] = useState(null);
   const [followLoading, setFollowLoading] = useState(false);
   const [showBooking, setShowBooking] = useState(false);
+  const [lightbox, setLightbox] = useState(null); // { images: [], index: 0 }
 
   // Any paid tier = Premium (monthly, plus legacy premium_plus and session)
   const canBook = !isStylist &&
@@ -299,7 +300,7 @@ export default function StylistProfile() {
           {activeTab === "portfolio" && (
             portfolio.length === 0 ? (
               <div style={{ textAlign: "center", padding: "32px 20px" }}>
-                <div style={{ fontSize: 32, marginBottom: 8 }}>🖼️</div>
+                <i className="ti ti-photo" style={{ fontSize: 40, color: "var(--text-tertiary)", display: "block", marginBottom: 8 }} aria-hidden="true"></i>
                 <div style={{ fontSize: 14, fontWeight: 500, marginBottom: 6 }}>No uploads yet</div>
                 <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>
                   This stylist hasn't added portfolio photos yet. Check back soon!
@@ -307,16 +308,20 @@ export default function StylistProfile() {
               </div>
             ) : (
               <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }}>
-                {portfolio.map(item => (
-                  <div key={item.id} style={{ background: "var(--bg-card)", borderRadius: "var(--radius)", overflow: "hidden", border: "0.5px solid var(--border)" }}>
-                    <div style={{ display: "flex", gap: 4, padding: 6 }}>
-                      {(item.itemImages || []).slice(0, 3).map((img, i) => (
-                        img && <img key={i} src={img} alt="" style={{ flex: 1, height: 70, objectFit: "cover", borderRadius: 6 }} />
-                      ))}
+                {portfolio.map(item => {
+                  const images = (item.itemImages || []).filter(Boolean);
+                  return (
+                    <div key={item.id} style={{ background: "var(--bg-card)", borderRadius: "var(--radius)", overflow: "hidden", border: "0.5px solid var(--border)", cursor: "pointer" }}
+                      onClick={() => images.length > 0 && setLightbox({ images, index: 0 })}>
+                      <div style={{ display: "flex", gap: 3, padding: 6 }}>
+                        {images.slice(0, 3).map((img, i) => (
+                          <img key={i} src={img} alt="" style={{ flex: 1, height: 80, objectFit: "cover", borderRadius: 6 }} />
+                        ))}
+                      </div>
+                      <div style={{ padding: "4px 8px 8px", fontSize: 11, fontWeight: 500, color: "var(--text-primary)" }}>{item.outfitName}</div>
                     </div>
-                    <div style={{ padding: "4px 8px 8px", fontSize: 11, fontWeight: 500, color: "var(--text-primary)" }}>{item.outfitName}</div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )
           )}
@@ -331,11 +336,66 @@ export default function StylistProfile() {
       <TabBar active={isStylist ? "clients" : "stylists"} type={isStylist ? "stylist" : "client"} />
 
       {showBooking && (
-        <BookingModal
-          stylist={stylist}
-          stylistId={stylistId}
-          onClose={() => setShowBooking(false)}
-        />
+        <BookingModal stylist={stylist} stylistId={stylistId} onClose={() => setShowBooking(false)} />
+      )}
+
+      {/* Portfolio lightbox carousel */}
+      {lightbox && (
+        <div
+          onClick={() => setLightbox(null)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.92)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}
+        >
+          {/* X close button */}
+          <button
+            onClick={() => setLightbox(null)}
+            style={{ position: "absolute", top: 16, right: 16, background: "rgba(255,255,255,0.15)", border: "none", borderRadius: "50%", width: 36, height: 36, color: "white", fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+            aria-label="Close"
+          >✕</button>
+
+          {/* Image counter */}
+          {lightbox.images.length > 1 && (
+            <div style={{ position: "absolute", top: 20, left: "50%", transform: "translateX(-50%)", color: "rgba(255,255,255,0.7)", fontSize: 13 }}>
+              {lightbox.index + 1} / {lightbox.images.length}
+            </div>
+          )}
+
+          {/* Main image */}
+          <img
+            src={lightbox.images[lightbox.index]}
+            alt=""
+            onClick={e => e.stopPropagation()}
+            style={{ maxWidth: "90vw", maxHeight: "80vh", objectFit: "contain", borderRadius: 8 }}
+          />
+
+          {/* Prev button */}
+          {lightbox.index > 0 && (
+            <button
+              onClick={e => { e.stopPropagation(); setLightbox(prev => ({ ...prev, index: prev.index - 1 })); }}
+              style={{ position: "absolute", left: 12, background: "rgba(255,255,255,0.15)", border: "none", borderRadius: "50%", width: 40, height: 40, color: "white", fontSize: 20, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+            >‹</button>
+          )}
+
+          {/* Next button */}
+          {lightbox.index < lightbox.images.length - 1 && (
+            <button
+              onClick={e => { e.stopPropagation(); setLightbox(prev => ({ ...prev, index: prev.index + 1 })); }}
+              style={{ position: "absolute", right: 12, background: "rgba(255,255,255,0.15)", border: "none", borderRadius: "50%", width: 40, height: 40, color: "white", fontSize: 20, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+            >›</button>
+          )}
+
+          {/* Dot indicators */}
+          {lightbox.images.length > 1 && (
+            <div style={{ position: "absolute", bottom: 20, left: "50%", transform: "translateX(-50%)", display: "flex", gap: 6 }}>
+              {lightbox.images.map((_, i) => (
+                <div
+                  key={i}
+                  onClick={e => { e.stopPropagation(); setLightbox(prev => ({ ...prev, index: i })); }}
+                  style={{ width: 8, height: 8, borderRadius: "50%", background: i === lightbox.index ? "white" : "rgba(255,255,255,0.4)", cursor: "pointer", transition: "background 0.2s" }}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       )}
     </>
   );

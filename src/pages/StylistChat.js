@@ -406,45 +406,46 @@ export default function StylistChat() {
         </div>
       </div>
 
-      {/* Client closet panel */}
-      {showCloset && (
-        <div style={{ background: "var(--bg-card)", borderBottom: "0.5px solid var(--border)", padding: "12px 16px", maxHeight: 220, overflowY: "auto" }}>
-          <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 10, color: "var(--text-primary)" }}>
-            {client?.name || "Client"}'s closet — visible items only
-          </div>
-          {closetLoading ? (
-            <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>Loading...</div>
-          ) : clientCloset.length === 0 ? (
-            <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>No public items in closet yet</div>
-          ) : (
-            <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4, scrollbarWidth: "none" }}>
-              {clientCloset.map((item, idx) => (
-                <div key={item.id} style={{ flexShrink: 0, textAlign: "center", cursor: "pointer" }} onClick={() => setLightboxIndex(idx)}>
-                  <img
-                    src={item.imageUrl || item.fallbackUrl}
-                    alt={item.name}
-                    onError={e => { if (item.fallbackUrl) e.target.src = item.fallbackUrl; }}
-                    style={{ width: 64, height: 64, borderRadius: 8, objectFit: "cover", border: "0.5px solid var(--border)", transition: "transform 0.15s" }}
-                  />
-                  <div style={{ fontSize: 9, color: "var(--text-tertiary)", marginTop: 2, maxWidth: 64, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</div>
-                  <div style={{ fontSize: 9, color: "var(--text-tertiary)", textTransform: "capitalize" }}>{item.attributes?.primaryColor}</div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Session ended banner for stylist */}
-      {sessionEnded && (
-        <div style={{ background: "#f0fdf4", border: "1px solid #6ee7b7", padding: "10px 16px", fontSize: 13, color: "#065f46" }}>
-          ✅ Session completed · Earnings added to your analytics
-        </div>
-      )}
-
-      {/* Messages */}
+      {/* Messages — closet panel shown inline at top when open */}
       <div style={{ flex: 1, overflowY: "auto", padding: 16, paddingBottom: sessionEnded ? 20 : 80 }}>
-        {messages.length === 0 && (
+
+        {/* Inline closet panel — scrolls with messages so it's always accessible */}
+        {showCloset && (
+          <div style={{ background: "var(--bg-card)", border: "0.5px solid var(--border)", borderRadius: "var(--radius)", padding: 12, marginBottom: 14 }}>
+            <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 10, color: "var(--text-primary)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span>{client?.name || "Client"}'s closet</span>
+              <button onClick={() => setShowCloset(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-tertiary)", fontSize: 16, padding: 0 }}>✕</button>
+            </div>
+            {closetLoading ? (
+              <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>Loading...</div>
+            ) : clientCloset.length === 0 ? (
+              <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>No public items in closet yet</div>
+            ) : (
+              <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4, scrollbarWidth: "none" }}>
+                {clientCloset.map((item, idx) => (
+                  <div key={item.id} style={{ flexShrink: 0, textAlign: "center", cursor: "pointer" }} onClick={() => setLightboxIndex(idx)}>
+                    <img
+                      src={item.imageUrl || item.fallbackUrl}
+                      alt={item.name}
+                      onError={e => { if (item.fallbackUrl) e.target.src = item.fallbackUrl; }}
+                      style={{ width: 72, height: 72, borderRadius: 8, objectFit: "cover", border: "0.5px solid var(--border)" }}
+                    />
+                    <div style={{ fontSize: 9, color: "var(--text-tertiary)", marginTop: 2, maxWidth: 72, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</div>
+                    <div style={{ fontSize: 9, color: "var(--text-tertiary)", textTransform: "capitalize" }}>{item.attributes?.primaryColor}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+        {/* Session ended banner */}
+        {sessionEnded && (
+          <div style={{ background: "#f0fdf4", border: "1px solid #6ee7b7", borderRadius: "var(--radius)", padding: "10px 14px", marginBottom: 14, fontSize: 13, color: "#065f46" }}>
+            Session completed · Earnings added to your analytics
+          </div>
+        )}
+
+        {messages.length === 0 && !showCloset && (
           <div style={{ textAlign: "center", padding: "40px 20px", color: "var(--text-secondary)" }}>
             <div style={{ fontSize: 32, marginBottom: 8 }}>👋</div>
             <div style={{ fontSize: 14 }}>

@@ -17,10 +17,32 @@ export default function StylistMessages() {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("newest");
   const [filterBy, setFilterBy] = useState("all");
+  const sessionStatusMap = useRef({}); // conversationId -> "active"|"ended"
 
   // Tracks which convIds have been marked read in THIS session
-  // Persists across re-renders and reloads so unread never reverts
   const readConvIds = useRef(new Set());
+
+  // Live chatSessions listener — keeps sessionStatusMap in sync
+  useEffect(() => {
+    if (!currentUser?.uid) return;
+    const unsub = onSnapshot(
+      query(collection(db, "chatSessions"), where("stylistId", "==", currentUser.uid)),
+      (snap) => {
+        snap.docs.forEach(d => {
+          const data = d.data();
+          if (data.conversationId) {
+            sessionStatusMap.current[data.conversationId] = data.status || "active";
+          }
+        });
+        // Re-tag conversations with latest session status
+        setConversations(prev => prev.map(c => ({
+          ...c,
+          sessionStatus: sessionStatusMap.current[c.conversationId] || "active",
+        })));
+      }
+    );
+    return unsub;
+  }, [currentUser]);
 
   useEffect(() => {
     if (!currentUser?.uid) return;
@@ -96,6 +118,8 @@ export default function StylistMessages() {
                 lastMessageAt: last?.createdAt || "",
                 unread: readConvIds.current.has(conv.id) ? 0 : conv.unread,
                 messageCount: conv.messages.length,
+                // Pull session status from our live map
+                sessionStatus: sessionStatusMap.current[conv.id] || "active",
               };
             })
           );
@@ -182,7 +206,7 @@ export default function StylistMessages() {
       }
       if (filterBy === "unread") return conv.unread > 0;
       if (filterBy === "active") return conv.sessionStatus === "active";
-      if (filterBy === "ended") return conv.sessionStatus === "ended";
+      if (filterBy === "past")   return conv.sessionStatus === "ended";
       return true;
     })
     .sort((a, b) => {
@@ -245,7 +269,7 @@ export default function StylistMessages() {
               { val: "all",    label: "All",          group: "filter" },
               { val: "unread", label: "Unread",        group: "filter" },
               { val: "active", label: "Active",        group: "filter" },
-              { val: "ended",  label: "Ended",         group: "filter" },
+              { val: "past",   label: "Past",          group: "filter" },
               { val: "newest", label: "Newest first",  group: "sort" },
               { val: "oldest", label: "Oldest first",  group: "sort" },
               { val: "name",   label: "Name A–Z",      group: "sort" },

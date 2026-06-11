@@ -13,6 +13,15 @@ import Toast from "../components/Toast";
 const CLOUD_NAME = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME;
 const UPLOAD_PRESET = process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET;
 
+const SPECIALTIES = [
+  "Casual & Everyday", "Business Casual", "Corporate & Executive",
+  "Streetwear & Urban", "Athleisure & Sporty", "Formal & Evening",
+  "Bridal & Special Occasions", "Resort & Vacation", "Bohemian & Free Spirit",
+  "Minimalist & Clean", "Y2K & Retro", "Cottagecore & Romantic",
+  "Dark & Alternative", "Preppy & Classic", "Festival & Statement",
+  "Sustainable & Ethical", "Plus Size Styling", "Petite Styling",
+];
+
 async function uploadPhoto(file) {
   const formData = new FormData();
   formData.append("file", file);
@@ -535,11 +544,48 @@ export default function Account() {
 
               {isStylist && (
                 <div className="card">
-                  <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 4 }}>Specialty</div>
-                  {editing
-                    ? <input className="input-field" value={specialty} onChange={e => setSpecialty(e.target.value)} placeholder="Your styling specialty" style={{ marginBottom: 0 }} />
-                    : <div style={{ fontSize: 14 }}>{userProfile?.specialty || "Not set"}</div>
-                  }
+                  <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 8 }}>
+                    Specialties
+                    {editing && <span style={{ fontSize: 11, color: "var(--text-tertiary)", marginLeft: 6 }}>— select all that apply</span>}
+                  </div>
+                  {editing ? (
+                    <>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                        {SPECIALTIES.map(s => {
+                          const currentSpecialties = Array.isArray(specialty)
+                            ? specialty
+                            : specialty ? specialty.split(", ").map(x => x.trim()) : [];
+                          const selected = currentSpecialties.includes(s);
+                          return (
+                            <button
+                              key={s}
+                              type="button"
+                              onClick={() => {
+                                const current = Array.isArray(specialty)
+                                  ? specialty
+                                  : specialty ? specialty.split(", ").map(x => x.trim()) : [];
+                                const next = selected
+                                  ? current.filter(x => x !== s)
+                                  : [...current, s];
+                                setSpecialty(next.join(", "));
+                              }}
+                              style={{ padding: "5px 12px", borderRadius: 20, fontSize: 12, fontFamily: "inherit", cursor: "pointer", border: `1.5px solid ${selected ? "var(--pink)" : "var(--border)"}`, background: selected ? "var(--pink)" : "var(--bg-card)", color: selected ? "white" : "var(--text-secondary)", fontWeight: selected ? 600 : 400 }}
+                            >
+                              {s}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {specialty && <div style={{ fontSize: 11, color: "var(--pink-dark)", marginTop: 6 }}>{specialty.split(", ").filter(Boolean).length} selected</div>}
+                    </>
+                  ) : (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                      {(specialty || "").split(", ").filter(Boolean).map(s => (
+                        <span key={s} style={{ fontSize: 12, background: "var(--avatar-bg)", border: "1px solid var(--border)", borderRadius: 20, padding: "3px 10px", color: "var(--text-secondary)" }}>{s}</span>
+                      ))}
+                      {!specialty && <span style={{ fontSize: 14, color: "var(--text-tertiary)" }}>Not set</span>}
+                    </div>
+                  )}
                 </div>
               )}
 

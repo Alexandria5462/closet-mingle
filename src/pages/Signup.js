@@ -50,7 +50,7 @@ export default function Signup() {
   const [city, setCity] = useState("");
   const [about, setAbout] = useState("");
   const [username, setUsername] = useState("");
-  const [specialty, setSpecialty] = useState("");
+  const [specialties, setSpecialties] = useState([]);
   const [yearsExp, setYearsExp] = useState("");
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
@@ -72,7 +72,7 @@ export default function Signup() {
     if (password.length < 6) { setError("Password must be at least 6 characters."); return; }
     if (acct === "stylist" && !photoFile && !photoPreview) { setError("A profile photo is required for stylist accounts."); return; }
     if (acct === "stylist" && !about) { setError("About me is required for stylist accounts."); return; }
-    if (acct === "stylist" && !specialty) { setError("Please select your styling specialty."); return; }
+    if (acct === "stylist" && specialties.length === 0) { setError("Please select at least one styling specialty."); return; }
     if (acct === "stylist" && !city) { setError("Location is required for stylist accounts."); return; }
 
     setLoading(true);
@@ -88,7 +88,8 @@ export default function Signup() {
         about: about || "",
         photoUrl: photoUrl || "",
         ...(acct === "stylist" && {
-          specialty,
+          specialty: specialties.join(", "),  // store as comma string for display
+          specialties,                         // also store as array for filtering
           yearsExperience: parseInt(yearsExp) || 0,
           stylistPlan,
           isVerified: false,
@@ -210,17 +211,40 @@ export default function Signup() {
 
         {acct === "stylist" && (
           <>
-            {/* Specialty dropdown */}
+            {/* Specialty multi-select */}
             <div style={{ marginBottom: 12 }}>
-              <select
-                className="input-field"
-                value={specialty}
-                onChange={e => setSpecialty(e.target.value)}
-                style={{ marginBottom: 0, cursor: "pointer" }}
-              >
-                <option value="">Select your styling specialty *</option>
-                {SPECIALTIES.map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
+              <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 8 }}>
+                Styling specialties * <span style={{ fontSize: 11, color: "var(--text-tertiary)" }}>— select all that apply</span>
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {SPECIALTIES.map(s => {
+                  const selected = specialties.includes(s);
+                  return (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => setSpecialties(prev =>
+                        selected ? prev.filter(x => x !== s) : [...prev, s]
+                      )}
+                      style={{
+                        padding: "6px 12px", borderRadius: 20, fontSize: 12, fontFamily: "inherit",
+                        cursor: "pointer", border: `1.5px solid ${selected ? "var(--pink)" : "var(--border)"}`,
+                        background: selected ? "var(--pink)" : "var(--bg-card)",
+                        color: selected ? "white" : "var(--text-secondary)",
+                        fontWeight: selected ? 600 : 400,
+                        transition: "all 0.15s",
+                      }}
+                    >
+                      {s}
+                    </button>
+                  );
+                })}
+              </div>
+              {specialties.length > 0 && (
+                <div style={{ fontSize: 11, color: "var(--pink-dark)", marginTop: 6 }}>
+                  {specialties.length} selected
+                </div>
+              )}
             </div>
 
             <input
