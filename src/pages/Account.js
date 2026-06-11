@@ -169,6 +169,8 @@ export default function Account() {
   const [city, setCity] = useState(userProfile?.city || "");
   const [specialty, setSpecialty] = useState(userProfile?.specialty || "");
   const [phone, setPhone] = useState(userProfile?.phone || "");
+  const [availabilityEnabled, setAvailabilityEnabled] = useState(userProfile?.availabilityEnabled || false);
+  const [availabilityHours, setAvailabilityHours] = useState(userProfile?.availabilityHours || "");
   const [photoFile, setPhotoFile] = useState(null);
   const [cropSrc, setCropSrc] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(userProfile?.photoUrl || null);
@@ -207,6 +209,8 @@ export default function Account() {
       setCity(userProfile.city || "");
       setSpecialty(userProfile.specialty || "");
       setPhone(userProfile.phone || "");
+      setAvailabilityEnabled(userProfile.availabilityEnabled || false);
+      setAvailabilityHours(userProfile.availabilityHours || "");
       setPhotoPreview(userProfile.photoUrl || null);
       if (userProfile.notifPrefs) setNotifPrefs(userProfile.notifPrefs);
     }
@@ -290,7 +294,7 @@ export default function Account() {
       let photoUrl = userProfile?.photoUrl || "";
       if (photoFile) photoUrl = await uploadPhoto(photoFile);
       if (!username || username.length < 3) { setToast("Username must be at least 3 characters."); setSaving(false); return; }
-      await updateDoc(doc(db, "users", currentUser.uid), { name, username: username.toLowerCase(), about, city, specialty, phone, photoUrl, updatedAt: new Date().toISOString() });
+      await updateDoc(doc(db, "users", currentUser.uid), { name, username: username.toLowerCase(), about, city, specialty, phone, availabilityEnabled, availabilityHours, photoUrl, updatedAt: new Date().toISOString() });
       setToast("Profile updated!");
       setEditing(false);
     } catch (e) { setToast("Failed to save. Try again."); }
@@ -428,11 +432,55 @@ export default function Account() {
 
               {isStylist && (
                 <div className="card">
-                  <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 4 }}> Specialty</div>
+                  <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 4 }}>Specialty</div>
                   {editing
                     ? <input className="input-field" value={specialty} onChange={e => setSpecialty(e.target.value)} placeholder="Your styling specialty" style={{ marginBottom: 0 }} />
                     : <div style={{ fontSize: 14 }}>{userProfile?.specialty || "Not set"}</div>
                   }
+                </div>
+              )}
+
+              {/* Availability — stylist only */}
+              {isStylist && (
+                <div className="card">
+                  <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 10 }}>Availability</div>
+                  {/* Online toggle */}
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: availabilityEnabled ? 12 : 0 }}>
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 500 }}>Show as available now</div>
+                      <div style={{ fontSize: 11, color: "var(--text-tertiary)" }}>Clients will see a green "Online now" badge on your profile</div>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        const next = !availabilityEnabled;
+                        setAvailabilityEnabled(next);
+                        try {
+                          await updateDoc(doc(db, "users", currentUser.uid), { availabilityEnabled: next });
+                          setToast(next ? "You are now shown as available" : "You are now shown as offline");
+                        } catch(e) { setAvailabilityEnabled(!next); }
+                      }}
+                      style={{ background: availabilityEnabled ? "var(--pink)" : "#d1d5db", border: "none", borderRadius: 20, width: 44, height: 24, cursor: "pointer", position: "relative", transition: "background 0.2s", flexShrink: 0 }}
+                    >
+                      <div style={{ position: "absolute", top: 3, left: availabilityEnabled ? 22 : 3, width: 18, height: 18, borderRadius: "50%", background: "white", transition: "left 0.2s" }} />
+                    </button>
+                  </div>
+                  {/* Hours — only show when toggling is on or hours are set */}
+                  <div style={{ marginTop: 4 }}>
+                    <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 4 }}>Available hours <span style={{ fontSize: 11 }}>(optional — e.g. "Mon–Fri 9am–6pm")</span></div>
+                    {editing ? (
+                      <input
+                        className="input-field"
+                        value={availabilityHours}
+                        onChange={e => setAvailabilityHours(e.target.value)}
+                        placeholder="e.g. Mon–Fri 9am–6pm EST"
+                        style={{ marginBottom: 0 }}
+                      />
+                    ) : (
+                      <div style={{ fontSize: 13, color: availabilityHours ? "var(--text-primary)" : "var(--text-tertiary)" }}>
+                        {availabilityHours || "Not set — tap Edit to add hours"}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
