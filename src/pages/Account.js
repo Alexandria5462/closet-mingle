@@ -193,6 +193,9 @@ export default function Account() {
   const [portfolio, setPortfolio] = useState([]);
   const [portfolioLoading, setPortfolioLoading] = useState(false);
   const portfolioRef = useRef();
+  const [verificationStatus, setVerificationStatus] = useState(null); // null | "eligible" | "pending" | "verified"
+  const [verificationCriteria, setVerificationCriteria] = useState(null);
+  const [requestingVerification, setRequestingVerification] = useState(false);
 
   const BIO_LIMIT = 300;
   const tierLabel = TIER_LABELS[userProfile?.subscriptionTier] || "Free";
@@ -215,8 +218,73 @@ export default function Account() {
       if (userProfile.notifPrefs) setNotifPrefs(userProfile.notifPrefs);
     }
     loadQuizResult();
-    if (isStylist) loadPortfolio();
+    if (isStylist) {
+      loadPortfolio();
+      checkVerification();
+    }
   }, [userProfile]);
+
+  async function checkVerification() {
+    if (!currentUser?.uid || !userProfile) return;
+    try {
+      if (userProfile.isVerified) { setVerificationStatus("verified"); return; }
+
+      const reqSnap = await getDocs(
+        query(collection(db, "verificationRequests"),
+          where("stylistId", "==", currentUser.uid),
+          where("status", "==", "pending")
+        )
+      );
+      if (!reqSnap.empty) { setVerificationStatus("pending"); return; }
+
+      const profileComplete = !!(userProfile.name && userProfile.username && userProfile.photoUrl && userProfile.about && userProfile.specialty && userProfile.city && userProfile.availabilityHours);
+      const createdAt = userProfile.createdAt ? new Date(userProfile.createdAt) : new Date(currentUser.metadata?.creationTime);
+      const ageDays = Math.floor((Date.now() - createdAt.getTime()) / 86400000);
+      const accountAgeOk = ageDays >= 90;
+
+      const savedPortSnap = await getDocs(query(collection(db, "savedOutfits"), where("userId", "==", currentUser.uid), where("isPortfolio", "==", true)));
+      const portfolioCount = savedPortSnap.size;
+      const portfolioOk = portfolioCount >= 10;
+
+      const reviewSnap = await getDocs(query(collection(db, "reviews"), where("targetUserId", "==", currentUser.uid)));
+      const reviews = reviewSnap.docs.map(d => d.data());
+      const uniqueReviewers = new Set(reviews.map(r => r.reviewerId)).size;
+      const avgRating = reviews.length > 0 ? reviews.reduce((s, r) => s + (r.rating || 0), 0) / reviews.length : 0;
+      const reviewsOk = uniqueReviewers >= 10;
+      const ratingOk = avgRating >= 4.0;
+
+      const sessionSnap = await getDocs(query(collection(db, "chatSessions"), where("stylistId", "==", currentUser.uid)));
+      const uniqueClients = new Set(sessionSnap.docs.map(d => d.data().clientId)).size;
+      const clientsOk = uniqueClients >= 5;
+
+      const criteria = {
+        profileComplete: { met: profileComplete, label: "Complete profile",         detail: "Name, photo, about, specialty, city & availability hours" },
+        accountAge:      { met: accountAgeOk,    label: "Account age 90+ days",     detail: `${ageDays} day${ageDays !== 1 ? "s" : ""} old` },
+        portfolio:       { met: portfolioOk,      label: "10+ portfolio images",     detail: `${portfolioCount} image${portfolioCount !== 1 ? "s" : ""} uploaded` },
+        reviews:         { met: reviewsOk,        label: "10+ reviews",              detail: `${uniqueReviewers} unique reviewer${uniqueReviewers !== 1 ? "s" : ""}` },
+        rating:          { met: ratingOk,         label: "4.0+ average rating",      detail: avgRating > 0 ? `${avgRating.toFixed(1)} avg` : "No reviews yet" },
+        clients:         { met: clientsOk,        label: "5+ active clients",        detail: `${uniqueClients} client${uniqueClients !== 1 ? "s" : ""}` },
+      };
+      setVerificationCriteria(criteria);
+      setVerificationStatus(Object.values(criteria).every(c => c.met) ? "eligible" : "not_eligible");
+    } catch(e) { console.error("Verification check:", e); }
+  }
+
+  async function requestVerification() {
+    setRequestingVerification(true);
+    try {
+      await addDoc(collection(db, "verificationRequests"), {
+        stylistId: currentUser.uid,
+        stylistName: userProfile.name,
+        stylistUsername: userProfile.username,
+        status: "pending",
+        requestedAt: new Date().toISOString(),
+      });
+      setVerificationStatus("pending");
+      setToast("Verification request submitted! We will review your profile shortly.");
+    } catch(e) { setToast("Failed to submit. Please try again."); }
+    setRequestingVerification(false);
+  }
 
   async function loadQuizResult() {
     if (!currentUser?.uid) return;
@@ -496,6 +564,68 @@ export default function Account() {
                     </div>
                     <i className="ti ti-arrow-right" style={{ color: "var(--text-tertiary)" }} aria-hidden="true"></i>
                   </div>
+                </div>
+              )}
+
+              {/* Verification — stylist only */}
+              {isStylist && (
+                <div className="card" style={{ border: verificationStatus === "verified" ? "1px solid #6ee7b7" : verificationStatus === "eligible" ? "1px solid var(--pink)" : "0.5px solid var(--border)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                    <div style={{ fontSize: 26 }}>
+                      {verificationStatus === "verified" ? "✅" : verificationStatus === "pending" ? "⏳" : verificationStatus === "eligible" ? "🏆" : "🎯"}
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 600 }}>
+                        {verificationStatus === "verified" ? "You are Verified ✓" :
+                         verificationStatus === "pending" ? "Verification Pending" :
+                         verificationStatus === "eligible" ? "You qualify for Verification!" :
+                         "Get Verified"}
+                      </div>
+                      <div style={{ fontSize: 11, color: "var(--text-secondary)" }}>
+                        {verificationStatus === "verified" ? "Your verified badge is live on your profile" :
+                         verificationStatus === "pending" ? "We are reviewing your request — check back soon" :
+                         verificationStatus === "eligible" ? "All criteria met — request your badge now" :
+                         "Complete the criteria below to earn your verified badge"}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Criteria checklist */}
+                  {verificationStatus !== "verified" && verificationStatus !== "pending" && verificationCriteria && (
+                    <div style={{ marginBottom: 14 }}>
+                      {Object.values(verificationCriteria).map((c, i) => (
+                        <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 0", borderBottom: i < Object.values(verificationCriteria).length - 1 ? "0.5px solid var(--border)" : "none" }}>
+                          <div style={{ width: 20, height: 20, borderRadius: "50%", background: c.met ? "#d1fae5" : "var(--bg)", border: `1px solid ${c.met ? "#6ee7b7" : "var(--border)"}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                            {c.met
+                              ? <i className="ti ti-check" style={{ fontSize: 11, color: "#065f46" }} aria-hidden="true"></i>
+                              : <i className="ti ti-x" style={{ fontSize: 11, color: "var(--text-tertiary)" }} aria-hidden="true"></i>
+                            }
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 12, fontWeight: 500, color: c.met ? "var(--text-primary)" : "var(--text-secondary)" }}>{c.label}</div>
+                            <div style={{ fontSize: 11, color: "var(--text-tertiary)" }}>{c.detail}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* CTA button */}
+                  {verificationStatus === "eligible" && (
+                    <button
+                      className="btn-pink"
+                      onClick={requestVerification}
+                      disabled={requestingVerification}
+                      style={{ width: "100%", marginBottom: 0 }}
+                    >
+                      {requestingVerification ? "Submitting..." : "Request Verification →"}
+                    </button>
+                  )}
+                  {verificationStatus === "not_eligible" && verificationCriteria && (
+                    <div style={{ fontSize: 11, color: "var(--text-tertiary)", textAlign: "center" }}>
+                      {Object.values(verificationCriteria).filter(c => !c.met).length} requirement{Object.values(verificationCriteria).filter(c => !c.met).length !== 1 ? "s" : ""} remaining
+                    </div>
+                  )}
                 </div>
               )}
 
