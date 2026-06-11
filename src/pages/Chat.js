@@ -48,6 +48,16 @@ export default function Chat() {
   const [isBlocked, setIsBlocked] = useState(false);
   const bottomRef = useRef(null);
 
+  const isFreeClient = userProfile?.accountType === "client" &&
+    !["monthly", "premium_plus", "session"].includes(userProfile?.subscriptionTier);
+
+  // Free clients cannot access chat — redirect to plans
+  useEffect(() => {
+    if (userProfile && isFreeClient) {
+      nav("/plans", { replace: true });
+    }
+  }, [userProfile]);
+
   // Build consistent conversationId — always sort so both sides get same ID
   const conversationId = [currentUser?.uid, stylistId].sort().join("_");
   const isSessionUser = userProfile?.subscriptionTier === "session";

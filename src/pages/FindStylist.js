@@ -282,7 +282,7 @@ export default function FindStylist() {
                   <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                     <span style={{ width: 6, height: 6, borderRadius: "50%", background: s.availabilityEnabled ? "var(--success)" : "#d1d5db", display: "inline-block" }}></span>
                     <span style={{ fontSize: 11, color: s.availabilityEnabled ? "var(--success)" : "var(--text-tertiary)" }}>
-                      {s.availabilityEnabled ? "Online" : "Offline"}
+                      {s.availabilityEnabled ? "Online now" : "Message anytime"}
                     </span>
                   </div>
                 </div>

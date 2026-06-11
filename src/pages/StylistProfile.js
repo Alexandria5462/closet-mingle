@@ -189,7 +189,7 @@ export default function StylistProfile() {
             )}
             <div style={{ display: "flex", gap: 6, justifyContent: "center", marginTop: 8 }}>
               <span style={{ fontSize: 11, background: stylist.availabilityEnabled ? "#d1fae5" : "var(--bg)", border: `1px solid ${stylist.availabilityEnabled ? "#6ee7b7" : "var(--border)"}`, borderRadius: 20, padding: "2px 10px", color: stylist.availabilityEnabled ? "#065f46" : "var(--text-tertiary)" }}>
-                {stylist.availabilityEnabled ? "🟢 Available now" : "⚫ Offline"}
+                {stylist.availabilityEnabled ? "🟢 Available now" : "💬 Send a message"}
               </span>
               {stylist.availabilityHours && (
                 <span style={{ fontSize: 11, background: "var(--bg)", borderRadius: 20, padding: "2px 10px", border: "0.5px solid var(--border)", color: "var(--text-secondary)" }}>
