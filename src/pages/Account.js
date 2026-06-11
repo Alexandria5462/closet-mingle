@@ -684,7 +684,10 @@ export default function Account() {
                   {!userProfile?.stripeOnboardingComplete && (
                     <>
                       <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 12, lineHeight: 1.5 }}>
-                        Stripe is how you receive payouts from client bookings. Setup takes about 5 minutes — you'll need your bank account details.
+                        Set up your payout account so you're ready to receive payments when ClosetMingle launches fully. Takes about 5 minutes — you'll need your bank account details.
+                      </div>
+                      <div style={{ background: "#fef3c7", border: "1px solid #fcd34d", borderRadius: "var(--radius)", padding: "8px 12px", marginBottom: 12, fontSize: 11, color: "#92400e" }}>
+                        🚧 <strong>Pre-launch:</strong> Stripe is in sandbox mode. Set up your rates and profile now — payments will activate when the platform goes live.
                       </div>
                       <button
                         className="btn-pink"

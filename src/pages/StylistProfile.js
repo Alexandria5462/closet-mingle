@@ -4,6 +4,7 @@ import { doc, getDoc, collection, query, where, getDocs, addDoc, deleteDoc } fro
 import { db } from "../lib/firebase";
 import { useAuth } from "../lib/AuthContext";
 import Reviews from "../components/Reviews";
+import BookingModal from "../components/BookingModal";
 import TabBar from "../components/TabBar";
 import { SkeletonList } from "../components/SkeletonLoader";
 import { notifyStylistNewFollower } from "../lib/notifications";
@@ -21,12 +22,15 @@ export default function StylistProfile() {
   const [isFollowing, setIsFollowing] = useState(false);
   const [followDocId, setFollowDocId] = useState(null);
   const [followLoading, setFollowLoading] = useState(false);
+  const [showBooking, setShowBooking] = useState(false);
 
-  const canChoose = userProfile?.subscriptionTier === "premium_plus";
-  const canChat = userProfile?.subscriptionTier === "monthly" ||
-                  userProfile?.subscriptionTier === "premium_plus" ||
-                  userProfile?.subscriptionTier === "session";
-  const isFreeClient = !isStylist && !canChat;
+  const hasRates = stylist?.monthlyRate || stylist?.sessionRate;
+  const canBook = !isStylist && (
+    userProfile?.subscriptionTier === "monthly" ||
+    userProfile?.subscriptionTier === "premium_plus" ||
+    userProfile?.subscriptionTier === "session"
+  );
+  const isFreeClient = !isStylist && !canBook;
 
   useEffect(() => {
     loadStylist();
@@ -199,25 +203,36 @@ export default function StylistProfile() {
             </div>
           </div>
 
-          {/* Chat + Follow buttons */}
+          {/* Pricing pills */}
+          {hasRates && (
+            <div style={{ display: "flex", gap: 8, justifyContent: "center", marginBottom: 12, flexWrap: "wrap" }}>
+              {stylist.monthlyRate && (
+                <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 20, padding: "4px 14px", fontSize: 12, fontWeight: 500 }}>
+                  🗓️ <strong>${stylist.monthlyRate}</strong>/mo
+                </div>
+              )}
+              {stylist.sessionRate && (
+                <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 20, padding: "4px 14px", fontSize: 12, fontWeight: 500 }}>
+                  ✨ <strong>${stylist.sessionRate}</strong>/session
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Book + Follow buttons */}
           <div style={{ display: "flex", gap: 10, marginBottom: 8 }}>
-            {/* Only show chat button to paying clients, not free users or stylists */}
             {!isStylist && !isFreeClient && (
               <button
                 className="btn-pink"
-                onClick={() => nav(`/chat/${stylistId}`)}
+                onClick={() => hasRates ? setShowBooking(true) : nav(`/chat/${stylistId}`)}
                 style={{ flex: 2, marginBottom: 0 }}
               >
-                {canChoose ? "Chat with this stylist" : "Start a session"}
+                {hasRates ? `Book ${stylist.name?.split(" ")[0]}` : "Message stylist"}
               </button>
             )}
             {!isStylist && isFreeClient && (
-              <button
-                className="btn-pink"
-                onClick={() => nav("/plans")}
-                style={{ flex: 2, marginBottom: 0 }}
-              >
-                Upgrade to chat
+              <button className="btn-pink" onClick={() => nav("/plans")} style={{ flex: 2, marginBottom: 0 }}>
+                Upgrade to book
               </button>
             )}
             <button
@@ -229,15 +244,16 @@ export default function StylistProfile() {
                 background: isFollowing ? "var(--bg-card)" : "var(--pink-light)",
                 color: isFollowing ? "var(--text-secondary)" : "var(--pink-dark)",
                 cursor: "pointer", fontFamily: "inherit", fontSize: 14, fontWeight: 500,
-                transition: "all 0.15s",
               }}
             >
               {followLoading ? "..." : isFollowing ? "Following ✓" : "Follow"}
             </button>
           </div>
-          {!canChoose && (
-            <div style={{ fontSize: 11, color: "var(--text-tertiary)", textAlign: "center", marginBottom: 14 }}>
-              Upgrade to Premium Plus to personally choose your stylist
+
+          {/* Pre-launch note — remove once Stripe is activated */}
+          {!isStylist && !isFreeClient && hasRates && !stylist?.stripeOnboardingComplete && (
+            <div style={{ background: "var(--bg-card)", border: "0.5px solid var(--border)", borderRadius: "var(--radius)", padding: "8px 14px", marginBottom: 12, fontSize: 12, color: "var(--text-secondary)", textAlign: "center" }}>
+              💬 Payments launching soon — book now to connect directly
             </div>
           )}
 
@@ -315,6 +331,14 @@ export default function StylistProfile() {
       </div>
 
       <TabBar active={isStylist ? "clients" : "stylists"} type={isStylist ? "stylist" : "client"} />
+
+      {showBooking && (
+        <BookingModal
+          stylist={stylist}
+          stylistId={stylistId}
+          onClose={() => setShowBooking(false)}
+        />
+      )}
     </>
   );
 }

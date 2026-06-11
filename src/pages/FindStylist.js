@@ -279,11 +279,28 @@ export default function FindStylist() {
                 </div>
 
                 <div style={{ flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: s.availabilityEnabled ? "var(--success)" : "#d1d5db", display: "inline-block" }}></span>
-                    <span style={{ fontSize: 11, color: s.availabilityEnabled ? "var(--success)" : "var(--text-tertiary)" }}>
-                      {s.availabilityEnabled ? "Online now" : "Message anytime"}
-                    </span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                      <span style={{ width: 6, height: 6, borderRadius: "50%", background: s.availabilityEnabled ? "var(--success)" : "#d1d5db", display: "inline-block" }}></span>
+                      <span style={{ fontSize: 11, color: s.availabilityEnabled ? "var(--success)" : "var(--text-tertiary)" }}>
+                        {s.availabilityEnabled ? "Online now" : "Message anytime"}
+                      </span>
+                    </div>
+                    {(s.monthlyRate || s.sessionRate) && (
+                      <span style={{ fontSize: 11, color: "var(--text-tertiary)" }}>·</span>
+                    )}
+                    {s.monthlyRate && (
+                      <span style={{ fontSize: 11, color: "var(--pink-dark)", fontWeight: 500 }}>${s.monthlyRate}/mo</span>
+                    )}
+                    {s.monthlyRate && s.sessionRate && (
+                      <span style={{ fontSize: 11, color: "var(--text-tertiary)" }}>or</span>
+                    )}
+                    {s.sessionRate && (
+                      <span style={{ fontSize: 11, color: "var(--pink-dark)", fontWeight: 500 }}>${s.sessionRate}/session</span>
+                    )}
+                    {!s.monthlyRate && !s.sessionRate && (
+                      <span style={{ fontSize: 11, color: "var(--text-tertiary)" }}>· Rate TBD</span>
+                    )}
                   </div>
                 </div>
               </div>
