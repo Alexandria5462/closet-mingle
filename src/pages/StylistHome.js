@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { collection, query, where, getDocs, doc, updateDoc, onSnapshot } from "firebase/firestore";
 import { db } from "../lib/firebase";
@@ -10,8 +10,12 @@ export default function StylistHome() {
   const { userProfile, currentUser } = useAuth();
   const [recentConvs, setRecentConvs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [todayStats, setTodayStats] = useState({ sessions: 0, earnings: 0, unread: 0 });
+  const [todayStats, setTodayStats] = useState({ sessions: 0, earnings: 0, unread: 0, followers: 0 });
+  const [liveRating, setLiveRating] = useState(null);
   const [availability, setAvailability] = useState(userProfile?.availabilityEnabled || false);
+  // Keep session earnings and tip earnings separate so they don't overwrite each other
+  const sessionEarningsRef = useRef(0);
+  const tipEarningsRef = useRef(0);
 
   const firstName = userProfile?.name?.split(" ")[0] || "there";
   const hour = new Date().getHours();
@@ -22,87 +26,100 @@ export default function StylistHome() {
   }, [userProfile]);
 
   useEffect(() => {
-    if (currentUser?.uid) {
-      loadDashboard();
-    }
-  }, [currentUser]);
-
-  useEffect(() => {
     if (!currentUser?.uid) return;
-    const unsub = onSnapshot(collection(db, "messages"), (snap) => {
+
+    // ── Live unread messages ───────────────────────────────────
+    const unsubMsgs = onSnapshot(collection(db, "messages"), (snap) => {
       const unread = snap.docs.filter(d => {
         const data = d.data();
-        return (data.conversationId||"").includes(currentUser.uid) && data.senderId !== currentUser.uid && !data.read;
+        return (data.conversationId || "").includes(currentUser.uid) &&
+               data.senderId !== currentUser.uid && !data.read;
       }).length;
-      setTodayStats(prev => ({...prev, unread}));
-    });
-    return unsub;
-  }, [currentUser]);
+      setTodayStats(prev => ({ ...prev, unread }));
 
-  async function loadDashboard() {
-    setLoading(true);
-    try {
-      const now = new Date();
-      const todayStart = new Date(now.setHours(0, 0, 0, 0)).toISOString();
-
-      // Today's sessions
-      const sessionSnap = await getDocs(
-        query(collection(db, "chatSessions"),
-          where("stylistId", "==", currentUser.uid),
-          where("status", "==", "ended")
-        )
-      );
-      const todaySessions = sessionSnap.docs.filter(d => d.data().endedAt > todayStart).length;
-      const todayEarnings = todaySessions * 9.99 * 0.7;
-
-      // Recent conversations
-      const msgSnap = await getDocs(
-        collection(db, "messages")
-      );
-
+      // Also update recent conversations
       const convMap = {};
-      msgSnap.docs.forEach(d => {
+      snap.docs.forEach(d => {
         const data = d.data();
-        if (!data.conversationId.includes(currentUser.uid)) return;
+        if (!(data.conversationId || "").includes(currentUser.uid)) return;
         if (!convMap[data.conversationId] || new Date(data.createdAt) > new Date(convMap[data.conversationId].createdAt)) {
           convMap[data.conversationId] = data;
         }
       });
+      const sorted = Object.values(convMap).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 3);
+      // Load client profiles async without blocking
+      Promise.all(sorted.map(async msg => {
+        const parts = (msg.conversationId || "").split("_");
+        const clientId = parts.find(id => id !== currentUser.uid) || "";
+        try {
+          const s = await getDocs(query(collection(db, "users"), where("__name__", "==", clientId)));
+          return { msg, client: !s.empty ? s.docs[0].data() : null, clientId };
+        } catch(e) { return { msg, client: null, clientId }; }
+      })).then(setRecentConvs);
+    });
 
-      // Unread count
-      const unreadCount = msgSnap.docs.filter(d => {
-        const data = d.data();
-        return data.conversationId.includes(currentUser.uid) && !data.read && data.senderId !== currentUser.uid;
-      }).length;
+    // ── Live today's sessions ─────────────────────────────────
+    const todayStart = new Date(new Date().setHours(0, 0, 0, 0)).toISOString();
+    const unsubSessions = onSnapshot(
+      query(collection(db, "chatSessions"),
+        where("stylistId", "==", currentUser.uid),
+        where("status", "==", "ended")
+      ),
+      (snap) => {
+        const todaySessions = snap.docs.filter(d => (d.data().endedAt || "") > todayStart).length;
+        sessionEarningsRef.current = todaySessions * 9.99 * 0.7;
+        setTodayStats(prev => ({
+          ...prev,
+          sessions: todaySessions,
+          earnings: sessionEarningsRef.current + tipEarningsRef.current,
+        }));
+      }
+    );
 
-      // Get client info for recent 3 convos
-      const recent = await Promise.all(
-        Object.values(convMap)
-          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-          .slice(0, 3)
-          .map(async msg => {
-            const clientId = msg.conversationId.replace(currentUser.uid, "").replace("_", "");
-            try {
-              const clientSnap = await getDocs(query(collection(db, "users"), where("__name__", "==", clientId)));
-              const client = !clientSnap.empty ? clientSnap.docs[0].data() : null;
-              return { msg, client, clientId };
-            } catch (e) { return { msg, client: null, clientId }; }
-          })
-      );
+    // ── Live today's tips ─────────────────────────────────────
+    const unsubTips = onSnapshot(
+      query(collection(db, "tips"), where("toStylistId", "==", currentUser.uid)),
+      (snap) => {
+        tipEarningsRef.current = snap.docs
+          .filter(d => (d.data().createdAt || "") > todayStart)
+          .reduce((sum, d) => sum + (d.data().stylistAmount || 0), 0);
+        setTodayStats(prev => ({
+          ...prev,
+          earnings: sessionEarningsRef.current + tipEarningsRef.current,
+        }));
+      }
+    );
 
-      setRecentConvs(recent);
-      // Follower count
-      const followerSnap = await getDocs(
-        query(collection(db, "follows"), where("stylistId", "==", currentUser.uid))
-      );
-      const followerCount = followerSnap.size;
+    // ── Live rating from reviews ──────────────────────────────
+    const unsubReviews = onSnapshot(
+      query(collection(db, "reviews"), where("targetUserId", "==", currentUser.uid)),
+      (snap) => {
+        const reviews = snap.docs.map(d => d.data());
+        const avg = reviews.length > 0
+          ? (reviews.reduce((s, r) => s + (r.rating || 0), 0) / reviews.length).toFixed(1)
+          : null;
+        setLiveRating(avg);
+      }
+    );
 
-      setTodayStats({ sessions: todaySessions, earnings: todayEarnings, unread: unreadCount, followers: followerCount });
-    } catch (e) {
-      console.error("Dashboard error:", e);
-    }
+    // ── Live followers ────────────────────────────────────────
+    const unsubFollowers = onSnapshot(
+      query(collection(db, "follows"), where("stylistId", "==", currentUser.uid)),
+      (snap) => {
+        setTodayStats(prev => ({ ...prev, followers: snap.size }));
+      }
+    );
+
     setLoading(false);
-  }
+
+    return () => {
+      unsubMsgs();
+      unsubSessions();
+      unsubTips();
+      unsubReviews();
+      unsubFollowers();
+    };
+  }, [currentUser]);
 
   async function toggleAvailability() {
     const newVal = !availability;
@@ -171,8 +188,8 @@ export default function StylistHome() {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 14 }}>
             {[
               { label: "Today's sessions", value: todayStats.sessions },
-              { label: "Today's earnings", value: `$${todayStats.earnings.toFixed(2)}` },
-              { label: "Unread messages", value: todayStats.unread },
+              { label: "Today's earnings", value: `$${(todayStats.earnings || 0).toFixed(2)}` },
+              { label: "Unread messages",  value: todayStats.unread },
             ].map(s => (
               <div key={s.label} className="stat-card" style={{ background: "var(--bg-card)", border: "0.5px solid var(--border)", borderRadius: "var(--radius)", padding: "10px 8px" }}>
                 <div className="stat-label" style={{ fontSize: 10 }}>{s.label}</div>
@@ -237,10 +254,10 @@ export default function StylistHome() {
                 </div>
                 <div style={{ fontSize: 10, color: "var(--text-tertiary)", marginTop: 2 }}>Verified badge</div>
               </div>
-              <div style={{ flex: 1, background: (userProfile?.rating > 0) ? "#fef3c7" : "var(--bg)", border: `1px solid ${userProfile?.rating > 0 ? "#fcd34d" : "var(--border)"}`, borderRadius: "var(--radius-sm)", padding: "10px 12px", textAlign: "center" }}>
+              <div style={{ flex: 1, background: (liveRating > 0) ? "#fef3c7" : "var(--bg)", border: `1px solid ${liveRating > 0 ? "#fcd34d" : "var(--border)"}`, borderRadius: "var(--radius-sm)", padding: "10px 12px", textAlign: "center" }}>
                 <div style={{ fontSize: 18, marginBottom: 4 }}>⭐</div>
-                <div style={{ fontSize: 11, fontWeight: 500, color: "var(--text-primary)" }}>
-                  {userProfile?.rating > 0 ? userProfile.rating : "—"}
+                <div style={{ fontSize: 11, fontWeight: 600, color: liveRating > 0 ? "#92400e" : "var(--text-tertiary)" }}>
+                  {liveRating ? liveRating : "—"}
                 </div>
                 <div style={{ fontSize: 10, color: "var(--text-tertiary)", marginTop: 2 }}>Avg rating</div>
               </div>
