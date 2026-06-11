@@ -937,8 +937,15 @@ export default function Account() {
                   </div>
 
                   <div className="card" style={{ background: "#f0fdf4", border: "1px solid #6ee7b7" }}>
-                    <div style={{ fontSize: 13, color: "#065f46" }}>
-                      💝 You keep <strong>100%</strong> of every tip · 🎯 You keep <strong>70%</strong> of every "Try a Session" fee
+                    <div style={{ fontSize: 13, color: "#065f46", lineHeight: 1.6 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                        <span>Tips from clients</span>
+                        <strong>100% yours</strong>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between" }}>
+                        <span>Client bookings (your rate)</span>
+                        <strong>80% yours</strong>
+                      </div>
                     </div>
                   </div>
 

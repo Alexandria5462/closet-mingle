@@ -137,24 +137,23 @@ export default function StylistAnalytics() {
                   ${((stats.totalTips || 0) + (stats.sessionFeeEarnings || 0)).toFixed(2)}
                 </div>
                 <div style={{ fontSize: 11, color: "var(--pink-dark)", opacity: 0.8, marginTop: 4 }}>
-                  Tips (100%) · Session fees (70% of $9.99)
+                  Tips (100%) + Session booking fees (80%)
                 </div>
               </div>
 
               {/* Stats grid */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
                 {[
-                  { label: "Total clients",        value: stats.totalClients ?? 0,       icon: "👥" },
-                  { label: "Avg Rating",            value: stats.avgRating > 0 ? `${stats.avgRating} ⭐` : "—", icon: "⭐" },
-                  { label: "Total Reviews",         value: stats.reviewCount ?? 0,        icon: "📝" },
-                  { label: "Tips received",         value: stats.totalTipCount ?? 0,      icon: "💝" },
-                  { label: "Total tips earned",     value: `$${(stats.totalTips || 0).toFixed(2)}`, icon: "💰" },
-                  { label: "Session fees earned",   value: `$${(stats.sessionFeeEarnings || 0).toFixed(2)}`, icon: "🎯" },
+                  { label: "Total Clients",       value: stats.totalClients ?? 0 },
+                  { label: "Avg Rating",           value: stats.avgRating > 0 ? `${stats.avgRating} / 5` : "—" },
+                  { label: "Total Reviews",        value: stats.reviewCount ?? 0 },
+                  { label: "Tips Received",        value: stats.totalTipCount ?? 0 },
+                  { label: "Total Tips Earned",    value: `$${(stats.totalTips || 0).toFixed(2)}` },
+                  { label: "Session Fees Earned",  value: `$${(stats.sessionFeeEarnings || 0).toFixed(2)}` },
                 ].map(s => (
-                  <div key={s.label} className="stat-card" style={{ background: "var(--bg-card)", border: "0.5px solid var(--border)", borderRadius: "var(--radius)" }}>
-                    <div style={{ fontSize: 18, marginBottom: 4 }}>{s.icon}</div>
-                    <div className="stat-label">{s.label}</div>
-                    <div className="stat-val">{s.value}</div>
+                  <div key={s.label} className="stat-card" style={{ background: "var(--bg-card)", border: "0.5px solid var(--border)", borderRadius: "var(--radius)", padding: "12px 14px" }}>
+                    <div className="stat-label" style={{ fontSize: 11, color: "var(--text-tertiary)", marginBottom: 4 }}>{s.label}</div>
+                    <div className="stat-val" style={{ fontSize: 20, fontWeight: 700 }}>{s.value}</div>
                   </div>
                 ))}
               </div>
@@ -180,11 +179,22 @@ export default function StylistAnalytics() {
                 </div>
               )}
 
-              {/* Revenue split reminder */}
+              {/* Revenue split */}
               <div className="card">
-                <div style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.6 }}>
-                  💝 <strong style={{ color: "var(--success)" }}>Tips — 100% yours.</strong> Every tip a client sends goes directly to you.<br />
-                  🎯 <strong style={{ color: "var(--pink-dark)" }}>Session fees — 70% yours.</strong> For Pay Per Session clients ($9.99), you earn $6.93. ClosetMingle keeps 30%.
+                <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 8 }}>How your earnings work</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
+                    <span style={{ color: "var(--text-secondary)" }}>Tips from clients</span>
+                    <strong style={{ color: "var(--success)" }}>100% yours</strong>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
+                    <span style={{ color: "var(--text-secondary)" }}>Booking fees (your rate)</span>
+                    <strong style={{ color: "var(--text-primary)" }}>80% yours</strong>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
+                    <span style={{ color: "var(--text-secondary)" }}>ClosetMingle platform fee</span>
+                    <span style={{ color: "var(--text-tertiary)" }}>20% per booking</span>
+                  </div>
                 </div>
               </div>
             </>

@@ -7,9 +7,9 @@ import Toast from "../components/Toast";
 import TabBar from "../components/TabBar";
 
 const GIFT_PLANS = [
-  { id: "gift_monthly", name: "Premium AI", duration: "1 month", price: "$9.99", color: "var(--pink-light)" },
-  { id: "gift_3month", name: "Premium AI", duration: "3 months", price: "$29.99", color: "#fce7f3", badge: "Save 25%" },
-  { id: "gift_plus", name: "Premium Plus", duration: "1 month", price: "$19.99", color: "#ede9fe" },
+  { id: "gift_monthly", name: "Premium",  duration: "1 month",  price: "$9.99",  color: "var(--pink-light)" },
+  { id: "gift_3month",  name: "Premium",  duration: "3 months", price: "$29.99", color: "var(--pink-light)", badge: "Best value" },
+  { id: "gift_6month",  name: "Premium",  duration: "6 months", price: "$54.99", color: "var(--pink-light)", badge: "Save 8%" },
 ];
 
 export default function GiftSubscription() {
@@ -56,10 +56,10 @@ export default function GiftSubscription() {
         </div>
         <div className="screen">
           <div style={{ textAlign: "center", padding: "80px 24px" }}>
-            <div style={{ fontSize: 64, marginBottom: 16 }}>🎁</div>
+            <i className="ti ti-gift" style={{ fontSize: 64, color: "var(--pink)", display: "block", marginBottom: 16 }} aria-hidden="true"></i>
             <div style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>Gift sent!</div>
             <div style={{ fontSize: 14, color: "var(--text-secondary)", marginBottom: 24, lineHeight: 1.6 }}>
-              {recipientName} will receive their gift at {recipientEmail}. How thoughtful! 💗
+              {recipientName} will receive their Premium gift at {recipientEmail}.
             </div>
             <button className="btn-pink" onClick={() => nav("/home")} style={{ width: "auto", padding: "12px 32px" }}>Back to home</button>
           </div>
@@ -83,9 +83,9 @@ export default function GiftSubscription() {
       <div className="screen">
         <div className="body">
           <div style={{ textAlign: "center", marginBottom: 20 }}>
-            <div style={{ fontSize: 48, marginBottom: 8 }}>🎁</div>
+            <i className="ti ti-gift" style={{ fontSize: 48, color: "var(--pink)", display: "block", marginBottom: 8 }} aria-hidden="true"></i>
             <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>Give the gift of style</div>
-            <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>Send a ClosetMingle subscription to someone you love</div>
+            <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>Send a ClosetMingle Premium subscription to someone special</div>
           </div>
 
           {/* Plan selection */}

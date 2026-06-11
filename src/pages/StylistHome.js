@@ -221,7 +221,7 @@ export default function StylistHome() {
             {[
               { label: "Clients helped", value: todayStats.sessions, sub: "today" },
               { label: "Tips earned",    value: `$${(tipEarningsRef.current || 0).toFixed(2)}`, sub: "today · 100% yours" },
-              { label: "Session fees",   value: `$${(sessionEarningsRef.current || 0).toFixed(2)}`, sub: "today · 70% yours" },
+              { label: "Session fees",   value: `$${(sessionEarningsRef.current || 0).toFixed(2)}`, sub: "today · from bookings" },
             ].map(s => (
               <div key={s.label} className="stat-card" style={{ background: "var(--bg-card)", border: "0.5px solid var(--border)", borderRadius: "var(--radius)", padding: "10px 8px", textAlign: "center" }}>
                 <div style={{ fontSize: 10, color: "var(--text-tertiary)", marginBottom: 2 }}>{s.label}</div>
