@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
+import { collection, query, where, onSnapshot, doc, getDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { useAuth } from "../lib/AuthContext";
 import TabBar from "../components/TabBar";
@@ -12,33 +12,38 @@ export default function ClientSessions() {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("all"); // all | active | completed
+  const [filter, setFilter] = useState("all");
+  const stylistCacheRef = React.useRef({});
 
   useEffect(() => {
-    if (currentUser?.uid) loadSessions();
-  }, [currentUser]);
-
-  async function loadSessions() {
+    if (!currentUser?.uid) return;
     setLoading(true);
-    try {
-      const snap = await getDocs(
-        query(collection(db, "chatSessions"), where("clientId", "==", currentUser.uid))
-      );
-      const raw = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-      // Load stylist info for each session
-      const withStylists = await Promise.all(raw.map(async s => {
-        try {
-          const stylistSnap = await getDoc(doc(db, "users", s.stylistId));
-          const stylist = stylistSnap.exists() ? stylistSnap.data() : null;
-          return { ...s, stylist };
-        } catch (e) { return { ...s, stylist: null }; }
-      }));
+    // Live listener — session status updates instantly when stylist ends/closes
+    const unsub = onSnapshot(
+      query(collection(db, "chatSessions"), where("clientId", "==", currentUser.uid)),
+      async (snap) => {
+        const raw = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-      setSessions(withStylists.sort((a, b) => new Date(b.startedAt) - new Date(a.startedAt)));
-    } catch (e) { console.error(e); }
-    setLoading(false);
-  }
+        // Load stylist profiles (cached)
+        const withStylists = await Promise.all(raw.map(async s => {
+          if (!stylistCacheRef.current[s.stylistId]) {
+            try {
+              const stylistSnap = await getDoc(doc(db, "users", s.stylistId));
+              stylistCacheRef.current[s.stylistId] = stylistSnap.exists() ? stylistSnap.data() : null;
+            } catch(e) {}
+          }
+          return { ...s, stylist: stylistCacheRef.current[s.stylistId] || null };
+        }));
+
+        setSessions(withStylists.sort((a, b) => new Date(b.startedAt) - new Date(a.startedAt)));
+        setLoading(false);
+      },
+      (err) => { console.error(err); setLoading(false); }
+    );
+
+    return unsub;
+  }, [currentUser]);
 
   function getTimeAgo(dateStr) {
     if (!dateStr) return "";

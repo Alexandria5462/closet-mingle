@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { collection, query, where, getDocs, addDoc, doc, updateDoc } from "firebase/firestore";
+import { collection, query, where, onSnapshot, addDoc, doc, updateDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { useAuth } from "../lib/AuthContext";
 import { notifyStylistNewReview, notifyClientReviewReply } from "../lib/notifications";
@@ -13,12 +13,30 @@ export default function Reviews({ targetUserId, targetUserName }) {
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [replyingTo, setReplyingTo] = useState(null); // review id
+  const [replyingTo, setReplyingTo] = useState(null);
   const [replyText, setReplyText] = useState("");
   const [submittingReply, setSubmittingReply] = useState(false);
 
   const canReview = currentUser && currentUser.uid !== targetUserId && userProfile?.accountType === "client";
   const canReply = currentUser?.uid === targetUserId && userProfile?.accountType === "stylist";
+
+  useEffect(() => {
+    if (!targetUserId) return;
+    setLoading(true);
+    // Live — new reviews and stylist replies appear instantly
+    const unsub = onSnapshot(
+      query(collection(db, "reviews"), where("targetUserId", "==", targetUserId)),
+      (snap) => {
+        setReviews(snap.docs
+          .map(d => ({ id: d.id, ...d.data() }))
+          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        );
+        setLoading(false);
+      },
+      (err) => { console.error(err); setLoading(false); }
+    );
+    return unsub;
+  }, [targetUserId]);
 
   async function submitReply(reviewId) {
     if (!replyText.trim()) return;
@@ -28,8 +46,7 @@ export default function Reviews({ targetUserId, targetUserName }) {
         reply: replyText.trim(),
         repliedAt: new Date().toISOString(),
       });
-      setReviews(prev => prev.map(r => r.id === reviewId ? { ...r, reply: replyText.trim() } : r));
-      // Notify client their review was replied to
+      // onSnapshot will update reviews automatically
       const reviewData = reviews.find(r => r.id === reviewId);
       if (reviewData?.reviewerId) {
         notifyClientReviewReply(reviewData.reviewerId, userProfile?.name || "Your stylist");
@@ -38,22 +55,6 @@ export default function Reviews({ targetUserId, targetUserName }) {
       setReplyText("");
     } catch(e) { console.error(e); }
     setSubmittingReply(false);
-  }
-
-  useEffect(() => {
-    if (targetUserId) loadReviews();
-  }, [targetUserId]);
-
-  async function loadReviews() {
-    setLoading(true);
-    try {
-      const snap = await getDocs(
-        query(collection(db, "reviews"), where("targetUserId", "==", targetUserId))
-      );
-      setReviews(snap.docs.map(d => ({ id: d.id, ...d.data() }))
-        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
-    } catch (e) { console.error(e); }
-    setLoading(false);
   }
 
   async function submitReview() {
