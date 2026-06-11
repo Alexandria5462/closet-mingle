@@ -156,7 +156,7 @@ export default function StylistHome() {
                 {availability ? "Available for sessions" : "Not available"}
               </div>
               <div style={{ fontSize: 12, color: availability ? "#065f46" : "var(--text-secondary)", marginTop: 2, opacity: 0.8 }}>
-                {availability ? userProfile?.availabilityHours || "Open now" : "Clients cannot see or book you"}
+                {availability ? userProfile?.availabilityHours || "Open now" : "You appear as offline"}
               </div>
             </div>
             <button
@@ -226,9 +226,9 @@ export default function StylistHome() {
               <div style={{ flex: 1, background: availability ? "#d1fae5" : "var(--bg)", border: `1px solid ${availability ? "#6ee7b7" : "var(--border)"}`, borderRadius: "var(--radius-sm)", padding: "10px 12px", textAlign: "center" }}>
                 <div style={{ fontSize: 18, marginBottom: 4 }}>{availability ? "🟢" : "⚫"}</div>
                 <div style={{ fontSize: 11, fontWeight: 500, color: availability ? "#065f46" : "var(--text-tertiary)" }}>
-                  {availability ? "Visible" : "Hidden"}
+                  {availability ? "Online" : "Offline"}
                 </div>
-                <div style={{ fontSize: 10, color: "var(--text-tertiary)", marginTop: 2 }}>In search results</div>
+                <div style={{ fontSize: 10, color: "var(--text-tertiary)", marginTop: 2 }}>Availability status</div>
               </div>
               <div style={{ flex: 1, background: userProfile?.isVerified ? "#d1fae5" : "var(--bg)", border: `1px solid ${userProfile?.isVerified ? "#6ee7b7" : "var(--border)"}`, borderRadius: "var(--radius-sm)", padding: "10px 12px", textAlign: "center" }}>
                 <div style={{ fontSize: 18, marginBottom: 4 }}>{userProfile?.isVerified ? "✅" : "⏳"}</div>
@@ -247,8 +247,8 @@ export default function StylistHome() {
             </div>
             <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginTop: 10, textAlign: "center" }}>
               {availability
-                ? "Clients can find and message you · Turn off availability to go offline"
-                : "Turn on availability above so clients can find you"
+                ? "Clients can see you are online and message you"
+                : "Clients can still view your profile and message you while offline"
               }
             </div>
           </div>
