@@ -58,34 +58,66 @@ export default function StylistHome() {
       })).then(setRecentConvs);
     });
 
-    // ── Live today's sessions ─────────────────────────────────
+    // ── Live today's active conversations ────────────────────
+    // A "session" = unique client the stylist sent at least one message to today
     const todayStart = new Date(new Date().setHours(0, 0, 0, 0)).toISOString();
     const unsubSessions = onSnapshot(
+      collection(db, "messages"),
+      (snap) => {
+        const clientsToday = new Set();
+        snap.docs.forEach(d => {
+          const data = d.data();
+          const convId = data.conversationId || "";
+          if (!convId.includes(currentUser.uid)) return;
+          if (data.senderId !== currentUser.uid) return; // only messages stylist sent
+          if ((data.createdAt || "") < todayStart) return; // only today
+          const parts = convId.split("_");
+          const clientId = parts.find(id => id !== currentUser.uid);
+          if (clientId) clientsToday.add(clientId);
+        });
+        setTodayStats(prev => ({ ...prev, sessions: clientsToday.size }));
+      }
+    );
+
+    // ── Live today's tips (100% goes to stylist) ──────────────
+    const unsubTips = onSnapshot(
+      query(collection(db, "tips"), where("toStylistId", "==", currentUser.uid)),
+      (snap) => {
+        // Tips: stylist keeps 100%
+        tipEarningsRef.current = snap.docs
+          .filter(d => (d.data().createdAt || "") > todayStart)
+          .reduce((sum, d) => sum + (d.data().stylistAmount || d.data().amount || 0), 0);
+
+        // "Try a Session" completions today: stylist keeps 70% of $9.99
+        sessionEarningsRef.current = snap.docs
+          .filter(d => false) // session earnings handled separately below
+          .reduce((sum) => sum, 0);
+
+        setTodayStats(prev => ({
+          ...prev,
+          earnings: tipEarningsRef.current + sessionEarningsRef.current,
+        }));
+      }
+    );
+
+    // ── Live "Try a Session" completions ──────────────────────
+    // Only Pay Per Session clients generate a session fee for the stylist
+    const unsubSessionFees = onSnapshot(
       query(collection(db, "chatSessions"),
         where("stylistId", "==", currentUser.uid),
         where("status", "==", "ended")
       ),
       (snap) => {
-        const todaySessions = snap.docs.filter(d => (d.data().endedAt || "") > todayStart).length;
-        sessionEarningsRef.current = todaySessions * 9.99 * 0.7;
+        // Only count session-tier clients (Pay Per Session = $9.99 * 70%)
+        sessionEarningsRef.current = snap.docs
+          .filter(d => {
+            const data = d.data();
+            return (data.endedAt || "") > todayStart && data.clientTier === "session";
+          })
+          .length * (9.99 * 0.7);
         setTodayStats(prev => ({
           ...prev,
-          sessions: todaySessions,
-          earnings: sessionEarningsRef.current + tipEarningsRef.current,
-        }));
-      }
-    );
-
-    // ── Live today's tips ─────────────────────────────────────
-    const unsubTips = onSnapshot(
-      query(collection(db, "tips"), where("toStylistId", "==", currentUser.uid)),
-      (snap) => {
-        tipEarningsRef.current = snap.docs
-          .filter(d => (d.data().createdAt || "") > todayStart)
-          .reduce((sum, d) => sum + (d.data().stylistAmount || 0), 0);
-        setTodayStats(prev => ({
-          ...prev,
-          earnings: sessionEarningsRef.current + tipEarningsRef.current,
+          earnings: tipEarningsRef.current + sessionEarningsRef.current,
         }));
       }
     );
@@ -116,6 +148,7 @@ export default function StylistHome() {
       unsubMsgs();
       unsubSessions();
       unsubTips();
+      unsubSessionFees();
       unsubReviews();
       unsubFollowers();
     };
@@ -163,7 +196,7 @@ export default function StylistHome() {
         <div className="body">
           <div style={{ fontSize: 20, fontWeight: 500, marginBottom: 4 }}>{greeting}, {firstName} </div>
           <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 16 }}>
-            {availability ? "You are live — clients can book you now" : "You are offline — turn on availability to receive clients"}
+            {availability ? "You are live — clients can see and message you" : "You appear offline — clients can still message you"}
           </div>
 
           {/* Quick availability toggle */}
@@ -187,13 +220,14 @@ export default function StylistHome() {
           {/* Today's stats */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 14 }}>
             {[
-              { label: "Today's sessions", value: todayStats.sessions },
-              { label: "Today's earnings", value: `$${(todayStats.earnings || 0).toFixed(2)}` },
-              { label: "Unread messages",  value: todayStats.unread },
+              { label: "Clients helped", value: todayStats.sessions, sub: "today" },
+              { label: "Tips earned",    value: `$${(tipEarningsRef.current || 0).toFixed(2)}`, sub: "today · 100% yours" },
+              { label: "Session fees",   value: `$${(sessionEarningsRef.current || 0).toFixed(2)}`, sub: "today · 70% yours" },
             ].map(s => (
-              <div key={s.label} className="stat-card" style={{ background: "var(--bg-card)", border: "0.5px solid var(--border)", borderRadius: "var(--radius)", padding: "10px 8px" }}>
-                <div className="stat-label" style={{ fontSize: 10 }}>{s.label}</div>
-                <div className="stat-val" style={{ fontSize: 18 }}>{s.value}</div>
+              <div key={s.label} className="stat-card" style={{ background: "var(--bg-card)", border: "0.5px solid var(--border)", borderRadius: "var(--radius)", padding: "10px 8px", textAlign: "center" }}>
+                <div style={{ fontSize: 10, color: "var(--text-tertiary)", marginBottom: 2 }}>{s.label}</div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: "var(--text-primary)" }}>{s.value}</div>
+                <div style={{ fontSize: 9, color: "var(--text-tertiary)", marginTop: 1 }}>{s.sub}</div>
               </div>
             ))}
           </div>

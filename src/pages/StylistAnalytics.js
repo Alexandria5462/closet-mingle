@@ -16,42 +16,56 @@ export default function StylistAnalytics() {
   useEffect(() => {
     if (!currentUser?.uid) return;
 
-    // Live sessions listener
+    // ── Live sessions listener ─────────────────────────────────
+    // Sessions = unique clients the stylist has ever messaged
+    // Only "Try a Session" (session tier) clients generate a session fee (70% of $9.99)
     const unsubSessions = onSnapshot(
       query(collection(db, "chatSessions"),
-        where("stylistId", "==", currentUser.uid),
-        where("status", "==", "ended")
+        where("stylistId", "==", currentUser.uid)
       ),
       (sessionSnap) => {
         const sessions = sessionSnap.docs.map(d => d.data());
-        const totalSessions = sessions.length;
-        const totalEarnings = totalSessions * 9.99 * 0.7;
-        const totalRevenue = totalSessions * 9.99;
+        const totalClients = new Set(sessions.map(s => s.clientId)).size;
 
-        // Build monthly breakdown
+        // Only Pay Per Session clients earn the stylist a fee
+        const completedSessionFees = sessions.filter(s =>
+          s.status === "ended" && s.clientTier === "session"
+        );
+        const sessionFeeEarnings = completedSessionFees.length * (9.99 * 0.7);
+
+        // Monthly breakdown by first contact date
         const monthly = {};
         sessions.forEach(s => {
-          const month = new Date(s.endedAt || s.startedAt).toLocaleDateString("en-US", { month: "short", year: "numeric" });
+          const month = new Date(s.startedAt).toLocaleDateString("en-US", { month: "short", year: "numeric" });
           if (!monthly[month]) monthly[month] = { sessions: 0, earnings: 0 };
           monthly[month].sessions++;
-          monthly[month].earnings += 9.99 * 0.7;
+          if (s.status === "ended" && s.clientTier === "session") {
+            monthly[month].earnings += 9.99 * 0.7;
+          }
         });
         setMonthlyData(Object.entries(monthly).map(([month, data]) => ({ month, ...data })).slice(-6));
 
-        setStats(prev => ({ ...(prev || {}), totalSessions, totalEarnings, totalRevenue }));
+        setStats(prev => ({ ...(prev || {}), totalClients, sessionFeeEarnings, completedSessions: completedSessionFees.length }));
         setLoading(false);
       },
       (err) => { console.error(err); setLoading(false); }
     );
 
-    // Live tips listener
+    // Live tips listener — stylist keeps 100% of tips
     const unsubTips = onSnapshot(
       query(collection(db, "tips"), where("toStylistId", "==", currentUser.uid)),
       (tipSnap) => {
         const tips = tipSnap.docs.map(d => d.data());
-        const totalTips = tips.reduce((s, t) => s + (t.stylistAmount || 0), 0);
+        // stylistAmount is always 100% of tip (full amount)
+        const totalTips = tips.reduce((s, t) => s + (t.stylistAmount || t.amount || 0), 0);
         const totalTipCount = tips.length;
-        setStats(prev => ({ ...(prev || {}), totalTips, totalTipCount }));
+        setStats(prev => ({
+          ...(prev || {}),
+          totalTips,
+          totalTipCount,
+          // Total earnings = 100% of all tips + 70% of session fees
+          totalEarnings: totalTips + (prev?.sessionFeeEarnings || 0),
+        }));
       }
     );
 
@@ -84,7 +98,7 @@ export default function StylistAnalytics() {
     };
   }, [currentUser]);
 
-  const hasData = stats && (stats.totalSessions > 0 || stats.reviewCount > 0);
+  const hasData = stats && (stats.totalClients > 0 || stats.reviewCount > 0 || stats.totalTipCount > 0);
   const maxEarnings = monthlyData.length > 0 ? Math.max(...monthlyData.map(m => m.earnings)) : 1;
 
   return (
@@ -122,22 +136,22 @@ export default function StylistAnalytics() {
               <div style={{ background: "var(--avatar-bg)", border: "1px solid #f4c0d1", borderRadius: "var(--radius)", padding: 16, marginBottom: 14, textAlign: "center" }}>
                 <div style={{ fontSize: 12, color: "var(--pink-dark)", marginBottom: 4, fontWeight: 500 }}>Total earned</div>
                 <div style={{ fontSize: 36, fontWeight: 700, color: "var(--pink-dark)" }}>
-                  ${stats.totalEarnings.toFixed(2)}
+                  ${((stats.totalTips || 0) + (stats.sessionFeeEarnings || 0)).toFixed(2)}
                 </div>
-                <div style={{ fontSize: 11, color: "var(--pink-dark)", opacity: 0.7 }}>
-                  Your 70% share · Platform revenue: ${stats.totalRevenue.toFixed(2)}
+                <div style={{ fontSize: 11, color: "var(--pink-dark)", opacity: 0.8, marginTop: 4 }}>
+                  Tips (100%) · Session fees (70% of $9.99)
                 </div>
               </div>
 
               {/* Stats grid */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
                 {[
-                  { label: "Total Sessions", value: stats.totalSessions ?? 0, icon: "💬" },
-                  { label: "Avg Rating", value: stats.avgRating > 0 ? `${stats.avgRating} ⭐` : "—", icon: "⭐" },
-                  { label: "Total Reviews", value: stats.reviewCount ?? 0, icon: "📝" },
-                  { label: "Tips Received", value: stats.totalTipCount ?? 0, icon: "✅" },
-                  { label: "Tips Earned", value: `$${(stats.totalTips || 0).toFixed(2)}`, icon: "💝" },
-                  { label: "Avg Per Session", value: stats.totalSessions > 0 ? `$${((stats.totalEarnings || 0) / stats.totalSessions).toFixed(2)}` : "—", icon: "💰" },
+                  { label: "Total clients",        value: stats.totalClients ?? 0,       icon: "👥" },
+                  { label: "Avg Rating",            value: stats.avgRating > 0 ? `${stats.avgRating} ⭐` : "—", icon: "⭐" },
+                  { label: "Total Reviews",         value: stats.reviewCount ?? 0,        icon: "📝" },
+                  { label: "Tips received",         value: stats.totalTipCount ?? 0,      icon: "💝" },
+                  { label: "Total tips earned",     value: `$${(stats.totalTips || 0).toFixed(2)}`, icon: "💰" },
+                  { label: "Session fees earned",   value: `$${(stats.sessionFeeEarnings || 0).toFixed(2)}`, icon: "🎯" },
                 ].map(s => (
                   <div key={s.label} className="stat-card" style={{ background: "var(--bg-card)", border: "0.5px solid var(--border)", borderRadius: "var(--radius)" }}>
                     <div style={{ fontSize: 18, marginBottom: 4 }}>{s.icon}</div>
@@ -170,8 +184,9 @@ export default function StylistAnalytics() {
 
               {/* Revenue split reminder */}
               <div className="card">
-                <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>
-                  You keep <strong style={{ color: "var(--success)" }}>70%</strong> of every session fee and <strong style={{ color: "var(--success)" }}>70%</strong> of every tip. Closet Mingle keeps 30%.
+                <div style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.6 }}>
+                  💝 <strong style={{ color: "var(--success)" }}>Tips — 100% yours.</strong> Every tip a client sends goes directly to you.<br />
+                  🎯 <strong style={{ color: "var(--pink-dark)" }}>Session fees — 70% yours.</strong> For Pay Per Session clients ($9.99), you earn $6.93. ClosetMingle keeps 30%.
                 </div>
               </div>
             </>
