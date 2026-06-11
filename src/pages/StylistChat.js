@@ -174,23 +174,29 @@ export default function StylistChat() {
   }
 
   async function sendMessage(content, type = "text") {
-    if (!content.trim() && type === "text") return;
+    if (!content?.trim() && type === "text") return;
     setSending(true);
-    await addDoc(collection(db, "messages"), {
-      conversationId,
-      senderId: currentUser.uid,
-      senderName: userProfile?.name || "",
-      content,
-      type,
-      createdAt: new Date().toISOString(),
-      read: false,
-    });
-    setText("");
-    // Notify client of new message (stylist → client relationship only)
-    if (type === "text") {
-      notifyClientNewMessage(clientId, currentUser.uid, userProfile?.name || "Your stylist", content);
+    try {
+      await addDoc(collection(db, "messages"), {
+        conversationId,
+        senderId: currentUser.uid,
+        senderName: userProfile?.name || "",
+        content,
+        type,
+        createdAt: new Date().toISOString(),
+        read: false,
+      });
+      setText("");
+    } catch(e) {
+      console.error("Send message error:", e);
+    } finally {
+      // Always unblock the input — runs whether addDoc succeeded or failed
+      setSending(false);
     }
-    setSending(false);
+    // Fire notification after input is unblocked — non-blocking
+    if (type === "text") {
+      notifyClientNewMessage(clientId, currentUser.uid, userProfile?.name || "Your stylist", content).catch(() => {});
+    }
   }
 
   async function handlePhoto(file) {

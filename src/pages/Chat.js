@@ -156,10 +156,12 @@ export default function Chat() {
     } catch (e) {
       console.error("Send message error:", e);
       setToast("Failed to send message. Please try again.");
+    } finally {
+      // Always unblock the send button — no matter what happened above
+      setSending(false);
     }
-    setSending(false);
 
-    // Run registration and notifications async — don't block the input
+    // Background tasks — fully non-blocking, never affect the input
     if (type === "text") {
       (async () => {
         try {
