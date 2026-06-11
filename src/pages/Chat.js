@@ -107,7 +107,6 @@ export default function Chat() {
   }
 
   async function loadSessionStatus() {
-    if (!isSessionUser) return;
     try {
       const snap = await getDocs(
         query(
@@ -311,11 +310,6 @@ export default function Chat() {
           <div style={{ textAlign: "center", padding: "40px 20px", color: "var(--text-secondary)" }}>
             <div style={{ fontSize: 32, marginBottom: 8 }}>👋</div>
             <div style={{ fontSize: 14 }}>Start your styling session!</div>
-            {isSessionUser && (
-              <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginTop: 6 }}>
-                Your session is active
-              </div>
-            )}
           </div>
         )}
         {messages.map(m => (
