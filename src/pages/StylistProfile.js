@@ -24,13 +24,11 @@ export default function StylistProfile() {
   const [followLoading, setFollowLoading] = useState(false);
   const [showBooking, setShowBooking] = useState(false);
 
-  const hasRates = stylist?.monthlyRate || stylist?.sessionRate;
-  const canBook = !isStylist && (
-    userProfile?.subscriptionTier === "monthly" ||
-    userProfile?.subscriptionTier === "premium_plus" ||
-    userProfile?.subscriptionTier === "session"
-  );
+  // Any paid tier = Premium (monthly, plus legacy premium_plus and session)
+  const canBook = !isStylist &&
+    ["monthly", "premium_plus", "session"].includes(userProfile?.subscriptionTier);
   const isFreeClient = !isStylist && !canBook;
+  const hasRates = stylist?.monthlyRate || stylist?.sessionRate;
 
   useEffect(() => {
     loadStylist();

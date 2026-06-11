@@ -60,7 +60,6 @@ export default function Chat() {
 
   // Build consistent conversationId — always sort so both sides get same ID
   const conversationId = [currentUser?.uid, stylistId].sort().join("_");
-  const isSessionUser = userProfile?.subscriptionTier === "session";
 
   useEffect(() => {
     if (!currentUser?.uid || !stylistId) return;
@@ -188,6 +187,7 @@ export default function Chat() {
               clientName: userProfile?.name || "",
               stylistId,
               status: "active",
+              clientTier: userProfile?.subscriptionTier || "free",
               startedAt: new Date().toISOString(),
             });
           }

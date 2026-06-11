@@ -24,19 +24,19 @@ async function uploadPhoto(file) {
 }
 
 const TIER_LABELS = {
-  free: "Free",
-  monthly: "Premium AI — $9.99/mo",
-  premium_plus: "Premium Plus — $19.99/mo",
-  session: "Pay Per Session",
+  free:            "Free",
+  monthly:         "Premium — $9.99/mo",
+  premium_plus:    "Premium — $9.99/mo", // legacy, maps to premium
+  session:         "Premium — $9.99/mo", // legacy, maps to premium
   stylist_monthly: "Stylist — $20/mo",
-  stylist_annual: "Stylist — $200/yr"
+  stylist_annual:  "Stylist — $200/yr"
 };
 
 const TIER_COLORS = {
-  free: "var(--bg)",
-  monthly: "var(--pink-light)",
-  premium_plus: "#ede9fe",
-  session: "#f0fdf4"
+  free:         "var(--bg)",
+  monthly:      "var(--pink-light)",
+  premium_plus: "var(--pink-light)",
+  session:      "var(--pink-light)",
 };
 
 function CancelModal({ tierLabel, onConfirm, onCancel, cancelling }) {

@@ -14,57 +14,29 @@ const CLIENT_PLANS = [
     features: [
       "Upload unlimited clothing items",
       "AI outfit suggestions",
-      "Swipe and liked items",
-      "Watermark on screenshots",
+      "Swipe and save outfits",
       "6-hour swipe sessions",
     ],
     limitations: [
-      "No stylist chat or recommendations",
-      "Cannot view stylist profiles or reviews",
+      "Watermark on outfit screenshots",
+      "No access to stylists",
     ],
   },
   {
     id: "monthly",
-    name: "Premium AI",
+    name: "Premium",
     price: "$9.99",
     period: "/mo",
-    badge: "Popular",
+    badge: "Most Popular",
     features: [
       "Everything in Free",
       "No watermark",
-      "Unlimited swipe sessions",
-      "Text and photo chat with stylists",
-      "View stylist profiles and ratings",
-      "Style profile quiz for better matches",
-    ],
-    limitations: [],
-  },
-  {
-    id: "premium_plus",
-    name: "Premium Plus",
-    price: "$19.99",
-    period: "/mo",
-    badge: "Best Value",
-    features: [
-      "Everything in Premium AI",
-      "Video sessions with stylists",
-      "Choose your own stylist",
+      "Unlimited AI swipe sessions",
+      "Browse and book any stylist",
+      "Text, photo and video chat with stylists",
+      "View stylist profiles, ratings and reviews",
+      "Style quiz for better AI matches",
       "7-day outfit history",
-      "Priority stylist matching",
-    ],
-    limitations: [],
-  },
-  {
-    id: "session",
-    name: "Book a Stylist",
-    price: "Varies",
-    period: "",
-    badge: "Flexible",
-    features: [
-      "Pay the stylist's own rate",
-      "Monthly or per-session booking",
-      "Text and video chat",
-      "Rate set by each stylist",
     ],
     limitations: [],
   },
@@ -190,11 +162,7 @@ export default function Plans() {
               <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>Upgrade anytime. Cancel anytime.</div>
             </div>
 
-            {CLIENT_PLANS.filter(p => {
-              const hasPaidPlan = userProfile?.subscriptionTier === "monthly" || userProfile?.subscriptionTier === "premium_plus";
-              if (p.id === "session" && hasPaidPlan) return false;
-              return true;
-            }).map(p => (
+            {CLIENT_PLANS.map(p => (
               <div
                 key={p.id}
                 onClick={() => setSelected(p.id)}

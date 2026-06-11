@@ -6,12 +6,10 @@ import { db } from "../lib/firebase";
 import TabBar from "../components/TabBar";
 
 function getTierInfo(tier) {
-  switch (tier) {
-    case "monthly":      return { isPaid: true, hasStylist: true, label: "Premium AI",    color: "var(--pink-light)" };
-    case "premium_plus": return { isPaid: true, hasStylist: true, label: "Premium Plus",  color: "#ede9fe" };
-    case "session":      return { isPaid: true, hasStylist: true, label: "Session",        color: "#f0fdf4" };
-    default:             return { isPaid: false, hasStylist: false, label: "Free",         color: "var(--bg)" };
-  }
+  const isPremium = ["monthly", "premium_plus", "session"].includes(tier);
+  return isPremium
+    ? { isPaid: true,  hasStylist: true,  label: "Premium", color: "var(--pink-light)" }
+    : { isPaid: false, hasStylist: false, label: "Free",    color: "var(--bg)" };
 }
 
 export default function ClientHome() {
