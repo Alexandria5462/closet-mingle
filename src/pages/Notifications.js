@@ -6,16 +6,16 @@ import { useAuth } from "../lib/AuthContext";
 import TabBar from "../components/TabBar";
 
 const TYPE_CONFIG = {
-  message_from_stylist: { icon: "ti-message-circle", color: "#c4745a", label: "Message", route: "/my-messages" },
-  message_from_client:  { icon: "ti-message-circle", color: "#c4745a", label: "Message", route: "/stylist/messages" },
-  new_review:           { icon: "ti-star",            color: "#f59e0b", label: "Review",  route: "/account#reviews" },
-  review_reply:         { icon: "ti-message-reply",   color: "#c4745a", label: "Reply",   route: "/my-messages" },
-  new_follower:         { icon: "ti-user-plus",       color: "#c4745a", label: "Follower",route: "/stylist" },
-  new_client:           { icon: "ti-users",           color: "#4a6741", label: "Client",  route: "/stylist/clients" },
-  session_ended:        { icon: "ti-check",           color: "#4a6741", label: "Session", route: "/my-messages" },
-  tip_received:         { icon: "ti-heart-handshake", color: "#c4745a", label: "Tip",     route: "/stylist/analytics" },
-  billing:              { icon: "ti-credit-card",     color: "#3b82f6", label: "Billing", route: "/account#billing" },
-  message:              { icon: "ti-message-circle",  color: "#c4745a", label: "Message", route: "/my-messages" },
+  message_from_stylist: { icon: "ti-message-circle", color: "#c4745a", label: "Message",  route: "/my-messages" },
+  message_from_client:  { icon: "ti-message-circle", color: "#c4745a", label: "Message",  route: "/stylist/messages" },
+  new_review:           { icon: "ti-star",            color: "#f59e0b", label: "Review",   route: "/account" },
+  review_reply:         { icon: "ti-message-reply",   color: "#c4745a", label: "Reply",    route: "/my-messages" },
+  new_follower:         { icon: "ti-user-plus",       color: "#c4745a", label: "Follower", route: "/stylist" },
+  new_client:           { icon: "ti-users",           color: "#4a6741", label: "Client",   route: "/stylist/clients" },
+  session_ended:        { icon: "ti-check",           color: "#4a6741", label: "Session",  route: "/my-messages" },
+  tip_received:         { icon: "ti-heart-handshake", color: "#c4745a", label: "Tip",      route: "/stylist/analytics" },
+  billing:              { icon: "ti-credit-card",     color: "#3b82f6", label: "Billing",  route: "/account" },
+  message:              { icon: "ti-message-circle",  color: "#c4745a", label: "Message",  route: "/my-messages" },
 };
 
 export default function Notifications() {
@@ -70,7 +70,18 @@ export default function Notifications() {
   async function handleTap(notif) {
     await markRead(notif.id);
     const cfg = TYPE_CONFIG[notif.type];
-    if (cfg?.route) nav(cfg.route);
+    if (!cfg?.route) return;
+    // Route clients to their own pages, not stylist pages
+    if (!isStylist) {
+      if (notif.type === "message_from_stylist" || notif.type === "message") {
+        // Route to specific chat if stylistId is stored, otherwise messages list
+        if (notif.stylistId) { nav(`/chat/${notif.stylistId}`); return; }
+        nav("/my-messages"); return;
+      }
+      if (notif.type === "session_ended") { nav("/my-messages"); return; }
+      if (notif.type === "billing") { nav("/account"); return; }
+    }
+    nav(cfg.route);
   }
 
   function timeAgo(dateStr) {

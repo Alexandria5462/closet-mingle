@@ -8,6 +8,7 @@ import { db } from "../lib/firebase";
 import { useAuth } from "../lib/AuthContext";
 import CameraModal from "../components/CameraModal";
 import VideoCall from "../components/VideoCall";
+import { notifyClientNewMessage, notifyClientSessionEnded } from "../lib/notifications";
 
 const CLOUD_NAME = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME;
 const UPLOAD_PRESET = process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET;
@@ -187,7 +188,7 @@ export default function StylistChat() {
     setText("");
     // Notify client of new message (stylist → client relationship only)
     if (type === "text") {
-      notifyClientNewMessage(clientId, userProfile?.name || "Your stylist", content);
+      notifyClientNewMessage(clientId, currentUser.uid, userProfile?.name || "Your stylist", content);
     }
     setSending(false);
   }
@@ -244,7 +245,7 @@ export default function StylistChat() {
       });
 
       // Notify client session ended
-      notifyClientSessionEnded(clientId, userProfile?.name || "Your stylist");
+      notifyClientSessionEnded(clientId, currentUser.uid, userProfile?.name || "Your stylist");
 
       // Update stylist analytics
       await updateDoc(doc(db, "users", currentUser.uid), {

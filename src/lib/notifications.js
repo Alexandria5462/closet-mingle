@@ -21,7 +21,7 @@
 import { addDoc, collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "./firebase";
 
-async function send(userId, title, body, type) {
+async function send(userId, title, body, type, extra = {}) {
   if (!userId || !title) return;
   try {
     await addDoc(collection(db, "notifications"), {
@@ -31,6 +31,7 @@ async function send(userId, title, body, type) {
       type,
       read: false,
       createdAt: new Date().toISOString(),
+      ...extra,
     });
   } catch(e) {
     console.error("Notification failed:", e);
@@ -39,10 +40,11 @@ async function send(userId, title, body, type) {
 
 // ── CLIENT NOTIFICATIONS ─────────────────────────────────────
 
-export async function notifyClientNewMessage(clientId, stylistName, preview) {
-  await send(clientId, "New message from your stylist",
-    `${stylistName}: ${(preview || "").slice(0, 60)}`,
-    "message_from_stylist"
+export async function notifyClientNewMessage(clientId, stylistId, stylistName, preview) {
+  await send(clientId, `New message from ${stylistName}`,
+    (preview || "").slice(0, 80),
+    "message_from_stylist",
+    { stylistId }
   );
 }
 
@@ -53,10 +55,11 @@ export async function notifyClientReviewReply(clientId, stylistName) {
   );
 }
 
-export async function notifyClientSessionEnded(clientId, stylistName) {
+export async function notifyClientSessionEnded(clientId, stylistId, stylistName) {
   await send(clientId, "Your session has ended",
     `Your session with ${stylistName} is complete. Leave a review!`,
-    "session_ended"
+    "session_ended",
+    { stylistId }
   );
 }
 
