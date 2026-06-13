@@ -471,81 +471,75 @@ export default function StylistChat() {
         <div ref={bottomRef} />
       </div>
 
-      {/* Closet tray — fixed directly above the input bar */}
-      {showCloset && (
-        <div style={{
-          position: "fixed",
-          bottom: sessionEnded ? 0 : "calc(65px + env(safe-area-inset-bottom, 0px))",
-          left: 0, right: 0,
-          maxWidth: 430,
-          margin: "0 auto",
-          background: "var(--bg-card)",
-          borderTop: "2px solid var(--pink)",
-          boxShadow: "0 -2px 12px rgba(0,0,0,0.08)",
-          zIndex: 100,
-        }}>
-          {/* Header row */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 14px 6px" }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text-primary)" }}>
-              {client?.name || "Client"}'s closet
-            </div>
-            <button
-              onClick={() => setShowCloset(false)}
-              style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-tertiary)", fontSize: 18, padding: 0, lineHeight: 1, display: "flex", alignItems: "center" }}
-              aria-label="Close closet"
-            >✕</button>
-          </div>
+      {/* Bottom bar — closet tray + input bar in ONE fixed container, no gap */}
+      {!sessionEnded && (
+        <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, maxWidth: 430, margin: "0 auto", zIndex: 100, background: "var(--bg-card)", borderTop: "0.5px solid var(--border)" }}>
 
-          {/* Closet items horizontal scroll */}
-          <div style={{ padding: "0 14px 12px" }}>
-            {closetLoading ? (
-              <div style={{ fontSize: 13, color: "var(--text-secondary)", paddingBottom: 6 }}>Loading...</div>
-            ) : clientCloset.length === 0 ? (
-              <div style={{ fontSize: 13, color: "var(--text-secondary)", paddingBottom: 6 }}>No public items yet</div>
-            ) : (
-              <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 2, scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}>
-                {clientCloset.map((item, idx) => (
-                  <div key={item.id} style={{ flexShrink: 0, textAlign: "center", cursor: "pointer" }} onClick={() => setLightboxIndex(idx)}>
-                    <img
-                      src={item.imageUrl || item.fallbackUrl}
-                      alt={item.name}
-                      onError={e => { if (item.fallbackUrl) e.target.src = item.fallbackUrl; }}
-                      style={{ width: 64, height: 64, borderRadius: 8, objectFit: "cover", border: "0.5px solid var(--border)" }}
-                    />
-                    <div style={{ fontSize: 9, color: "var(--text-tertiary)", marginTop: 2, maxWidth: 64, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</div>
-                    <div style={{ fontSize: 9, color: "var(--text-tertiary)", textTransform: "capitalize" }}>{item.attributes?.primaryColor}</div>
-                  </div>
-                ))}
+          {/* Closet tray — only shown when open, sits directly above input */}
+          {showCloset && (
+            <div style={{ borderBottom: "0.5px solid var(--border)" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 14px 4px" }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text-primary)" }}>
+                  {client?.name || "Client"}'s closet
+                </div>
+                <button
+                  onClick={() => setShowCloset(false)}
+                  style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-tertiary)", fontSize: 18, padding: 0, lineHeight: 1 }}
+                  aria-label="Close closet"
+                >✕</button>
               </div>
-            )}
+              <div style={{ padding: "0 14px 10px" }}>
+                {closetLoading ? (
+                  <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>Loading...</div>
+                ) : clientCloset.length === 0 ? (
+                  <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>No public items yet</div>
+                ) : (
+                  <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 2, scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}>
+                    {clientCloset.map((item, idx) => (
+                      <div key={item.id} style={{ flexShrink: 0, textAlign: "center", cursor: "pointer" }} onClick={() => setLightboxIndex(idx)}>
+                        <img
+                          src={item.imageUrl || item.fallbackUrl}
+                          alt={item.name}
+                          onError={e => { if (item.fallbackUrl) e.target.src = item.fallbackUrl; }}
+                          style={{ width: 64, height: 64, borderRadius: 8, objectFit: "cover", border: "0.5px solid var(--border)" }}
+                        />
+                        <div style={{ fontSize: 9, color: "var(--text-tertiary)", marginTop: 2, maxWidth: 64, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</div>
+                        <div style={{ fontSize: 9, color: "var(--text-tertiary)", textTransform: "capitalize" }}>{item.attributes?.primaryColor}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Input bar — always at the very bottom */}
+          <div style={{ display: "flex", gap: 8, alignItems: "center", padding: "10px 14px", paddingBottom: "max(10px, env(safe-area-inset-bottom))" }}>
+            <button onClick={() => setShowCamera(true)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-secondary)" }}>
+              <i className="ti ti-photo" style={{ fontSize: 22 }} aria-hidden="true"></i>
+            </button>
+            <input
+              className="input-field"
+              style={{ flex: 1, margin: 0, padding: "10px 14px" }}
+              placeholder="Send a message..."
+              value={text}
+              onChange={e => setText(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendMessage(text)}
+            />
+            <button
+              onClick={() => sendMessage(text)}
+              disabled={sending || !text.trim()}
+              style={{ background: "var(--pink)", border: "none", borderRadius: "50%", width: 36, height: 36, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, opacity: (!text.trim() || sending) ? 0.4 : 1 }}
+            >
+              <i className="ti ti-send" style={{ fontSize: 16, color: "white" }} aria-hidden="true"></i>
+            </button>
           </div>
         </div>
       )}
 
-      {/* Input bar */}
-      {!sessionEnded && (
-        <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, maxWidth: 430, margin: "0 auto", padding: "10px 14px", background: "var(--bg-card)", borderTop: "0.5px solid var(--border)", display: "flex", gap: 8, alignItems: "center", paddingBottom: "max(10px,env(safe-area-inset-bottom))" }}>
-          <button
-            onClick={() => setShowCamera(true)}
-            style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-secondary)" }}
-          >
-            <i className="ti ti-photo" style={{ fontSize: 22 }} aria-hidden="true"></i>
-          </button>
-          <input
-            className="input-field"
-            style={{ flex: 1, margin: 0, padding: "10px 14px" }}
-            placeholder="Send a message..."
-            value={text}
-            onChange={e => setText(e.target.value)}
-            onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendMessage(text)}
-          />
-          <button
-            onClick={() => sendMessage(text)}
-            disabled={sending || !text.trim()}
-            style={{ background: "var(--pink)", border: "none", borderRadius: "50%", width: 36, height: 36, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, opacity: (!text.trim() || sending) ? 0.4 : 1 }}
-          >
-            <i className="ti ti-send" style={{ fontSize: 16, color: "white" }} aria-hidden="true"></i>
-          </button>
+      {sessionEnded && (
+        <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, maxWidth: 430, margin: "0 auto", background: "#f0fdf4", borderTop: "1px solid #6ee7b7", padding: "12px 16px", fontSize: 13, color: "#065f46", textAlign: "center" }}>
+          Session completed · Earnings added to your analytics
         </div>
       )}
 
