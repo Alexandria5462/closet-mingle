@@ -471,16 +471,17 @@ export default function StylistChat() {
         <div ref={bottomRef} />
       </div>
 
-      {/* Sticky closet tray — sits above input bar, visible while scrolling */}
+      {/* Closet tray — fixed directly above the input bar */}
       {showCloset && (
         <div style={{
           position: "fixed",
-          bottom: sessionEnded ? 0 : 65,
+          bottom: sessionEnded ? 0 : "calc(65px + env(safe-area-inset-bottom, 0px))",
           left: 0, right: 0,
           maxWidth: 430,
           margin: "0 auto",
           background: "var(--bg-card)",
-          borderTop: "0.5px solid var(--border)",
+          borderTop: "2px solid var(--pink)",
+          boxShadow: "0 -2px 12px rgba(0,0,0,0.08)",
           zIndex: 100,
         }}>
           {/* Header row */}

@@ -56,20 +56,29 @@ export default function StylistAnalytics() {
         setSessions(withNames.sort((a, b) => new Date(b.startedAt) - new Date(a.startedAt)));
 
         const totalClients       = new Set(raw.map(s => s.clientId)).size;
-        // completed = any session marked ended, whether or not it had a fee
         const completed          = raw.filter(s => s.status === "ended");
         const completedSessions  = completed.length;
         const sessionFeeEarnings = completed.reduce((sum, s) => sum + (s.stylistEarned || 0), 0);
 
-        // Monthly breakdown
+        // Monthly breakdown — sessions only here, tips added by tip listener
         const monthly = {};
         raw.forEach(s => {
           const month = new Date(s.startedAt).toLocaleDateString("en-US", { month: "short", year: "numeric" });
-          if (!monthly[month]) monthly[month] = { sessions: 0, earnings: 0 };
+          if (!monthly[month]) monthly[month] = { sessions: 0, earnings: 0, tipEarnings: 0 };
           monthly[month].sessions++;
           if (s.status === "ended") monthly[month].earnings += s.stylistEarned || 0;
         });
-        setMonthlyData(Object.entries(monthly).map(([month, data]) => ({ month, ...data })).slice(-6));
+        // Store base monthly so tip listener can merge into it
+        setMonthlyData(prev => {
+          const merged = { ...monthly };
+          // Preserve any tip earnings already added by tip listener
+          prev.forEach(m => {
+            if (merged[m.month]) merged[m.month].tipEarnings = m.tipEarnings || 0;
+          });
+          return Object.entries(merged)
+            .map(([month, data]) => ({ month, ...data, total: (data.earnings || 0) + (data.tipEarnings || 0) }))
+            .slice(-6);
+        });
         setStats(prev => ({ ...(prev || {}), totalClients, sessionFeeEarnings, completedSessions }));
         setLoading(false);
       },
@@ -85,6 +94,20 @@ export default function StylistAnalytics() {
         setTips(raw);
         const totalTips = raw.reduce((s, t) => s + (t.stylistAmount || t.amount || 0), 0);
         setStats(prev => ({ ...(prev || {}), totalTips, totalTipCount: raw.length }));
+
+        // Merge tip earnings into monthly chart
+        const tipsByMonth = {};
+        raw.forEach(t => {
+          if (!t.createdAt) return;
+          const month = new Date(t.createdAt).toLocaleDateString("en-US", { month: "short", year: "numeric" });
+          if (!tipsByMonth[month]) tipsByMonth[month] = 0;
+          tipsByMonth[month] += t.stylistAmount || t.amount || 0;
+        });
+        setMonthlyData(prev => prev.map(m => ({
+          ...m,
+          tipEarnings: tipsByMonth[m.month] || 0,
+          total: (m.earnings || 0) + (tipsByMonth[m.month] || 0),
+        })));
       }
     );
 
@@ -112,7 +135,6 @@ export default function StylistAnalytics() {
   }, [currentUser]);
 
   const hasData    = stats && (stats.totalClients > 0 || stats.reviewCount > 0 || stats.totalTipCount > 0);
-  const maxEarnings = monthlyData.length > 0 ? Math.max(...monthlyData.map(m => m.earnings)) : 1;
   const toggle     = (panel) => setExpanded(prev => prev === panel ? null : panel);
 
   return (
@@ -333,13 +355,21 @@ export default function StylistAnalytics() {
               <div className="card" style={{ marginBottom: 10 }}>
                 <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 14 }}>Monthly earnings</div>
                 <div style={{ display: "flex", alignItems: "flex-end", gap: 6, height: 120 }}>
-                  {monthlyData.map((m, i) => (
-                    <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                      <div style={{ fontSize: 9, color: "var(--text-tertiary)" }}>${m.earnings.toFixed(0)}</div>
-                      <div style={{ width: "100%", borderRadius: "4px 4px 0 0", height: `${Math.max(8, (m.earnings / maxEarnings) * 90)}px`, background: i === monthlyData.length - 1 ? "var(--pink)" : "var(--avatar-bg)", border: `1px solid ${i === monthlyData.length - 1 ? "var(--pink-dark)" : "var(--border)"}` }} />
-                      <div style={{ fontSize: 9, color: "var(--text-tertiary)", textAlign: "center" }}>{m.month.split(" ")[0]}</div>
-                    </div>
-                  ))}
+                  {monthlyData.map((m, i) => {
+                    const barVal = m.total || m.earnings || 0;
+                    const maxVal = Math.max(...monthlyData.map(x => x.total || x.earnings || 0), 1);
+                    return (
+                      <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                        <div style={{ fontSize: 9, color: "var(--text-tertiary)" }}>${barVal.toFixed(0)}</div>
+                        <div style={{ width: "100%", borderRadius: "4px 4px 0 0", height: `${Math.max(8, (barVal / maxVal) * 90)}px`, background: i === monthlyData.length - 1 ? "var(--pink)" : "var(--avatar-bg)", border: `1px solid ${i === monthlyData.length - 1 ? "var(--pink-dark)" : "var(--border)"}` }} />
+                        <div style={{ fontSize: 9, color: "var(--text-tertiary)", textAlign: "center" }}>{m.month.split(" ")[0]}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div style={{ display: "flex", gap: 12, marginTop: 10, fontSize: 10, color: "var(--text-tertiary)" }}>
+                  <span><span style={{ display: "inline-block", width: 8, height: 8, borderRadius: 2, background: "var(--pink)", marginRight: 4 }}></span>Tips</span>
+                  <span><span style={{ display: "inline-block", width: 8, height: 8, borderRadius: 2, background: "var(--avatar-bg)", border: "1px solid var(--border)", marginRight: 4 }}></span>Session fees</span>
                 </div>
               </div>
             )}
