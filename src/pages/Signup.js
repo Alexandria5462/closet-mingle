@@ -57,6 +57,9 @@ export default function Signup() {
   const [stylistPlan, setStylistPlan] = useState("monthly");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [promoCode, setPromoCode] = useState("");
+  const [promoError, setPromoError] = useState("");
+  const [promoApplied, setPromoApplied] = useState(false);
 
   const BIO_LIMIT = 300;
 
