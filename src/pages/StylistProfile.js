@@ -170,7 +170,13 @@ export default function StylistProfile() {
               <div style={{ fontSize: 13, color: "var(--text-tertiary)", marginBottom: 4 }}>@{stylist.username}</div>
             )}
             {stylist.specialty && (
-              <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 6 }}>{stylist.specialty}</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 4, justifyContent: "center", marginBottom: 8, padding: "0 12px" }}>
+                {stylist.specialty.split(", ").filter(Boolean).map((sp, i) => (
+                  <span key={i} style={{ fontSize: 11, background: "var(--avatar-bg)", border: "0.5px solid var(--border)", borderRadius: 20, padding: "3px 10px", color: "var(--text-secondary)", whiteSpace: "nowrap" }}>
+                    {sp}
+                  </span>
+                ))}
+              </div>
             )}
             {/* Star rating directly below specialty */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginBottom: 4 }}>

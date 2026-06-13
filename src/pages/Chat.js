@@ -322,7 +322,7 @@ export default function Chat() {
                 }
               </div>
             )}
-            <div>
+            <div style={{ minWidth: 0, maxWidth: "75%" }}>
               {m.type === "image" ? (
                 <img src={m.content} alt="shared" style={{ maxWidth: 200, borderRadius: 12, display: "block" }} />
               ) : m.type === "video_invite" ? (

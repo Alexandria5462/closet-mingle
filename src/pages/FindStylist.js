@@ -241,7 +241,7 @@ export default function FindStylist() {
                   }
                 </div>
 
-                <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginBottom: 2 }}>
                     <div style={{ fontSize: 14, fontWeight: 500 }}>{s.name}</div>
                     {s.username && <div style={{ fontSize: 11, color: "var(--text-tertiary)" }}>@{s.username}</div>}
@@ -255,9 +255,49 @@ export default function FindStylist() {
                       <span style={{ background: "var(--pink)", borderRadius: 20, padding: "1px 8px", fontSize: 9, color: "white", fontWeight: 500 }}>Top pick</span>
                     )}
                   </div>
-                  {s.specialty && <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>{s.specialty}</div>}
-                  {s.city && <div style={{ fontSize: 11, color: "var(--text-tertiary)" }}>{s.city}</div>}
-                  <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 3 }}>
+
+                  {/* Specialties — max 2 pills on one line, rest as +N */}
+                  {s.specialty && (
+                    <div style={{ display: "flex", gap: 4, marginTop: 3, marginBottom: 2, alignItems: "center", maxWidth: "100%", overflow: "hidden" }}>
+                      {s.specialty.split(", ").filter(Boolean).slice(0, 2).map((sp, i) => (
+                        <span key={i} style={{
+                          fontSize: 10,
+                          background: "var(--avatar-bg)",
+                          border: "0.5px solid var(--border)",
+                          borderRadius: 20,
+                          padding: "2px 8px",
+                          color: "var(--text-secondary)",
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          maxWidth: 110,
+                          display: "inline-block",
+                          flexShrink: 1,
+                        }}>{sp}</span>
+                      ))}
+                      {s.specialty.split(", ").filter(Boolean).length > 2 && (
+                        <span style={{ fontSize: 10, color: "var(--text-tertiary)", whiteSpace: "nowrap", flexShrink: 0 }}>
+                          +{s.specialty.split(", ").filter(Boolean).length - 2}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Availability + pricing on ONE line */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 3, marginBottom: 2, flexWrap: "nowrap", overflow: "hidden" }}>
+                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: s.availabilityEnabled ? "var(--success)" : "#d1d5db", flexShrink: 0, display: "inline-block" }}></span>
+                    <span style={{ fontSize: 11, color: s.availabilityEnabled ? "var(--success)" : "var(--text-tertiary)", whiteSpace: "nowrap" }}>
+                      {s.availabilityEnabled ? "Online" : "Available"}
+                    </span>
+                    {(s.monthlyRate || s.sessionRate) && <span style={{ fontSize: 11, color: "var(--text-tertiary)", flexShrink: 0 }}>·</span>}
+                    {s.monthlyRate && <span style={{ fontSize: 11, color: "var(--pink-dark)", fontWeight: 600, whiteSpace: "nowrap", flexShrink: 0 }}>${s.monthlyRate}/mo</span>}
+                    {s.monthlyRate && s.sessionRate && <span style={{ fontSize: 11, color: "var(--text-tertiary)", flexShrink: 0 }}>or</span>}
+                    {s.sessionRate && <span style={{ fontSize: 11, color: "var(--pink-dark)", fontWeight: 600, whiteSpace: "nowrap", flexShrink: 0 }}>${s.sessionRate}/session</span>}
+                    {!s.monthlyRate && !s.sessionRate && <span style={{ fontSize: 11, color: "var(--text-tertiary)" }}>Rate TBD</span>}
+                  </div>
+
+                  {s.city && <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginBottom: 2 }}>{s.city}</div>}
+                  <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 2 }}>
                     {s.rating > 0 ? (
                       <>
                         <span style={{ fontSize: 12, color: "#c4745a", letterSpacing: 1 }}>
@@ -276,32 +316,6 @@ export default function FindStylist() {
                       {s.about}
                     </div>
                   )}
-                </div>
-
-                <div style={{ flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                      <span style={{ width: 6, height: 6, borderRadius: "50%", background: s.availabilityEnabled ? "var(--success)" : "#d1d5db", display: "inline-block" }}></span>
-                      <span style={{ fontSize: 11, color: s.availabilityEnabled ? "var(--success)" : "var(--text-tertiary)" }}>
-                        {s.availabilityEnabled ? "Online now" : "Message anytime"}
-                      </span>
-                    </div>
-                    {(s.monthlyRate || s.sessionRate) && (
-                      <span style={{ fontSize: 11, color: "var(--text-tertiary)" }}>·</span>
-                    )}
-                    {s.monthlyRate && (
-                      <span style={{ fontSize: 11, color: "var(--pink-dark)", fontWeight: 500 }}>${s.monthlyRate}/mo</span>
-                    )}
-                    {s.monthlyRate && s.sessionRate && (
-                      <span style={{ fontSize: 11, color: "var(--text-tertiary)" }}>or</span>
-                    )}
-                    {s.sessionRate && (
-                      <span style={{ fontSize: 11, color: "var(--pink-dark)", fontWeight: 500 }}>${s.sessionRate}/session</span>
-                    )}
-                    {!s.monthlyRate && !s.sessionRate && (
-                      <span style={{ fontSize: 11, color: "var(--text-tertiary)" }}>· Rate TBD</span>
-                    )}
-                  </div>
                 </div>
               </div>
 
