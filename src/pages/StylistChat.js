@@ -438,6 +438,11 @@ export default function StylistChat() {
               </div>
             )}
             <div style={{ minWidth: 0, maxWidth: "75%" }}>
+              {m.type === "image" ? (
+                <img src={m.content} alt="shared" style={{ maxWidth: 200, borderRadius: 12, display: "block" }} />
+              ) : m.type === "video_invite" ? (
+                <div style={{ background: "var(--avatar-bg)", border: "1px solid #f4c0d1", borderRadius: 12, padding: "10px 14px" }}>
+                  <div style={{ fontSize: 13, color: "var(--pink-dark)", marginBottom: 8 }}>📹 Video call started!</div>
                   <button
                     className="btn-pink btn-sm"
                     onClick={() => {
