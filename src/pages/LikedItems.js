@@ -147,7 +147,7 @@ export default function LikedItems() {
 
           {canGenerate ? (
             <button className="btn-pink" onClick={() => nav("/generated")} style={{ marginBottom:16 }}>
-              Generate AI Outfits from Liked Items
+              Generate Outfits from Liked Items
             </button>
           ) : (
             <div style={{ background: "var(--avatar-bg)", border:"1px solid #f4c0d1", borderRadius:"var(--radius)", padding:"12px 14px", marginBottom:16, fontSize:13, color:"var(--pink-dark)" }}>

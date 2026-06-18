@@ -345,64 +345,54 @@ export default function StylistProfile() {
         <BookingModal stylist={stylist} stylistId={stylistId} onClose={() => setShowBooking(false)} />
       )}
 
-      {/* Portfolio lightbox carousel */}
-      {lightbox && (
-        <div
-          onClick={() => setLightbox(null)}
-          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.92)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}
-        >
-          {/* X close button */}
-          <button
+      {/* Portfolio lightbox carousel with swipe */}
+      {lightbox && (() => {
+        let touchStartX = 0;
+        const handleTouchStart = e => { touchStartX = e.touches[0].clientX; };
+        const handleTouchEnd = e => {
+          const diff = touchStartX - e.changedTouches[0].clientX;
+          if (Math.abs(diff) > 50) {
+            if (diff > 0 && lightbox.index < lightbox.images.length - 1) {
+              setLightbox(prev => ({ ...prev, index: prev.index + 1 }));
+            } else if (diff < 0 && lightbox.index > 0) {
+              setLightbox(prev => ({ ...prev, index: prev.index - 1 }));
+            }
+          }
+        };
+        return (
+          <div
             onClick={() => setLightbox(null)}
-            style={{ position: "absolute", top: 16, right: 16, background: "rgba(255,255,255,0.15)", border: "none", borderRadius: "50%", width: 36, height: 36, color: "white", fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
-            aria-label="Close"
-          >✕</button>
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.92)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}
+          >
+            <button onClick={() => setLightbox(null)} style={{ position: "absolute", top: 16, right: 16, background: "rgba(255,255,255,0.15)", border: "none", borderRadius: "50%", width: 36, height: 36, color: "white", fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} aria-label="Close">✕</button>
 
-          {/* Image counter */}
-          {lightbox.images.length > 1 && (
-            <div style={{ position: "absolute", top: 20, left: "50%", transform: "translateX(-50%)", color: "rgba(255,255,255,0.7)", fontSize: 13 }}>
-              {lightbox.index + 1} / {lightbox.images.length}
-            </div>
-          )}
+            {lightbox.images.length > 1 && (
+              <div style={{ position: "absolute", top: 20, left: "50%", transform: "translateX(-50%)", color: "rgba(255,255,255,0.7)", fontSize: 13 }}>
+                {lightbox.index + 1} / {lightbox.images.length}
+              </div>
+            )}
 
-          {/* Main image */}
-          <img
-            src={lightbox.images[lightbox.index]}
-            alt=""
-            onClick={e => e.stopPropagation()}
-            style={{ maxWidth: "90vw", maxHeight: "80vh", objectFit: "contain", borderRadius: 8 }}
-          />
+            <img src={lightbox.images[lightbox.index]} alt="" onClick={e => e.stopPropagation()} style={{ maxWidth: "90vw", maxHeight: "80vh", objectFit: "contain", borderRadius: 8, userSelect: "none" }} />
 
-          {/* Prev button */}
-          {lightbox.index > 0 && (
-            <button
-              onClick={e => { e.stopPropagation(); setLightbox(prev => ({ ...prev, index: prev.index - 1 })); }}
-              style={{ position: "absolute", left: 12, background: "rgba(255,255,255,0.15)", border: "none", borderRadius: "50%", width: 40, height: 40, color: "white", fontSize: 20, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
-            >‹</button>
-          )}
+            {lightbox.index > 0 && (
+              <button onClick={e => { e.stopPropagation(); setLightbox(prev => ({ ...prev, index: prev.index - 1 })); }} style={{ position: "absolute", left: 12, background: "rgba(255,255,255,0.15)", border: "none", borderRadius: "50%", width: 40, height: 40, color: "white", fontSize: 22, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>‹</button>
+            )}
+            {lightbox.index < lightbox.images.length - 1 && (
+              <button onClick={e => { e.stopPropagation(); setLightbox(prev => ({ ...prev, index: prev.index + 1 })); }} style={{ position: "absolute", right: 12, background: "rgba(255,255,255,0.15)", border: "none", borderRadius: "50%", width: 40, height: 40, color: "white", fontSize: 22, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>›</button>
+            )}
 
-          {/* Next button */}
-          {lightbox.index < lightbox.images.length - 1 && (
-            <button
-              onClick={e => { e.stopPropagation(); setLightbox(prev => ({ ...prev, index: prev.index + 1 })); }}
-              style={{ position: "absolute", right: 12, background: "rgba(255,255,255,0.15)", border: "none", borderRadius: "50%", width: 40, height: 40, color: "white", fontSize: 20, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
-            >›</button>
-          )}
-
-          {/* Dot indicators */}
-          {lightbox.images.length > 1 && (
-            <div style={{ position: "absolute", bottom: 20, left: "50%", transform: "translateX(-50%)", display: "flex", gap: 6 }}>
-              {lightbox.images.map((_, i) => (
-                <div
-                  key={i}
-                  onClick={e => { e.stopPropagation(); setLightbox(prev => ({ ...prev, index: i })); }}
-                  style={{ width: 8, height: 8, borderRadius: "50%", background: i === lightbox.index ? "white" : "rgba(255,255,255,0.4)", cursor: "pointer", transition: "background 0.2s" }}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+            {lightbox.images.length > 1 && (
+              <div style={{ position: "absolute", bottom: 20, left: "50%", transform: "translateX(-50%)", display: "flex", gap: 6 }}>
+                {lightbox.images.map((_, i) => (
+                  <div key={i} onClick={e => { e.stopPropagation(); setLightbox(prev => ({ ...prev, index: i })); }} style={{ width: 8, height: 8, borderRadius: "50%", background: i === lightbox.index ? "white" : "rgba(255,255,255,0.4)", cursor: "pointer" }} />
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })()}
     </>
   );
 }

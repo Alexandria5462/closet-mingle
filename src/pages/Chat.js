@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   collection, addDoc, query, where,
-  onSnapshot, doc, getDoc, updateDoc, getDocs, orderBy
+  onSnapshot, doc, getDoc, updateDoc, getDocs, orderBy, writeBatch
 } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { useAuth } from "../lib/AuthContext";
@@ -73,17 +73,27 @@ export default function Chat() {
       collection(db, "messages"),
       where("conversationId", "==", conversationId)
     );
-    const unsub = onSnapshot(q, (snap) => {
+    const unsub = onSnapshot(q, async (snap) => {
       const msgs = snap.docs
         .map(d => ({ id: d.id, ...d.data() }))
         .sort((a, b) => {
-          // Sort by createdAt client-side to avoid needing Firestore index
           const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
           const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
           return aTime - bTime;
         });
       setMessages(msgs);
       setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+
+      // Mark all unread messages from the stylist as read
+      const unread = snap.docs.filter(d => {
+        const data = d.data();
+        return !data.read && data.senderId !== currentUser.uid;
+      });
+      if (unread.length > 0) {
+        const batch = writeBatch(db);
+        unread.forEach(d => batch.update(doc(db, "messages", d.id), { read: true }));
+        batch.commit().catch(() => {});
+      }
     }, (error) => {
       console.error("Messages listener error:", error);
     });
@@ -257,13 +267,13 @@ export default function Chat() {
           <button onClick={() => nav(-1)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-secondary)" }}>
             <i className="ti ti-arrow-left" style={{ fontSize: 20 }} aria-hidden="true"></i>
           </button>
-          <div className="avatar" style={{ background: "var(--avatar-bg)", color: "var(--pink-dark)", width: 36, height: 36, fontSize: 13, overflow: "hidden" }}>
+          <div className="avatar" onClick={() => nav(`/stylist/${stylistId}`)} style={{ background: "var(--avatar-bg)", color: "var(--pink-dark)", width: 36, height: 36, fontSize: 13, overflow: "hidden", cursor: "pointer" }}>
             {stylist?.photoUrl
               ? <img src={stylist.photoUrl} alt={stylist.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
               : initials
             }
           </div>
-          <div>
+          <div onClick={() => nav(`/stylist/${stylistId}`)} style={{ cursor: "pointer" }}>
             <div style={{ fontSize: 14, fontWeight: 500 }}>{stylist?.name || "Stylist"}</div>
             <div style={{ fontSize: 11, color: sessionEnded ? "var(--text-tertiary)" : "var(--success)" }}>
               {sessionEnded ? "Session ended" : "Active"}

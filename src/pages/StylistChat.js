@@ -380,6 +380,16 @@ export default function StylistChat() {
             </button>
           )}
 
+          {/* Build outfit from client closet */}
+          {!sessionEnded && (
+            <button
+              onClick={() => nav(`/stylist/build-outfit/${clientId}`)}
+              style={{ background: "var(--avatar-bg)", border: "1px solid var(--border)", borderRadius: 20, padding: "6px 12px", cursor: "pointer", fontSize: 12, color: "var(--pink-dark)", fontFamily: "inherit", fontWeight: 500 }}
+            >
+              Build Outfit
+            </button>
+          )}
+
           {/* View client closet button */}
           {!sessionEnded && (
             <button

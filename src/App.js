@@ -38,6 +38,7 @@ import StylistMessages from "./pages/StylistMessages";
 import StylistAnalytics from "./pages/StylistAnalytics";
 import StylistClients from "./pages/StylistClients";
 import ClientProfile from "./pages/ClientProfile";
+import StylistOutfitBuilder from "./pages/StylistOutfitBuilder";
 
 function PrivateRoute({ children, accountType }) {
   const { currentUser, userProfile, loading } = useAuth();
@@ -103,6 +104,7 @@ function AppRoutes() {
       <Route path="/stylist/client/:clientId" element={<PrivateRoute accountType="stylist"><ClientProfile /></PrivateRoute>} />
       <Route path="/stylist/analytics" element={<PrivateRoute accountType="stylist"><StylistAnalytics /></PrivateRoute>} />
       <Route path="/stylist/chat/:clientId" element={<PrivateRoute accountType="stylist"><StylistChat /></PrivateRoute>} />
+      <Route path="/stylist/build-outfit/:clientId" element={<PrivateRoute accountType="stylist"><StylistOutfitBuilder /></PrivateRoute>} />
 
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>

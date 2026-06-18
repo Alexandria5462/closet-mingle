@@ -127,49 +127,15 @@ export default function ShareOutfit({ outfit, onClose }) {
           Share this look with friends
         </div>
 
-        {/* Primary share button (native share sheet) */}
-        {(navigator.share || navigator.canShare) && (
-          <button
-            className="btn-pink"
-            onClick={shareNative}
-            disabled={sharing}
-            style={{ marginBottom: 12 }}
-          >
-            <i className="ti ti-share" style={{ marginRight: 8 }} aria-hidden="true"></i>
-            {sharing ? "Sharing..." : "Share via..."}
-          </button>
-        )}
-
-        {/* SMS */}
+        {/* Native share — opens iOS/Android share sheet with all apps */}
         <button
-          className="btn-outline"
-          onClick={shareViaSMS}
+          className="btn-pink"
+          onClick={shareNative}
+          disabled={sharing}
           style={{ marginBottom: 12 }}
         >
-          <i className="ti ti-message" style={{ marginRight: 8 }} aria-hidden="true"></i>
-          Send via Text
-        </button>
-
-        {/* Social buttons */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 }}>
-          <button onClick={shareToTwitter} style={{ padding: "10px", borderRadius: "var(--radius-sm)", border: "1px solid var(--border)", background: "var(--bg-card)", cursor: "pointer", fontSize: 13, fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-            <i className="ti ti-brand-x" aria-hidden="true"></i> X / Twitter
-          </button>
-          <button onClick={sharePinterest} style={{ padding: "10px", borderRadius: "var(--radius-sm)", border: "1px solid var(--border)", background: "var(--bg-card)", cursor: "pointer", fontSize: 13, fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-            <i className="ti ti-brand-pinterest" aria-hidden="true"></i> Pinterest
-          </button>
-          <button onClick={shareToInstagram} style={{ padding: "10px", borderRadius: "var(--radius-sm)", border: "1px solid var(--border)", background: "var(--bg-card)", cursor: "pointer", fontSize: 13, fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-            <i className="ti ti-brand-instagram" aria-hidden="true"></i> Instagram
-          </button>
-          <button onClick={shareToTikTok} style={{ padding: "10px", borderRadius: "var(--radius-sm)", border: "1px solid var(--border)", background: "var(--bg-card)", cursor: "pointer", fontSize: 13, fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-            <i className="ti ti-brand-tiktok" aria-hidden="true"></i> TikTok
-          </button>
-        </div>
-
-        {/* Copy link */}
-        <button onClick={copyLink} className="btn-outline" style={{ marginBottom: 10 }}>
-          <i className="ti ti-copy" style={{ marginRight: 8 }} aria-hidden="true"></i>
-          {copied ? "Copied!" : "Copy text"}
+          <i className="ti ti-share" style={{ marginRight: 8 }} aria-hidden="true"></i>
+          {sharing ? "Sharing..." : "Share outfit"}
         </button>
 
         <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13, color: "var(--text-tertiary)", fontFamily: "inherit", width: "100%", padding: "8px 0" }}>
