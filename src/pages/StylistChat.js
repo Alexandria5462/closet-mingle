@@ -331,89 +331,55 @@ export default function StylistChat() {
         </div>
       )}
 
-      <div className="header">
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <button
-            onClick={() => nav(-1)}
-            style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-secondary)" }}
-          >
+      <div className="header" style={{ flexDirection: "column", alignItems: "stretch", gap: 0, padding: "8px 16px 0" }}>
+        {/* Top row — back, avatar, name */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, paddingBottom: 8 }}>
+          <button onClick={() => nav(-1)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-secondary)", flexShrink: 0 }}>
             <i className="ti ti-arrow-left" style={{ fontSize: 20 }} aria-hidden="true"></i>
           </button>
-          <div
-            className="avatar"
-            onClick={() => nav(`/stylist/client/${clientId}`)}
-            style={{ background: "var(--avatar-bg)", color: "var(--pink-dark)", width: 36, height: 36, fontSize: 13, overflow: "hidden", cursor: "pointer" }}
-            title="View client profile"
-          >
+          <div className="avatar" onClick={() => nav(`/stylist/client/${clientId}`)}
+            style={{ background: "var(--avatar-bg)", color: "var(--pink-dark)", width: 36, height: 36, fontSize: 13, overflow: "hidden", cursor: "pointer", flexShrink: 0 }}>
             {client?.photoUrl
               ? <img src={client.photoUrl} alt={client.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-              : initials
-            }
+              : initials}
           </div>
-          <div>
-            <div
-              style={{ fontSize: 14, fontWeight: 500, cursor: "pointer" }}
-              onClick={() => nav(`/stylist/client/${clientId}`)}
-            >{client?.name || "Client"}</div>
-            <div style={{ fontSize: 11, color: "var(--text-secondary)", display: "flex", alignItems: "center", gap: 4 }}>
-              {isSessionClient && (
-                <span style={{ background: "#f0fdf4", border: "1px solid #6ee7b7", borderRadius: 10, padding: "1px 6px", fontSize: 9, color: "#065f46" }}>
-                  Pay Per Session
-                </span>
-              )}
+          <div style={{ flex: 1, minWidth: 0 }} onClick={() => nav(`/stylist/client/${clientId}`)}>
+            <div style={{ fontSize: 14, fontWeight: 600, cursor: "pointer", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{client?.name || "Client"}</div>
+            <div style={{ fontSize: 10, color: sessionEnded ? "var(--text-tertiary)" : "var(--success)" }}>
+              {sessionEnded ? "Session ended" : "Active"}
             </div>
           </div>
-        </div>
-
-        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          {/* Video call — stylist only */}
+          {/* Video — icon only to save space */}
           {!sessionEnded && !clientClosed && (
-            <button
-              onClick={startVideoCall}
-              disabled={startingVideo}
-              style={{ background: "var(--pink)", border: "none", borderRadius: 20, padding: "6px 12px", color: "white", cursor: "pointer", fontSize: 12, display: "flex", alignItems: "center", gap: 4 }}
-            >
+            <button onClick={startVideoCall} disabled={startingVideo}
+              style={{ background: "var(--pink)", border: "none", borderRadius: "50%", width: 34, height: 34, color: "white", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
               {startingVideo
-                ? <span className="spinner" style={{ width: 14, height: 14 }}></span>
-                : <><i className="ti ti-video" aria-hidden="true"></i> Video</>
-              }
+                ? <span style={{ width: 14, height: 14, border: "2px solid white", borderTop: "2px solid transparent", borderRadius: "50%", display: "inline-block" }}></span>
+                : <i className="ti ti-video" style={{ fontSize: 16 }} aria-hidden="true"></i>}
             </button>
           )}
+          {sessionEnded && <span style={{ fontSize: 11, color: "var(--success)", fontWeight: 500, flexShrink: 0 }}>Completed</span>}
+        </div>
 
-          {/* Build outfit from client closet */}
-          {!sessionEnded && (
-            <button
-              onClick={() => nav(`/stylist/build-outfit/${clientId}`)}
-              style={{ background: "var(--avatar-bg)", border: "1px solid var(--border)", borderRadius: 20, padding: "6px 12px", cursor: "pointer", fontSize: 12, color: "var(--pink-dark)", fontFamily: "inherit", fontWeight: 500 }}
-            >
+        {/* Second row — action buttons */}
+        {!sessionEnded && (
+          <div style={{ display: "flex", gap: 6, paddingBottom: 8, overflowX: "auto", scrollbarWidth: "none" }}>
+            <button onClick={() => nav(`/stylist/build-outfit/${clientId}`)}
+              style={{ flexShrink: 0, padding: "5px 12px", background: "var(--pink)", border: "none", borderRadius: 20, cursor: "pointer", fontSize: 11, color: "white", fontFamily: "inherit", fontWeight: 500 }}>
               Build Outfit
             </button>
-          )}
-
-          {/* View client closet button */}
-          {!sessionEnded && (
-            <button
-              onClick={() => { setShowCloset(!showCloset); if (!clientCloset.length) loadClientCloset(); }}
-              style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 20, padding: "6px 12px", cursor: "pointer", fontSize: 12, color: "var(--text-primary)", fontFamily: "inherit" }}
-            >
-              {showCloset ? "Hide closet" : "View closet"}
+            <button onClick={() => { setShowCloset(!showCloset); if (!clientCloset.length) loadClientCloset(); }}
+              style={{ flexShrink: 0, padding: "5px 12px", background: showCloset ? "var(--avatar-bg)" : "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 20, cursor: "pointer", fontSize: 11, color: "var(--text-secondary)", fontFamily: "inherit" }}>
+              {showCloset ? "Hide closet" : "Closet"}
             </button>
-          )}
-
-          {/* End Session button — only shows when session client */}
-          {isSessionClient && !sessionEnded && (
-            <button
-              onClick={() => setShowEndConfirm(true)}
-              style={{ background: "#059669", border: "none", borderRadius: 20, padding: "6px 12px", color: "white", cursor: "pointer", fontSize: 12, fontWeight: 500 }}
-            >
-              End Session
-            </button>
-          )}
-
-          {sessionEnded && (
-            <span style={{ fontSize: 12, color: "var(--success)", fontWeight: 500 }}>✅ Completed</span>
-          )}
-        </div>
+            {isSessionClient && (
+              <button onClick={() => setShowEndConfirm(true)}
+                style={{ flexShrink: 0, padding: "5px 12px", background: "none", border: "1px solid #059669", borderRadius: 20, cursor: "pointer", fontSize: 11, color: "#059669", fontFamily: "inherit", fontWeight: 500 }}>
+                End Session
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Messages scroll area */}
@@ -452,20 +418,35 @@ export default function StylistChat() {
                 <img src={m.content} alt="shared" style={{ maxWidth: 200, borderRadius: 12, display: "block" }} />
               ) : m.type === "video_invite" ? (
                 <div style={{ background: "var(--avatar-bg)", border: "1px solid #f4c0d1", borderRadius: 12, padding: "10px 14px" }}>
-                  <div style={{ fontSize: 13, color: "var(--pink-dark)", marginBottom: 8 }}>📹 Video call started!</div>
-                  <button
-                    className="btn-pink btn-sm"
-                    onClick={() => {
-                      const url = m.content.split("Join here: ")[1];
-                      if (url) setVideoRoomUrl(url);
-                    }}
-                  >
+                  <div style={{ fontSize: 13, color: "var(--pink-dark)", marginBottom: 8 }}>Video call started</div>
+                  <button className="btn-pink btn-sm" onClick={() => { const url = m.content.split("Join here: ")[1]; if (url) setVideoRoomUrl(url); }}>
                     Join Video Call
                   </button>
                 </div>
               ) : m.type === "session_ended" ? (
                 <div style={{ background: "#f0fdf4", border: "1px solid #6ee7b7", borderRadius: 12, padding: "10px 14px", fontSize: 13, color: "#065f46" }}>
-                  ✅ {m.content}
+                  {m.content}
+                </div>
+              ) : m.type === "outfit_suggestion" ? (
+                <div style={{ background: "var(--bg-card)", border: "0.5px solid var(--border)", borderRadius: 14, padding: 10, maxWidth: 260 }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: "var(--pink-dark)", marginBottom: 8, letterSpacing: 0.3 }}>Outfit Suggestion</div>
+                  <div style={{ display: "grid", gridTemplateColumns: (m.outfitItems?.length || 0) <= 2 ? "1fr 1fr" : "1fr 1fr 1fr", gap: 4, marginBottom: 6 }}>
+                    {(m.outfitItems || []).map((item, i) => (
+                      item.imageUrl
+                        ? <img key={i} src={item.imageUrl} alt={item.name} style={{ width: "100%", aspectRatio: "1", objectFit: "cover", borderRadius: 8 }} />
+                        : <div key={i} style={{ width: "100%", aspectRatio: "1", background: "var(--avatar-bg)", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <i className="ti ti-hanger" style={{ color: "var(--text-tertiary)", fontSize: 18 }} aria-hidden="true"></i>
+                          </div>
+                    ))}
+                  </div>
+                  {(m.outfitItems || []).length > 0 && (
+                    <div style={{ fontSize: 10, color: "var(--text-tertiary)", lineHeight: 1.5 }}>
+                      {m.outfitItems.map(i => i.name).join(" · ")}
+                    </div>
+                  )}
+                  {m.note && (
+                    <div style={{ fontSize: 11, color: "var(--text-secondary)", marginTop: 6, paddingTop: 6, borderTop: "0.5px solid var(--border)" }}>{m.note}</div>
+                  )}
                 </div>
               ) : (
                 <div className={`msg-bubble${m.senderId === currentUser?.uid ? " msg-me" : " msg-them"}`}>

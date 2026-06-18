@@ -68,20 +68,20 @@ export default function StylistOutfitBuilder() {
     setSending(true);
     try {
       const selectedItems = closet.filter(i => selected.has(i.id));
-      const outfitText = `👗 Outfit suggestion for you:\n\n${selectedItems.map(i => `• ${i.name} (${i.category}${i.attributes?.primaryColor ? " · " + i.attributes.primaryColor : ""})`).join("\n")}${note ? "\n\n💬 " + note : ""}`;
 
       await addDoc(collection(db, "messages"), {
         conversationId,
         senderId: currentUser.uid,
         senderName: userProfile?.name || "Stylist",
-        content: outfitText,
+        content: "Outfit suggestion",
         type: "outfit_suggestion",
+        note: note.trim() || null,
         outfitItems: selectedItems.map(i => ({
           id: i.id,
           name: i.name,
           category: i.category,
-          imageUrl: i.imageUrl,
-          color: i.attributes?.primaryColor,
+          imageUrl: i.imageUrl || null,
+          color: i.attributes?.primaryColor || null,
         })),
         createdAt: new Date().toISOString(),
         read: false,
