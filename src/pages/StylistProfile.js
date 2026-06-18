@@ -9,6 +9,84 @@ import TabBar from "../components/TabBar";
 import { SkeletonList } from "../components/SkeletonLoader";
 import { notifyStylistNewFollower } from "../lib/notifications";
 
+// ── Lightbox carousel with touch swipe support ────────────────
+function LightboxCarousel({ images, index, onChange, onClose }) {
+  const touchStartX = React.useRef(0);
+
+  function handleTouchStart(e) {
+    touchStartX.current = e.touches[0].clientX;
+  }
+  function handleTouchEnd(e) {
+    const diff = touchStartX.current - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 40) {
+      if (diff > 0 && index < images.length - 1) onChange(index + 1);
+      else if (diff < 0 && index > 0) onChange(index - 1);
+    }
+  }
+
+  return (
+    <div
+      onClick={onClose}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.94)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}
+    >
+      {/* Close */}
+      <button
+        onClick={onClose}
+        style={{ position: "absolute", top: 16, right: 16, background: "rgba(255,255,255,0.18)", border: "none", borderRadius: "50%", width: 38, height: 38, color: "white", fontSize: 20, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+        aria-label="Close"
+      >✕</button>
+
+      {/* Counter */}
+      {images.length > 1 && (
+        <div style={{ position: "absolute", top: 20, left: "50%", transform: "translateX(-50%)", color: "rgba(255,255,255,0.75)", fontSize: 13, fontWeight: 500 }}>
+          {index + 1} / {images.length}
+        </div>
+      )}
+
+      {/* Main image */}
+      <img
+        src={images[index]}
+        alt=""
+        onClick={e => e.stopPropagation()}
+        style={{ maxWidth: "90vw", maxHeight: "78vh", objectFit: "contain", borderRadius: 10, userSelect: "none", pointerEvents: "auto" }}
+      />
+
+      {/* Prev arrow */}
+      {index > 0 && (
+        <button
+          onClick={e => { e.stopPropagation(); onChange(index - 1); }}
+          style={{ position: "absolute", left: 10, background: "rgba(255,255,255,0.18)", border: "none", borderRadius: "50%", width: 44, height: 44, color: "white", fontSize: 26, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+          aria-label="Previous"
+        >‹</button>
+      )}
+
+      {/* Next arrow */}
+      {index < images.length - 1 && (
+        <button
+          onClick={e => { e.stopPropagation(); onChange(index + 1); }}
+          style={{ position: "absolute", right: 10, background: "rgba(255,255,255,0.18)", border: "none", borderRadius: "50%", width: 44, height: 44, color: "white", fontSize: 26, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+          aria-label="Next"
+        >›</button>
+      )}
+
+      {/* Dot indicators */}
+      {images.length > 1 && (
+        <div style={{ position: "absolute", bottom: 22, left: "50%", transform: "translateX(-50%)", display: "flex", gap: 8 }}>
+          {images.map((_, i) => (
+            <div
+              key={i}
+              onClick={e => { e.stopPropagation(); onChange(i); }}
+              style={{ width: i === index ? 20 : 8, height: 8, borderRadius: 4, background: i === index ? "white" : "rgba(255,255,255,0.4)", cursor: "pointer", transition: "all 0.2s" }}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function StylistProfile() {
   const { stylistId } = useParams();
   const nav = useNavigate();
@@ -345,54 +423,15 @@ export default function StylistProfile() {
         <BookingModal stylist={stylist} stylistId={stylistId} onClose={() => setShowBooking(false)} />
       )}
 
-      {/* Portfolio lightbox carousel with swipe */}
-      {lightbox && (() => {
-        let touchStartX = 0;
-        const handleTouchStart = e => { touchStartX = e.touches[0].clientX; };
-        const handleTouchEnd = e => {
-          const diff = touchStartX - e.changedTouches[0].clientX;
-          if (Math.abs(diff) > 50) {
-            if (diff > 0 && lightbox.index < lightbox.images.length - 1) {
-              setLightbox(prev => ({ ...prev, index: prev.index + 1 }));
-            } else if (diff < 0 && lightbox.index > 0) {
-              setLightbox(prev => ({ ...prev, index: prev.index - 1 }));
-            }
-          }
-        };
-        return (
-          <div
-            onClick={() => setLightbox(null)}
-            onTouchStart={handleTouchStart}
-            onTouchEnd={handleTouchEnd}
-            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.92)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}
-          >
-            <button onClick={() => setLightbox(null)} style={{ position: "absolute", top: 16, right: 16, background: "rgba(255,255,255,0.15)", border: "none", borderRadius: "50%", width: 36, height: 36, color: "white", fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} aria-label="Close">✕</button>
-
-            {lightbox.images.length > 1 && (
-              <div style={{ position: "absolute", top: 20, left: "50%", transform: "translateX(-50%)", color: "rgba(255,255,255,0.7)", fontSize: 13 }}>
-                {lightbox.index + 1} / {lightbox.images.length}
-              </div>
-            )}
-
-            <img src={lightbox.images[lightbox.index]} alt="" onClick={e => e.stopPropagation()} style={{ maxWidth: "90vw", maxHeight: "80vh", objectFit: "contain", borderRadius: 8, userSelect: "none" }} />
-
-            {lightbox.index > 0 && (
-              <button onClick={e => { e.stopPropagation(); setLightbox(prev => ({ ...prev, index: prev.index - 1 })); }} style={{ position: "absolute", left: 12, background: "rgba(255,255,255,0.15)", border: "none", borderRadius: "50%", width: 40, height: 40, color: "white", fontSize: 22, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>‹</button>
-            )}
-            {lightbox.index < lightbox.images.length - 1 && (
-              <button onClick={e => { e.stopPropagation(); setLightbox(prev => ({ ...prev, index: prev.index + 1 })); }} style={{ position: "absolute", right: 12, background: "rgba(255,255,255,0.15)", border: "none", borderRadius: "50%", width: 40, height: 40, color: "white", fontSize: 22, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>›</button>
-            )}
-
-            {lightbox.images.length > 1 && (
-              <div style={{ position: "absolute", bottom: 20, left: "50%", transform: "translateX(-50%)", display: "flex", gap: 6 }}>
-                {lightbox.images.map((_, i) => (
-                  <div key={i} onClick={e => { e.stopPropagation(); setLightbox(prev => ({ ...prev, index: i })); }} style={{ width: 8, height: 8, borderRadius: "50%", background: i === lightbox.index ? "white" : "rgba(255,255,255,0.4)", cursor: "pointer" }} />
-                ))}
-              </div>
-            )}
-          </div>
-        );
-      })()}
+      {/* Portfolio lightbox — swipe left/right or tap arrows */}
+      {lightbox && (
+        <LightboxCarousel
+          images={lightbox.images}
+          index={lightbox.index}
+          onChange={i => setLightbox(prev => ({ ...prev, index: i }))}
+          onClose={() => setLightbox(null)}
+        />
+      )}
     </>
   );
 }

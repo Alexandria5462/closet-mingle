@@ -5,6 +5,7 @@ import { db } from "../lib/firebase";
 import { useAuth } from "../lib/AuthContext";
 import TabBar from "../components/TabBar";
 import Toast from "../components/Toast";
+import ShareOutfit from "../components/ShareOutfit";
 
 const OCCASIONS = ["Casual","Work / Office","Date Night","Brunch","Formal","Travel","Workout"];
 
@@ -116,7 +117,8 @@ export default function GeneratedOutfits() {
   const [toast, setToast] = useState("");
   const [savedIds, setSavedIds] = useState(new Set());
   const [error, setError] = useState("");
-  const [namingOutfit, setNamingOutfit] = useState(null); // outfit index being named
+  const [namingOutfit, setNamingOutfit] = useState(null);
+  const [sharingOutfit, setSharingOutfit] = useState(null);
 
   // Determine expiry based on tier
   const isFreeAccount = !userProfile?.subscriptionTier || userProfile?.subscriptionTier === "free";
@@ -379,7 +381,11 @@ export default function GeneratedOutfits() {
       )}
 
       {/* Share outfit modal */}
-       />
+      {sharingOutfit && (
+        <ShareOutfit
+          outfit={sharingOutfit}
+          onClose={() => setSharingOutfit(null)}
+        />
       )}
     </>
   );
