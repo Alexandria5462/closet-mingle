@@ -50,6 +50,8 @@ export default function StylistChat() {
   const [clientCloset, setClientCloset] = useState([]);
   const [closetLoading, setClosetLoading] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(null);
+  const [isBlocked, setIsBlocked] = useState(false);
+  const [checkingBlock, setCheckingBlock] = useState(true);
   const bottomRef = useRef(null);
 
   const conversationId = [currentUser?.uid, clientId].sort().join("_");
@@ -76,6 +78,42 @@ export default function StylistChat() {
   }
 
   useEffect(() => {
+    if (!currentUser?.uid || !clientId) return;
+    let cancelled = false;
+
+    async function checkBlockThenLoad() {
+      setCheckingBlock(true);
+      try {
+        const blockSnap = await getDocs(
+          query(collection(db, "blockedUsers"),
+            where("stylistId", "==", currentUser.uid),
+            where("clientId", "==", clientId)
+          )
+        );
+        if (!blockSnap.empty) {
+          if (cancelled) return;
+          setIsBlocked(true);
+          setCheckingBlock(false);
+          // Load the client's name only — needed to show a clean blocked screen,
+          // but no messages, session data, or closet are ever loaded.
+          try {
+            const c = await getDoc(doc(db, "users", clientId));
+            if (c.exists() && !cancelled) setClient(c.data());
+          } catch(e) {}
+          return; // stop here — do not wire up messages, session, or closet
+        }
+      } catch(e) { console.error("Block check failed:", e); }
+      if (cancelled) return;
+      setIsBlocked(false);
+      setCheckingBlock(false);
+    }
+
+    checkBlockThenLoad();
+    return () => { cancelled = true; };
+  }, [currentUser, clientId]);
+
+  useEffect(() => {
+    if (isBlocked || checkingBlock) return; // never wire up live data for a blocked relationship
     loadClient();
     loadSession();
     // Mark all unread messages as read immediately when chat opens
@@ -98,10 +136,10 @@ export default function StylistChat() {
       console.error("Messages listener error:", error);
     });
     return unsub;
-  }, [clientId, conversationId]);
+  }, [clientId, conversationId, isBlocked, checkingBlock]);
 
   async function loadClientCloset() {
-    if (!clientId) return;
+    if (!clientId || isBlocked) return;
     setClosetLoading(true);
     try {
       const snap = await getDocs(
@@ -177,6 +215,7 @@ export default function StylistChat() {
 
   async function sendMessage(content, type = "text") {
     if (!content?.trim() && type === "text") return;
+    if (isBlocked) return; // hard guard — never write a message in a blocked relationship
     setSending(true);
     try {
       await addDoc(collection(db, "messages"), {
@@ -270,6 +309,36 @@ export default function StylistChat() {
   const initials = client?.name?.split(" ").map(n => n[0]).join("").slice(0, 2) || "CL";
   const sessionEnded = sessionStatus === "ended";
   const isSessionClient = client?.subscriptionTier === "session";
+
+  // Blocked relationship — show a minimal explanation screen only.
+  // No messages, no closet, no input bar, no booking actions are rendered at all.
+  if (checkingBlock) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100dvh" }}>
+        <span className="spinner"></span>
+      </div>
+    );
+  }
+
+  if (isBlocked) {
+    return (
+      <div style={{ maxWidth: 430, margin: "0 auto", minHeight: "100dvh", background: "var(--bg)", display: "flex", flexDirection: "column" }}>
+        <div className="header">
+          <button onClick={() => nav(-1)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-secondary)" }}>
+            <i className="ti ti-arrow-left" style={{ fontSize: 20 }} aria-hidden="true"></i>
+          </button>
+          <div style={{ fontSize: 16, fontWeight: 600 }}>Unavailable</div>
+        </div>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 28px", textAlign: "center" }}>
+          <i className="ti ti-ban" style={{ fontSize: 48, color: "var(--text-tertiary)", display: "block", marginBottom: 16 }} aria-hidden="true"></i>
+          <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>This conversation is unavailable</div>
+          <div style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.6, maxWidth: 280 }}>
+            You don't have access to message, view, or build outfits for this client right now.
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>

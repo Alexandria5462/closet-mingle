@@ -41,9 +41,37 @@ export default function ClientProfile() {
   async function loadAll() {
     setLoading(true);
     try {
-      // Load client profile
+      // Load client profile — always needed for header/name even if blocked
       const clientSnap = await getDoc(doc(db, "users", clientId));
       if (clientSnap.exists()) setClient(clientSnap.data());
+
+      // Check block status FIRST — before loading any of the client's actual data.
+      // Only the stylist's OWN block is theirs to control.
+      if (isStylist) {
+        const blockSnap = await getDocs(
+          query(collection(db, "blockedUsers"),
+            where("stylistId", "==", currentUser.uid),
+            where("clientId", "==", clientId)
+          )
+        );
+        if (!blockSnap.empty) {
+          const blockData = blockSnap.docs[0].data();
+          setBlockDocId(blockSnap.docs[0].id);
+          setIsBlocked(blockData.blockedBy === "stylist");
+          setBlockedByClient(blockData.blockedBy === "client");
+
+          if (blockData.blockedBy === "client") {
+            // The CLIENT blocked this stylist — stop here entirely.
+            // No closet, no sessions, no quiz, no active-client status. Nothing further loads.
+            setLoading(false);
+            return;
+          }
+        } else {
+          setIsBlocked(false);
+          setBlockedByClient(false);
+          setBlockDocId(null);
+        }
+      }
 
       // Load public closet items
       const closetSnap = await getDocs(
@@ -92,27 +120,7 @@ export default function ClientProfile() {
       }
       setQuizResult(quizData);
 
-      // Check block status — only the stylist's OWN block is theirs to control
       if (isStylist) {
-        const blockSnap = await getDocs(
-          query(collection(db, "blockedUsers"),
-            where("stylistId", "==", currentUser.uid),
-            where("clientId", "==", clientId)
-          )
-        );
-        if (!blockSnap.empty) {
-          const blockData = blockSnap.docs[0].data();
-          setBlockDocId(blockSnap.docs[0].id);
-          // Only mark as "blocked by me" (actionable Unblock) if the stylist initiated it
-          setIsBlocked(blockData.blockedBy === "stylist");
-          // If the client blocked the stylist instead, that's a separate, non-actionable state
-          setBlockedByClient(blockData.blockedBy === "client");
-        } else {
-          setIsBlocked(false);
-          setBlockedByClient(false);
-          setBlockDocId(null);
-        }
-
         // Check if already an active client (chatSession exists with active status)
         // Use simple 2-field query to avoid composite index requirement
         const clientSnap2 = await getDocs(
@@ -242,6 +250,28 @@ export default function ClientProfile() {
   const baseTabs = ["about", "closet", "sessions", "style"];
   const TABS = isStylist ? [...baseTabs, "review"] : baseTabs;
 
+  // Client blocked this stylist — stop here, show a minimal screen only.
+  // No closet, sessions, quiz data, or action buttons render at all.
+  if (!loading && isStylist && blockedByClient) {
+    return (
+      <div style={{ maxWidth: 430, margin: "0 auto", minHeight: "100dvh", background: "var(--bg)", display: "flex", flexDirection: "column" }}>
+        <div className="header">
+          <button onClick={() => nav(-1)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-secondary)" }}>
+            <i className="ti ti-arrow-left" style={{ fontSize: 20 }} aria-hidden="true"></i>
+          </button>
+          <div style={{ fontSize: 16, fontWeight: 600 }}>Unavailable</div>
+        </div>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 28px", textAlign: "center" }}>
+          <i className="ti ti-ban" style={{ fontSize: 48, color: "var(--text-tertiary)", display: "block", marginBottom: 16 }} aria-hidden="true"></i>
+          <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>This client's profile is unavailable</div>
+          <div style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.6, maxWidth: 280 }}>
+            You don't have access to view this client's closet, sessions, or profile details right now.
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="header">
@@ -286,17 +316,19 @@ export default function ClientProfile() {
                 {/* Action buttons — own row, centered, below @ name, above stats */}
                 {isStylist && (
                   <div style={{ display: "flex", justifyContent: "center", gap: 8, marginBottom: 14, flexWrap: "nowrap" }}>
-                    <button
-                      onClick={() => nav(`/stylist/chat/${clientId}`)}
-                      style={{ padding: "6px 14px", fontSize: 12, fontFamily: "inherit", cursor: "pointer", borderRadius: 20, background: "var(--pink)", border: "none", color: "white", fontWeight: 500, display: "flex", alignItems: "center", gap: 4 }}
-                    >
-                      <i className="ti ti-message-circle" style={{ fontSize: 13 }} aria-hidden="true"></i>
-                      Message
-                    </button>
+                    {!blockedByClient && (
+                      <button
+                        onClick={() => nav(`/stylist/chat/${clientId}`)}
+                        style={{ padding: "6px 14px", fontSize: 12, fontFamily: "inherit", cursor: "pointer", borderRadius: 20, background: "var(--pink)", border: "none", color: "white", fontWeight: 500, display: "flex", alignItems: "center", gap: 4 }}
+                      >
+                        <i className="ti ti-message-circle" style={{ fontSize: 13 }} aria-hidden="true"></i>
+                        Message
+                      </button>
+                    )}
                     <button
                       onClick={toggleMyClient}
-                      disabled={addingClient}
-                      style={{ padding: "6px 14px", fontSize: 12, fontFamily: "inherit", cursor: "pointer", borderRadius: 20, background: isMyClient ? "var(--bg-card)" : "transparent", border: `1px solid ${isMyClient ? "var(--success)" : "var(--pink)"}`, color: isMyClient ? "var(--success)" : "var(--pink)", fontWeight: 500 }}
+                      disabled={addingClient || blockedByClient}
+                      style={{ padding: "6px 14px", fontSize: 12, fontFamily: "inherit", cursor: blockedByClient ? "not-allowed" : "pointer", borderRadius: 20, background: isMyClient ? "var(--bg-card)" : "transparent", border: `1px solid ${isMyClient ? "var(--success)" : "var(--pink)"}`, color: isMyClient ? "var(--success)" : "var(--pink)", fontWeight: 500, opacity: blockedByClient ? 0.5 : 1 }}
                     >
                       {addingClient ? "..." : isMyClient ? "✓ Active Client" : "+ Add Client"}
                     </button>
@@ -471,8 +503,8 @@ export default function ClientProfile() {
                   ) : sessions.map(s => (
                     <div
                       key={s.id}
-                      onClick={() => nav(`/stylist/chat/${clientId}`)}
-                      style={{ background: "var(--bg-card)", border: `0.5px solid ${s.status === "active" ? "#6ee7b7" : "var(--border)"}`, borderRadius: "var(--radius)", padding: 14, marginBottom: 10, cursor: "pointer" }}
+                      onClick={() => !blockedByClient && nav(`/stylist/chat/${clientId}`)}
+                      style={{ background: "var(--bg-card)", border: `0.5px solid ${s.status === "active" ? "#6ee7b7" : "var(--border)"}`, borderRadius: "var(--radius)", padding: 14, marginBottom: 10, cursor: blockedByClient ? "default" : "pointer", opacity: blockedByClient ? 0.6 : 1 }}
                     >
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
                         <span style={{ fontSize: 13, fontWeight: 500 }}>Session</span>

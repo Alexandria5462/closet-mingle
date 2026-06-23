@@ -26,12 +26,37 @@ export default function StylistOutfitBuilder() {
   const [note, setNote] = useState("");
   const [filterCat, setFilterCat] = useState("all");
   const [categories, setCategories] = useState([]);
+  const [isBlocked, setIsBlocked] = useState(false);
+  const [checkingBlock, setCheckingBlock] = useState(true);
 
   const conversationId = [clientId, currentUser?.uid].sort().join("_");
 
   useEffect(() => {
     if (!currentUser?.uid || !clientId) return;
-    loadClientAndCloset();
+    let cancelled = false;
+
+    async function checkBlockThenLoad() {
+      setCheckingBlock(true);
+      try {
+        const blockSnap = await getDocs(
+          query(collection(db, "blockedUsers"),
+            where("stylistId", "==", currentUser.uid),
+            where("clientId", "==", clientId)
+          )
+        );
+        if (!blockSnap.empty) {
+          if (!cancelled) { setIsBlocked(true); setCheckingBlock(false); setLoading(false); }
+          return; // never load closet items for a blocked relationship
+        }
+      } catch(e) { console.error("Block check failed:", e); }
+      if (cancelled) return;
+      setIsBlocked(false);
+      setCheckingBlock(false);
+      loadClientAndCloset();
+    }
+
+    checkBlockThenLoad();
+    return () => { cancelled = true; };
   }, [clientId, currentUser]);
 
   async function loadClientAndCloset() {
@@ -65,6 +90,7 @@ export default function StylistOutfitBuilder() {
   }
 
   async function sendOutfitSuggestion() {
+    if (isBlocked) return; // hard guard
     if (selected.size < 2) { setToast("Select at least 2 items to build an outfit"); return; }
     setSending(true);
     try {
@@ -109,6 +135,34 @@ export default function StylistOutfitBuilder() {
   const filtered = filterCat === "all"
     ? closet
     : closet.filter(i => i.category === filterCat);
+
+  if (checkingBlock) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100dvh" }}>
+        <span className="spinner"></span>
+      </div>
+    );
+  }
+
+  if (isBlocked) {
+    return (
+      <div style={{ maxWidth: 430, margin: "0 auto", minHeight: "100dvh", background: "var(--bg)", display: "flex", flexDirection: "column" }}>
+        <div className="header">
+          <button onClick={() => nav(-1)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-secondary)" }}>
+            <i className="ti ti-arrow-left" style={{ fontSize: 20 }} aria-hidden="true"></i>
+          </button>
+          <div style={{ fontSize: 16, fontWeight: 600 }}>Unavailable</div>
+        </div>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 28px", textAlign: "center" }}>
+          <i className="ti ti-ban" style={{ fontSize: 48, color: "var(--text-tertiary)", display: "block", marginBottom: 16 }} aria-hidden="true"></i>
+          <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>This client's closet is unavailable</div>
+          <div style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.6, maxWidth: 280 }}>
+            You don't have access to view or build outfits for this client right now.
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
