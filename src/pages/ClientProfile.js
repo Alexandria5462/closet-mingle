@@ -23,6 +23,8 @@ export default function ClientProfile() {
   const [lightboxIndex, setLightboxIndex] = useState(null);
   const [isBlocked, setIsBlocked] = useState(false);
   const [blocking, setBlocking] = useState(false);
+  const [blockedByClient, setBlockedByClient] = useState(false);
+  const [blockDocId, setBlockDocId] = useState(null);
   const [showReport, setShowReport] = useState(false);
   const [isMyClient, setIsMyClient] = useState(false);
   const [addingClient, setAddingClient] = useState(false);
@@ -90,7 +92,7 @@ export default function ClientProfile() {
       }
       setQuizResult(quizData);
 
-      // Check if this client is blocked by this stylist
+      // Check block status — only the stylist's OWN block is theirs to control
       if (isStylist) {
         const blockSnap = await getDocs(
           query(collection(db, "blockedUsers"),
@@ -98,7 +100,18 @@ export default function ClientProfile() {
             where("clientId", "==", clientId)
           )
         );
-        setIsBlocked(!blockSnap.empty);
+        if (!blockSnap.empty) {
+          const blockData = blockSnap.docs[0].data();
+          setBlockDocId(blockSnap.docs[0].id);
+          // Only mark as "blocked by me" (actionable Unblock) if the stylist initiated it
+          setIsBlocked(blockData.blockedBy === "stylist");
+          // If the client blocked the stylist instead, that's a separate, non-actionable state
+          setBlockedByClient(blockData.blockedBy === "client");
+        } else {
+          setIsBlocked(false);
+          setBlockedByClient(false);
+          setBlockDocId(null);
+        }
 
         // Check if already an active client (chatSession exists with active status)
         // Use simple 2-field query to avoid composite index requirement
@@ -174,18 +187,14 @@ export default function ClientProfile() {
   async function toggleBlock() {
     setBlocking(true);
     try {
-      if (isBlocked) {
-        const snap = await getDocs(
-          query(collection(db, "blockedUsers"),
-            where("stylistId", "==", currentUser.uid),
-            where("clientId", "==", clientId)
-          )
-        );
-        for (const d of snap.docs) await deleteDoc(doc(db, "blockedUsers", d.id));
+      if (isBlocked && blockDocId) {
+        // Only unblock if this stylist was the one who placed the block
+        await deleteDoc(doc(db, "blockedUsers", blockDocId));
         setIsBlocked(false);
+        setBlockDocId(null);
         setToast("Client unblocked");
-      } else {
-        await addDoc(collection(db, "blockedUsers"), {
+      } else if (!isBlocked && !blockedByClient) {
+        const newBlock = await addDoc(collection(db, "blockedUsers"), {
           stylistId: currentUser.uid,
           clientId,
           clientName: client?.name || "",
@@ -193,6 +202,7 @@ export default function ClientProfile() {
           createdAt: new Date().toISOString(),
         });
         setIsBlocked(true);
+        setBlockDocId(newBlock.id);
         setToast("Client blocked");
       }
     } catch(e) { setToast("Failed. Try again."); }
@@ -290,13 +300,22 @@ export default function ClientProfile() {
                     >
                       {addingClient ? "..." : isMyClient ? "✓ Active Client" : "+ Add Client"}
                     </button>
-                    <button
-                      onClick={toggleBlock}
-                      disabled={blocking}
-                      style={{ padding: "6px 14px", fontSize: 12, fontFamily: "inherit", cursor: "pointer", borderRadius: 20, background: "transparent", border: `1px solid ${isBlocked ? "var(--success)" : "var(--danger)"}`, color: isBlocked ? "var(--success)" : "var(--danger)", fontWeight: 500 }}
-                    >
-                      {blocking ? "..." : isBlocked ? "Unblock" : "Block"}
-                    </button>
+                    {blockedByClient ? (
+                      <span
+                        title="This client has blocked you — you cannot unblock them"
+                        style={{ padding: "6px 14px", fontSize: 12, fontFamily: "inherit", borderRadius: 20, background: "var(--bg)", border: "1px solid var(--border)", color: "var(--text-tertiary)", fontWeight: 500, display: "flex", alignItems: "center", gap: 4 }}
+                      >
+                        <i className="ti ti-ban" style={{ fontSize: 13 }} aria-hidden="true"></i> Blocked you
+                      </span>
+                    ) : (
+                      <button
+                        onClick={toggleBlock}
+                        disabled={blocking}
+                        style={{ padding: "6px 14px", fontSize: 12, fontFamily: "inherit", cursor: "pointer", borderRadius: 20, background: "transparent", border: `1px solid ${isBlocked ? "var(--success)" : "var(--danger)"}`, color: isBlocked ? "var(--success)" : "var(--danger)", fontWeight: 500 }}
+                      >
+                        {blocking ? "..." : isBlocked ? "Unblock" : "Block"}
+                      </button>
+                    )}
                     <button
                       onClick={() => setShowReport(true)}
                       title="Report this client"
