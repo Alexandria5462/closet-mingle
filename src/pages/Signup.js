@@ -60,6 +60,7 @@ export default function Signup() {
   const [promoCode, setPromoCode] = useState("");
   const [promoError, setPromoError] = useState("");
   const [promoApplied, setPromoApplied] = useState(false);
+  const [ageConfirmed, setAgeConfirmed] = useState(false);
 
   const BIO_LIMIT = 300;
 
@@ -72,6 +73,7 @@ export default function Signup() {
 
   async function handleSubmit() {
     if (!name || !email || !password) { setError("Please fill in all required fields."); return; }
+    if (!ageConfirmed) { setError("You must confirm you are 18 or older to create an account."); return; }
     if (password.length < 6) { setError("Password must be at least 6 characters."); return; }
     if (acct === "stylist" && !photoFile && !photoPreview) { setError("A profile photo is required for stylist accounts."); return; }
     if (acct === "stylist" && !about) { setError("About me is required for stylist accounts."); return; }
@@ -312,6 +314,21 @@ export default function Signup() {
             )}
           </div>
         )}
+
+        {/* Age confirmation — required, no account creation without it */}
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 14, padding: "10px 12px", background: "var(--bg-card)", border: "0.5px solid var(--border)", borderRadius: "var(--radius)" }}>
+          <input
+            type="checkbox"
+            id="ageConfirm"
+            checked={ageConfirmed}
+            onChange={e => setAgeConfirmed(e.target.checked)}
+            style={{ marginTop: 2, width: 16, height: 16, flexShrink: 0, cursor: "pointer" }}
+          />
+          <label htmlFor="ageConfirm" style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.5, cursor: "pointer" }}>
+            I confirm that I am 18 years of age or older and agree to ClosetMingle's{" "}
+            <span style={{ color: "var(--pink-dark)", textDecoration: "underline" }} onClick={e => { e.preventDefault(); nav("/terms"); }}>Terms of Service</span>.
+          </label>
+        </div>
 
         <button className="btn-pink" onClick={handleSubmit} disabled={loading}>
           {loading ? <span className="spinner"></span> : "Create account"}

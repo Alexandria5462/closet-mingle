@@ -193,6 +193,7 @@ export default function Account() {
   const [unreadMsgCount, setUnreadMsgCount] = useState(0);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [exportingData, setExportingData] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [notifPrefs, setNotifPrefs] = useState({ messages: true, sessions: true, tips: true, promotions: false });
   const location = useLocation();
@@ -322,6 +323,60 @@ export default function Account() {
       setToast("Failed to connect Stripe. Try again.");
     }
     setStripeLoading(false);
+  }
+
+  // Collects and downloads everything Firestore has on file for this user.
+  // Supports the user's right to access/export their own data (CCPA/GDPR-style requests).
+  async function exportMyData() {
+    setExportingData(true);
+    try {
+      const uid = currentUser.uid;
+      const collected = { exportedAt: new Date().toISOString(), profile: userProfile };
+
+      const collectionsToExport = isStylist
+        ? [
+            { name: "closetItems",   field: "userId" },
+            { name: "savedOutfits",  field: "userId" },
+            { name: "chatSessions",  field: "stylistId" },
+            { name: "reviews",       field: "targetUserId" },
+            { name: "tips",          field: "toStylistId" },
+            { name: "follows",       field: "stylistId" },
+            { name: "portfolio",     field: "stylistId" },
+            { name: "messages",      field: "senderId" },
+          ]
+        : [
+            { name: "closetItems",   field: "userId" },
+            { name: "savedOutfits",  field: "userId" },
+            { name: "chatSessions",  field: "clientId" },
+            { name: "reviews",       field: "reviewerId" },
+            { name: "follows",       field: "followerId" },
+            { name: "messages",      field: "senderId" },
+          ];
+
+      for (const c of collectionsToExport) {
+        try {
+          const snap = await getDocs(query(collection(db, c.name), where(c.field, "==", uid)));
+          collected[c.name] = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        } catch(e) {
+          collected[c.name] = { error: "Could not load this section" };
+        }
+      }
+
+      const blob = new Blob([JSON.stringify(collected, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `closetmingle-data-export-${uid.slice(0, 8)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      setToast("Your data export has started downloading.");
+    } catch(e) {
+      console.error("Export failed:", e);
+      setToast("Failed to export data. Please try again.");
+    }
+    setExportingData(false);
   }
 
   async function loadQuizResult() {
@@ -933,6 +988,17 @@ export default function Account() {
                   <i className="ti ti-chevron-right" style={{ color: "var(--text-tertiary)" }} aria-hidden="true"></i>
                 </div>
               </div>
+
+              {/* Download my data — privacy/data access request */}
+              <button
+                onClick={exportMyData}
+                disabled={exportingData}
+                className="btn-outline"
+                style={{ marginTop: 8 }}
+              >
+                <i className="ti ti-download" aria-hidden="true"></i>
+                {exportingData ? "Preparing your data..." : "Download my data"}
+              </button>
 
               {/* Sign out */}
               <button className="btn-outline" onClick={async () => { await logout(); nav("/"); }} style={{ color: "var(--danger)", borderColor: "var(--danger)", marginTop: 8 }}>

@@ -11,6 +11,7 @@ import VideoCall from "../components/VideoCall";
 import Toast from "../components/Toast";
 import TipModal from "../components/TipModal";
 import Reviews from "../components/Reviews";
+import ReportUserModal from "../components/ReportUserModal";
 import { notifyStylistNewMessage, notifyStylistNewClient } from "../lib/notifications";
 
 const CLOUD_NAME = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME;
@@ -44,6 +45,8 @@ export default function Chat() {
   const [sessionDoc, setSessionDoc] = useState(null);
   const [toast, setToast] = useState("");
   const [showTip, setShowTip] = useState(false);
+  const [showReport, setShowReport] = useState(false);
+  const [showOptionsMenu, setShowOptionsMenu] = useState(false);
   const [showReviewPrompt, setShowReviewPrompt] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
   const bottomRef = useRef(null);
@@ -281,13 +284,26 @@ export default function Chat() {
           </div>
         </div>
         {!sessionEnded && (
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <div style={{ display: "flex", gap: 8, alignItems: "center", position: "relative" }}>
             <button onClick={() => setShowCamera(true)} style={{ background: "none", border: "none", cursor: "pointer" }}>
               <i className="ti ti-photo" style={{ fontSize: 22, color: "var(--pink)" }} aria-hidden="true"></i>
             </button>
             <button onClick={() => setShowTip(true)} style={{ background: "none", border: "none", cursor: "pointer" }}>
               <i className="ti ti-heart-handshake" style={{ fontSize: 22, color: "var(--pink)" }} aria-hidden="true"></i>
             </button>
+            <button onClick={() => setShowOptionsMenu(s => !s)} style={{ background: "none", border: "none", cursor: "pointer" }}>
+              <i className="ti ti-dots-vertical" style={{ fontSize: 20, color: "var(--text-secondary)" }} aria-hidden="true"></i>
+            </button>
+            {showOptionsMenu && (
+              <div style={{ position: "absolute", top: 30, right: 0, background: "var(--bg-card)", border: "0.5px solid var(--border)", borderRadius: "var(--radius)", boxShadow: "0 4px 16px rgba(0,0,0,0.12)", zIndex: 50, minWidth: 160 }}>
+                <button
+                  onClick={() => { setShowOptionsMenu(false); setShowReport(true); }}
+                  style={{ width: "100%", textAlign: "left", padding: "12px 14px", background: "none", border: "none", cursor: "pointer", fontSize: 13, color: "var(--danger)", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 8 }}
+                >
+                  <i className="ti ti-flag" style={{ fontSize: 15 }} aria-hidden="true"></i> Report stylist
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -429,6 +445,14 @@ export default function Chat() {
           conversationId={conversationId}
           onClose={() => setShowTip(false)}
           onSuccess={() => { setShowTip(false); setToast("Tip sent!"); }}
+        />
+      )}
+      {showReport && (
+        <ReportUserModal
+          reportedUserId={stylistId}
+          reportedUserName={stylist?.name}
+          conversationId={conversationId}
+          onClose={() => setShowReport(false)}
         />
       )}
     </>

@@ -8,6 +8,7 @@ import { db } from "../lib/firebase";
 import { useAuth } from "../lib/AuthContext";
 import CameraModal from "../components/CameraModal";
 import VideoCall from "../components/VideoCall";
+import ReportUserModal from "../components/ReportUserModal";
 import { notifyClientNewMessage, notifyClientSessionEnded } from "../lib/notifications";
 
 const CLOUD_NAME = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME;
@@ -41,6 +42,7 @@ export default function StylistChat() {
   const [sessionDoc, setSessionDoc] = useState(null);
   const [sessionStatus, setSessionStatus] = useState(null);
   const [showEndConfirm, setShowEndConfirm] = useState(false);
+  const [showReport, setShowReport] = useState(false);
   const [ending, setEnding] = useState(false);
   const [closingClient, setClosingClient] = useState(false);
   const [clientClosed, setClientClosed] = useState(false);
@@ -358,6 +360,13 @@ export default function StylistChat() {
                 : <i className="ti ti-video" style={{ fontSize: 16 }} aria-hidden="true"></i>}
             </button>
           )}
+          {/* Report client — icon only */}
+          {!sessionEnded && (
+            <button onClick={() => setShowReport(true)}
+              style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-tertiary)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <i className="ti ti-flag" style={{ fontSize: 18 }} aria-hidden="true"></i>
+            </button>
+          )}
           {sessionEnded && <span style={{ fontSize: 11, color: "var(--success)", fontWeight: 500, flexShrink: 0 }}>Completed</span>}
         </div>
 
@@ -594,6 +603,15 @@ export default function StylistChat() {
             >→</button>
           </div>
         </div>
+      )}
+
+      {showReport && (
+        <ReportUserModal
+          reportedUserId={clientId}
+          reportedUserName={client?.name}
+          conversationId={conversationId}
+          onClose={() => setShowReport(false)}
+        />
       )}
     </>
   );
