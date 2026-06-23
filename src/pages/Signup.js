@@ -60,7 +60,7 @@ export default function Signup() {
   const [promoCode, setPromoCode] = useState("");
   const [promoError, setPromoError] = useState("");
   const [promoApplied, setPromoApplied] = useState(false);
-  const [ageConfirmed, setAgeConfirmed] = useState(false);
+  const [birthdate, setBirthdate] = useState("");
 
   const BIO_LIMIT = 300;
 
@@ -71,9 +71,20 @@ export default function Signup() {
     setPhotoPreview(URL.createObjectURL(file));
   }
 
+  function calculateAge(dateStr) {
+    if (!dateStr) return 0;
+    const dob = new Date(dateStr);
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const monthDiff = today.getMonth() - dob.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) age--;
+    return age;
+  }
+
   async function handleSubmit() {
     if (!name || !email || !password) { setError("Please fill in all required fields."); return; }
-    if (!ageConfirmed) { setError("You must confirm you are 18 or older to create an account."); return; }
+    if (!birthdate) { setError("Please enter your date of birth."); return; }
+    if (calculateAge(birthdate) < 18) { setError("You must be 18 or older to create a ClosetMingle account."); return; }
     if (password.length < 6) { setError("Password must be at least 6 characters."); return; }
     if (acct === "stylist" && !photoFile && !photoPreview) { setError("A profile photo is required for stylist accounts."); return; }
     if (acct === "stylist" && !about) { setError("About me is required for stylist accounts."); return; }
@@ -92,6 +103,7 @@ export default function Signup() {
         city: city || "",
         about: about || "",
         photoUrl: photoUrl || "",
+        birthdate, // stored for age verification records — never displayed publicly
         ...(acct === "stylist" && {
           specialty: specialties.join(", "),  // store as comma string for display
           specialties,                         // also store as array for filtering
@@ -315,19 +327,24 @@ export default function Signup() {
           </div>
         )}
 
-        {/* Age confirmation — required, no account creation without it */}
-        <div style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 14, padding: "10px 12px", background: "var(--bg-card)", border: "0.5px solid var(--border)", borderRadius: "var(--radius)" }}>
-          <input
-            type="checkbox"
-            id="ageConfirm"
-            checked={ageConfirmed}
-            onChange={e => setAgeConfirmed(e.target.checked)}
-            style={{ marginTop: 2, width: 16, height: 16, flexShrink: 0, cursor: "pointer" }}
-          />
-          <label htmlFor="ageConfirm" style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.5, cursor: "pointer" }}>
-            I confirm that I am 18 years of age or older and agree to ClosetMingle's{" "}
-            <span style={{ color: "var(--pink-dark)", textDecoration: "underline" }} onClick={e => { e.preventDefault(); nav("/terms"); }}>Terms of Service</span>.
+        {/* Date of birth — required, calculates real age, no self-attestation only */}
+        <div style={{ marginBottom: 14 }}>
+          <label htmlFor="birthdate" style={{ fontSize: 13, fontWeight: 500, color: "var(--text-primary)", display: "block", marginBottom: 6 }}>
+            Date of birth *
           </label>
+          <input
+            id="birthdate"
+            type="date"
+            className="input-field"
+            value={birthdate}
+            onChange={e => setBirthdate(e.target.value)}
+            max={new Date(Date.now() - 18 * 365.25 * 86400000).toISOString().split("T")[0]}
+            style={{ marginBottom: 4 }}
+          />
+          <div style={{ fontSize: 11, color: "var(--text-tertiary)" }}>
+            You must be 18 or older to use ClosetMingle. By creating an account you agree to our{" "}
+            <span style={{ color: "var(--pink-dark)", textDecoration: "underline", cursor: "pointer" }} onClick={() => nav("/terms")}>Terms of Service</span>.
+          </div>
         </div>
 
         <button className="btn-pink" onClick={handleSubmit} disabled={loading}>

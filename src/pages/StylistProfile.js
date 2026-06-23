@@ -111,6 +111,9 @@ export default function StylistProfile() {
   const [showReport, setShowReport] = useState(false);
   const [showBooking, setShowBooking] = useState(false);
   const [lightbox, setLightbox] = useState(null); // { images: [], index: 0 }
+  const [isBlockedByMe, setIsBlockedByMe] = useState(false);
+  const [blockDocId, setBlockDocId] = useState(null);
+  const [blockLoading, setBlockLoading] = useState(false);
 
   // Any paid tier = Premium (monthly, plus legacy premium_plus and session)
   const canBook = !isStylist &&
@@ -130,7 +133,19 @@ export default function StylistProfile() {
       if (currentUser?.uid && !isStylist) {
         try {
           const blockSnap = await getDocs(query(collection(db, "blockedUsers"), where("stylistId", "==", stylistId), where("clientId", "==", currentUser.uid)));
-          if (!blockSnap.empty) { nav("/find-stylist", { replace: true }); return; }
+          if (!blockSnap.empty) {
+            const blockDoc = blockSnap.docs[0];
+            const blockData = blockDoc.data();
+            if (blockData.blockedBy === "client") {
+              // This client blocked the stylist themselves — stay on page, show as blocked
+              setIsBlockedByMe(true);
+              setBlockDocId(blockDoc.id);
+            } else {
+              // The stylist blocked this client — redirect away entirely, profile hidden
+              nav("/find-stylist", { replace: true });
+              return;
+            }
+          }
         } catch(e) {}
       }
 
@@ -190,6 +205,35 @@ export default function StylistProfile() {
       }
     } catch (e) { console.error(e); }
     setFollowLoading(false);
+  }
+
+  async function toggleBlock() {
+    if (!currentUser?.uid) return;
+    setBlockLoading(true);
+    try {
+      if (isBlockedByMe && blockDocId) {
+        await deleteDoc(doc(db, "blockedUsers", blockDocId));
+        setIsBlockedByMe(false);
+        setBlockDocId(null);
+      } else {
+        const newBlock = await addDoc(collection(db, "blockedUsers"), {
+          stylistId,
+          clientId: currentUser.uid,
+          stylistName: stylist?.name || "",
+          blockedBy: "client",
+          createdAt: new Date().toISOString(),
+        });
+        setIsBlockedByMe(true);
+        setBlockDocId(newBlock.id);
+        // Unfollow automatically if they were following — blocking implies no further contact
+        if (isFollowing && followDocId) {
+          await deleteDoc(doc(db, "follows", followDocId)).catch(() => {});
+          setIsFollowing(false);
+          setFollowDocId(null);
+        }
+      }
+    } catch(e) { console.error(e); }
+    setBlockLoading(false);
   }
 
   if (loading) {
@@ -311,53 +355,78 @@ export default function StylistProfile() {
             </div>
           )}
 
-          {/* Book + Follow buttons */}
-          <div style={{ display: "flex", gap: 10, marginBottom: 8 }}>
-            {!isStylist && !isFreeClient && (
+          {/* Blocked state — replaces Book/Message/Follow entirely when this client has blocked the stylist */}
+          {!isStylist && isBlockedByMe ? (
+            <div style={{ marginBottom: 8 }}>
+              <div style={{ background: "var(--bg-card)", border: "0.5px solid var(--border)", borderRadius: "var(--radius)", padding: "14px 16px", textAlign: "center", marginBottom: 10 }}>
+                <i className="ti ti-shield-x" style={{ fontSize: 22, color: "var(--text-tertiary)", display: "block", marginBottom: 6 }} aria-hidden="true"></i>
+                <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>You've blocked this stylist. You won't see them in search and can't message them.</div>
+              </div>
               <button
-                className="btn-pink"
-                onClick={() => hasRates ? setShowBooking(true) : nav(`/chat/${stylistId}`)}
-                style={{ flex: 2, marginBottom: 0 }}
+                onClick={toggleBlock}
+                disabled={blockLoading}
+                className="btn-outline"
+                style={{ marginBottom: 0 }}
               >
-                {hasRates ? `Book ${stylist.name?.split(" ")[0]}` : "Message stylist"}
+                {blockLoading ? "..." : "Unblock"}
               </button>
-            )}
-            {!isStylist && isFreeClient && (
-              <button className="btn-pink" onClick={() => nav("/plans")} style={{ flex: 2, marginBottom: 0 }}>
-                Upgrade to book
-              </button>
-            )}
-            <button
-              onClick={toggleFollow}
-              disabled={followLoading}
-              style={{
-                flex: 1, padding: "13px 16px", borderRadius: "var(--radius-sm)",
-                border: `1.5px solid ${isFollowing ? "var(--border)" : "var(--pink)"}`,
-                background: isFollowing ? "var(--bg-card)" : "var(--pink-light)",
-                color: isFollowing ? "var(--text-secondary)" : "var(--pink-dark)",
-                cursor: "pointer", fontFamily: "inherit", fontSize: 14, fontWeight: 500,
-              }}
-            >
-              {followLoading ? "..." : isFollowing ? "Following ✓" : "Follow"}
-            </button>
-            {!isStylist && (
-              <button
-                onClick={() => setShowReport(true)}
-                title="Report this stylist"
-                style={{
-                  flexShrink: 0, width: 44, borderRadius: "var(--radius-sm)",
-                  border: "1.5px solid var(--border)", background: "var(--bg-card)",
-                  color: "var(--text-tertiary)", cursor: "pointer",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                }}
-              >
-                <i className="ti ti-flag" style={{ fontSize: 16 }} aria-hidden="true"></i>
-              </button>
-            )}
-          </div>
+            </div>
+          ) : (
+            <>
+              {/* Book + Follow + Report + Block buttons */}
+              <div style={{ display: "flex", gap: 10, marginBottom: 8 }}>
+                {!isStylist && !isFreeClient && (
+                  <button
+                    className="btn-pink"
+                    onClick={() => hasRates ? setShowBooking(true) : nav(`/chat/${stylistId}`)}
+                    style={{ flex: 2, marginBottom: 0 }}
+                  >
+                    {hasRates ? `Book ${stylist.name?.split(" ")[0]}` : "Message stylist"}
+                  </button>
+                )}
+                {!isStylist && isFreeClient && (
+                  <button className="btn-pink" onClick={() => nav("/plans")} style={{ flex: 2, marginBottom: 0 }}>
+                    Upgrade to book
+                  </button>
+                )}
+                <button
+                  onClick={toggleFollow}
+                  disabled={followLoading}
+                  style={{
+                    flex: 1, padding: "13px 16px", borderRadius: "var(--radius-sm)",
+                    border: `1.5px solid ${isFollowing ? "var(--border)" : "var(--pink)"}`,
+                    background: isFollowing ? "var(--bg-card)" : "var(--pink-light)",
+                    color: isFollowing ? "var(--text-secondary)" : "var(--pink-dark)",
+                    cursor: "pointer", fontFamily: "inherit", fontSize: 14, fontWeight: 500,
+                  }}
+                >
+                  {followLoading ? "..." : isFollowing ? "Following ✓" : "Follow"}
+                </button>
+              </div>
+
+              {/* Secondary row — report and block, lower visual priority */}
+              {!isStylist && (
+                <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+                  <button
+                    onClick={() => setShowReport(true)}
+                    style={{ flex: 1, padding: "9px 12px", borderRadius: "var(--radius-sm)", border: "1px solid var(--border)", background: "var(--bg-card)", color: "var(--text-tertiary)", cursor: "pointer", fontFamily: "inherit", fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center", gap: 5 }}
+                  >
+                    <i className="ti ti-flag" style={{ fontSize: 13 }} aria-hidden="true"></i> Report
+                  </button>
+                  <button
+                    onClick={toggleBlock}
+                    disabled={blockLoading}
+                    style={{ flex: 1, padding: "9px 12px", borderRadius: "var(--radius-sm)", border: "1px solid var(--border)", background: "var(--bg-card)", color: "var(--text-tertiary)", cursor: "pointer", fontFamily: "inherit", fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center", gap: 5 }}
+                  >
+                    <i className="ti ti-ban" style={{ fontSize: 13 }} aria-hidden="true"></i> {blockLoading ? "..." : "Block"}
+                  </button>
+                </div>
+              )}
+            </>
+          )}
 
           {/* Pre-launch note — remove once Stripe is activated */}
-          {!isStylist && !isFreeClient && hasRates && !stylist?.stripeOnboardingComplete && (
+          {!isStylist && !isFreeClient && !isBlockedByMe && hasRates && !stylist?.stripeOnboardingComplete && (
             <div style={{ background: "var(--bg-card)", border: "0.5px solid var(--border)", borderRadius: "var(--radius)", padding: "8px 14px", marginBottom: 12, fontSize: 12, color: "var(--text-secondary)", textAlign: "center" }}>
               💬 Payments launching soon — book now to connect directly
             </div>

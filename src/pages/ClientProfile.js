@@ -189,6 +189,7 @@ export default function ClientProfile() {
           stylistId: currentUser.uid,
           clientId,
           clientName: client?.name || "",
+          blockedBy: "stylist",
           createdAt: new Date().toISOString(),
         });
         setIsBlocked(true);

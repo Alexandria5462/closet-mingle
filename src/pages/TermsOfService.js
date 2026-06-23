@@ -31,7 +31,7 @@ export default function TermsOfService() {
           },
           {
             title: "3. Eligibility",
-            content: "You must be at least 13 years of age to use this App. If you are under 18, you must have your parent or legal guardian's permission to use the App. By using the App, you represent and warrant that you meet the eligibility requirements."
+            content: "You must be at least 18 years of age to create an account or use this App. By creating an account, you represent and warrant that you are 18 years of age or older. We verify date of birth at signup and reserve the right to suspend or terminate accounts found to violate this requirement."
           },
           {
             title: "4. User Accounts and Usernames",

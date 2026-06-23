@@ -26,6 +26,8 @@ import Referral from "./pages/Referral";
 import GiftSubscription from "./pages/GiftSubscription";
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TrustSafety from "./pages/TrustSafety";
+import SuspendedAccount from "./pages/SuspendedAccount";
 import StylistHome from "./pages/StylistHome";
 import ClientSessions from "./pages/ClientSessions";
 import ClosetPrivacy from "./pages/ClosetPrivacy";
@@ -45,6 +47,8 @@ function PrivateRoute({ children, accountType }) {
   // Wait for auth to finish loading
   if (loading) return null;
   if (!currentUser) return <Navigate to="/" replace />;
+  // Suspended accounts are routed to a single explanation page regardless of destination
+  if (userProfile?.accountSuspended) return <Navigate to="/suspended" replace />;
   // Wait for profile to load before checking accountType
   if (accountType && userProfile && userProfile.accountType !== accountType)
     return <Navigate to={userProfile.accountType === "stylist" ? "/stylist" : "/home"} replace />;
@@ -72,6 +76,8 @@ function AppRoutes() {
       <Route path="/login" element={<Login />} />
       <Route path="/terms" element={<TermsOfService />} />
       <Route path="/privacy" element={<PrivacyPolicy />} />
+      <Route path="/trust-safety" element={<TrustSafety />} />
+      <Route path="/suspended" element={<SuspendedAccount />} />
 
       {/* Client */}
       <Route path="/plans" element={<Plans />} />

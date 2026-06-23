@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { addDoc, collection } from "firebase/firestore";
+import React, { useState, useEffect } from "react";
+import { addDoc, collection, query, where, getDocs, doc, updateDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { useAuth } from "../lib/AuthContext";
 
@@ -27,6 +27,29 @@ export default function ReportUserModal({ reportedUserId, reportedUserName, conv
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
+  const [alreadyReported, setAlreadyReported] = useState(false);
+  const [checkingPrior, setCheckingPrior] = useState(true);
+
+  // Light duplicate-report guard — checks if this reporter already
+  // has a pending report open against this exact user.
+  // This is informational only, not a hard block — legitimate repeat
+  // concerns (e.g. ongoing harassment) should still be reportable.
+  useEffect(() => {
+    if (!currentUser?.uid || !reportedUserId) { setCheckingPrior(false); return; }
+    (async () => {
+      try {
+        const snap = await getDocs(
+          query(collection(db, "reports"),
+            where("reporterId", "==", currentUser.uid),
+            where("reportedUserId", "==", reportedUserId),
+            where("status", "==", "pending")
+          )
+        );
+        setAlreadyReported(!snap.empty);
+      } catch(e) { /* fail silently — not critical */ }
+      setCheckingPrior(false);
+    })();
+  }, [currentUser, reportedUserId]);
 
   async function submitReport() {
     if (!reason) { setError("Please select a reason for this report."); return; }
@@ -45,6 +68,28 @@ export default function ReportUserModal({ reportedUserId, reportedUserName, conv
         status: "pending", // pending | reviewed | resolved
         createdAt: new Date().toISOString(),
       });
+
+      // Auto-suspend pending review once 3+ pending reports exist against this user.
+      // This does NOT permanently ban anyone — it pauses access while a human reviews.
+      try {
+        const pendingSnap = await getDocs(
+          query(collection(db, "reports"),
+            where("reportedUserId", "==", reportedUserId),
+            where("status", "==", "pending")
+          )
+        );
+        if (pendingSnap.size >= 3) {
+          await updateDoc(doc(db, "users", reportedUserId), {
+            accountSuspended: true,
+            suspendedAt: new Date().toISOString(),
+            suspendedReason: "Multiple user reports pending review",
+          });
+        }
+      } catch(e) {
+        console.error("Auto-suspend check failed:", e);
+        // Report itself still succeeded even if suspend check fails — don't block the user on this
+      }
+
       setSubmitted(true);
     } catch(e) {
       console.error("Report submission failed:", e);
@@ -77,6 +122,12 @@ export default function ReportUserModal({ reportedUserId, reportedUserName, conv
         <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 16 }}>
           This report is confidential. {reportedUserName || "This user"} will not be notified.
         </div>
+
+        {!checkingPrior && alreadyReported && (
+          <div style={{ background: "var(--bg-card)", border: "0.5px solid var(--border)", borderRadius: "var(--radius)", padding: "10px 14px", marginBottom: 14, fontSize: 12, color: "var(--text-secondary)" }}>
+            You already have a report pending review for this user. You can still submit another if this is a new or ongoing concern.
+          </div>
+        )}
 
         <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 8 }}>What's going on?</div>
         {REASONS.map(r => (

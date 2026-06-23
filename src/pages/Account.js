@@ -989,6 +989,34 @@ export default function Account() {
                 </div>
               </div>
 
+              {/* Legal & Trust */}
+              <div className="card">
+                <div style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 10 }}>Legal & Trust</div>
+                <button
+                  onClick={() => nav("/trust-safety")}
+                  style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", background: "none", border: "none", padding: "10px 0", cursor: "pointer", fontFamily: "inherit", borderBottom: "0.5px solid var(--border)" }}
+                >
+                  <span style={{ fontSize: 14, color: "var(--text-primary)", display: "flex", alignItems: "center", gap: 8 }}>
+                    <i className="ti ti-shield-check" style={{ fontSize: 16, color: "var(--pink-dark)" }} aria-hidden="true"></i> Trust & Safety
+                  </span>
+                  <i className="ti ti-chevron-right" style={{ color: "var(--text-tertiary)" }} aria-hidden="true"></i>
+                </button>
+                <button
+                  onClick={() => nav("/terms")}
+                  style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", background: "none", border: "none", padding: "10px 0", cursor: "pointer", fontFamily: "inherit", borderBottom: "0.5px solid var(--border)" }}
+                >
+                  <span style={{ fontSize: 14, color: "var(--text-primary)" }}>Terms of Service</span>
+                  <i className="ti ti-chevron-right" style={{ color: "var(--text-tertiary)" }} aria-hidden="true"></i>
+                </button>
+                <button
+                  onClick={() => nav("/privacy")}
+                  style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", background: "none", border: "none", padding: "10px 0", cursor: "pointer", fontFamily: "inherit" }}
+                >
+                  <span style={{ fontSize: 14, color: "var(--text-primary)" }}>Privacy Policy</span>
+                  <i className="ti ti-chevron-right" style={{ color: "var(--text-tertiary)" }} aria-hidden="true"></i>
+                </button>
+              </div>
+
               {/* Download my data — privacy/data access request */}
               <button
                 onClick={exportMyData}

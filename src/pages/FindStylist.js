@@ -86,9 +86,14 @@ export default function FindStylist() {
       let filteredData = withData;
       if (userProfile?.uid) {
         try {
-          const blockSnap = await getDocs(query(collection(db, "blockedUsers"), where("clientId", "==", userProfile.uid)));
-          const blockedBy = new Set(blockSnap.docs.map(d => d.data().stylistId));
-          filteredData = withData.filter(s => !blockedBy.has(s.uid));
+          // Hide stylists in either direction: stylist blocked this client, OR this client blocked the stylist
+          const [blockedByStylistSnap, blockedByMeSnap] = await Promise.all([
+            getDocs(query(collection(db, "blockedUsers"), where("clientId", "==", userProfile.uid))),
+            getDocs(query(collection(db, "blockedUsers"), where("clientId", "==", userProfile.uid), where("blockedBy", "==", "client"))),
+          ]);
+          const hiddenStylistIds = new Set(blockedByStylistSnap.docs.map(d => d.data().stylistId));
+          blockedByMeSnap.docs.forEach(d => hiddenStylistIds.add(d.data().stylistId));
+          filteredData = withData.filter(s => !hiddenStylistIds.has(s.id));
         } catch(e) {}
       }
       const specs = ["All", ...new Set(filteredData.map(s => s.specialty).filter(Boolean))];

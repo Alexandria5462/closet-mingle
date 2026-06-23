@@ -49,6 +49,7 @@ export default function Chat() {
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
   const [showReviewPrompt, setShowReviewPrompt] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
+  const [blockedByMe, setBlockedByMe] = useState(false);
   const bottomRef = useRef(null);
 
   const isFreeClient = userProfile?.accountType === "client" &&
@@ -108,14 +109,17 @@ export default function Chat() {
     try {
       const s = await getDoc(doc(db, "users", stylistId));
       if (s.exists()) setStylist(s.data());
-      // Check if this client is blocked by the stylist
+      // Check if either party has blocked the other — messaging is off either way
       const blockSnap = await getDocs(
         query(collection(db, "blockedUsers"),
           where("stylistId", "==", stylistId),
           where("clientId", "==", currentUser.uid)
         )
       );
-      setIsBlocked(!blockSnap.empty);
+      if (!blockSnap.empty) {
+        setIsBlocked(true);
+        setBlockedByMe(blockSnap.docs[0].data().blockedBy === "client");
+      }
     } catch (e) { console.error(e); }
   }
 
