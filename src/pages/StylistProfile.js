@@ -10,7 +10,7 @@ import { SkeletonList } from "../components/SkeletonLoader";
 import { notifyStylistNewFollower } from "../lib/notifications";
 
 // ── Lightbox carousel with touch swipe support ────────────────
-function LightboxCarousel({ images, index, onChange, onClose }) {
+function LightboxCarousel({ images, index, labels, onChange, onClose }) {
   const touchStartX = React.useRef(0);
 
   function handleTouchStart(e) {
@@ -40,8 +40,15 @@ function LightboxCarousel({ images, index, onChange, onClose }) {
 
       {/* Counter */}
       {images.length > 1 && (
-        <div style={{ position: "absolute", top: 20, left: "50%", transform: "translateX(-50%)", color: "rgba(255,255,255,0.75)", fontSize: 13, fontWeight: 500 }}>
-          {index + 1} / {images.length}
+        <div style={{ position: "absolute", top: 20, left: "50%", transform: "translateX(-50%)", textAlign: "center" }}>
+          <div style={{ color: "rgba(255,255,255,0.75)", fontSize: 13, fontWeight: 500 }}>
+            {index + 1} / {images.length}
+          </div>
+          {labels && labels[index] && (
+            <div style={{ color: "rgba(255,255,255,0.55)", fontSize: 11, marginTop: 2 }}>
+              {labels[index]}
+            </div>
+          )}
         </div>
       )}
 
@@ -392,20 +399,38 @@ export default function StylistProfile() {
               </div>
             ) : (
               <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }}>
-                {portfolio.map(item => {
-                  const images = (item.itemImages || []).filter(Boolean);
-                  return (
-                    <div key={item.id} style={{ background: "var(--bg-card)", borderRadius: "var(--radius)", overflow: "hidden", border: "0.5px solid var(--border)", cursor: "pointer" }}
-                      onClick={() => images.length > 0 && setLightbox({ images, index: 0 })}>
-                      <div style={{ display: "flex", gap: 3, padding: 6 }}>
-                        {images.slice(0, 3).map((img, i) => (
-                          <img key={i} src={img} alt="" style={{ flex: 1, height: 80, objectFit: "cover", borderRadius: 6 }} />
-                        ))}
+                {(() => {
+                  // Build one flat list of every image across all portfolio outfits,
+                  // so swiping in the lightbox can move between outfits, not just within one.
+                  const allImages = [];
+                  portfolio.forEach(item => {
+                    (item.itemImages || []).filter(Boolean).forEach(img => {
+                      allImages.push({ src: img, outfitName: item.outfitName });
+                    });
+                  });
+
+                  return portfolio.map(item => {
+                    const images = (item.itemImages || []).filter(Boolean);
+                    const globalStartIndex = allImages.findIndex(
+                      g => g.src === images[0] && g.outfitName === item.outfitName
+                    );
+                    return (
+                      <div key={item.id} style={{ background: "var(--bg-card)", borderRadius: "var(--radius)", overflow: "hidden", border: "0.5px solid var(--border)", cursor: "pointer" }}
+                        onClick={() => images.length > 0 && setLightbox({
+                          images: allImages.map(g => g.src),
+                          labels: allImages.map(g => g.outfitName),
+                          index: Math.max(globalStartIndex, 0),
+                        })}>
+                        <div style={{ display: "flex", gap: 3, padding: 6 }}>
+                          {images.slice(0, 3).map((img, i) => (
+                            <img key={i} src={img} alt="" style={{ flex: 1, height: 80, objectFit: "cover", borderRadius: 6 }} />
+                          ))}
+                        </div>
+                        <div style={{ padding: "4px 8px 8px", fontSize: 11, fontWeight: 500, color: "var(--text-primary)" }}>{item.outfitName}</div>
                       </div>
-                      <div style={{ padding: "4px 8px 8px", fontSize: 11, fontWeight: 500, color: "var(--text-primary)" }}>{item.outfitName}</div>
-                    </div>
-                  );
-                })}
+                    );
+                  });
+                })()}
               </div>
             )
           )}
@@ -428,6 +453,7 @@ export default function StylistProfile() {
         <LightboxCarousel
           images={lightbox.images}
           index={lightbox.index}
+          labels={lightbox.labels}
           onChange={i => setLightbox(prev => ({ ...prev, index: i }))}
           onClose={() => setLightbox(null)}
         />
