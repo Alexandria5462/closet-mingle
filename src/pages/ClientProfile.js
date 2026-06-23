@@ -6,6 +6,7 @@ import { useAuth } from "../lib/AuthContext";
 import TabBar from "../components/TabBar";
 import Toast from "../components/Toast";
 import { SkeletonList } from "../components/SkeletonLoader";
+import ReportUserModal from "../components/ReportUserModal";
 
 export default function ClientProfile() {
   const { clientId } = useParams();
@@ -22,6 +23,7 @@ export default function ClientProfile() {
   const [lightboxIndex, setLightboxIndex] = useState(null);
   const [isBlocked, setIsBlocked] = useState(false);
   const [blocking, setBlocking] = useState(false);
+  const [showReport, setShowReport] = useState(false);
   const [isMyClient, setIsMyClient] = useState(false);
   const [addingClient, setAddingClient] = useState(false);
   const [showReviewForm, setShowReviewForm] = useState(false);
@@ -154,6 +156,7 @@ export default function ClientProfile() {
             clientName: client?.name || "",
             stylistId: currentUser.uid,
             status: "active",
+            clientTier: client?.subscriptionTier || "free",
             startedAt: new Date().toISOString(),
             addedManually: true,
           });
@@ -292,6 +295,13 @@ export default function ClientProfile() {
                       style={{ padding: "6px 14px", fontSize: 12, fontFamily: "inherit", cursor: "pointer", borderRadius: 20, background: "transparent", border: `1px solid ${isBlocked ? "var(--success)" : "var(--danger)"}`, color: isBlocked ? "var(--success)" : "var(--danger)", fontWeight: 500 }}
                     >
                       {blocking ? "..." : isBlocked ? "Unblock" : "Block"}
+                    </button>
+                    <button
+                      onClick={() => setShowReport(true)}
+                      title="Report this client"
+                      style={{ padding: "6px 10px", fontSize: 12, fontFamily: "inherit", cursor: "pointer", borderRadius: 20, background: "transparent", border: "1px solid var(--border)", color: "var(--text-tertiary)", display: "flex", alignItems: "center" }}
+                    >
+                      <i className="ti ti-flag" style={{ fontSize: 14 }} aria-hidden="true"></i>
                     </button>
                   </div>
                 )}
@@ -520,6 +530,13 @@ export default function ClientProfile() {
 
       <TabBar active="clients" type="stylist" />
       {toast && <Toast message={toast} onDone={() => setToast("")} />}
+      {showReport && (
+        <ReportUserModal
+          reportedUserId={clientId}
+          reportedUserName={client?.name}
+          onClose={() => setShowReport(false)}
+        />
+      )}
     </>
   );
 }

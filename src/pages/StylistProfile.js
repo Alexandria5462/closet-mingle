@@ -8,6 +8,7 @@ import BookingModal from "../components/BookingModal";
 import TabBar from "../components/TabBar";
 import { SkeletonList } from "../components/SkeletonLoader";
 import { notifyStylistNewFollower } from "../lib/notifications";
+import ReportUserModal from "../components/ReportUserModal";
 
 // ── Lightbox carousel with touch swipe support ────────────────
 function LightboxCarousel({ images, index, labels, onChange, onClose }) {
@@ -107,6 +108,7 @@ export default function StylistProfile() {
   const [isFollowing, setIsFollowing] = useState(false);
   const [followDocId, setFollowDocId] = useState(null);
   const [followLoading, setFollowLoading] = useState(false);
+  const [showReport, setShowReport] = useState(false);
   const [showBooking, setShowBooking] = useState(false);
   const [lightbox, setLightbox] = useState(null); // { images: [], index: 0 }
 
@@ -338,6 +340,20 @@ export default function StylistProfile() {
             >
               {followLoading ? "..." : isFollowing ? "Following ✓" : "Follow"}
             </button>
+            {!isStylist && (
+              <button
+                onClick={() => setShowReport(true)}
+                title="Report this stylist"
+                style={{
+                  flexShrink: 0, width: 44, borderRadius: "var(--radius-sm)",
+                  border: "1.5px solid var(--border)", background: "var(--bg-card)",
+                  color: "var(--text-tertiary)", cursor: "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}
+              >
+                <i className="ti ti-flag" style={{ fontSize: 16 }} aria-hidden="true"></i>
+              </button>
+            )}
           </div>
 
           {/* Pre-launch note — remove once Stripe is activated */}
@@ -456,6 +472,14 @@ export default function StylistProfile() {
           labels={lightbox.labels}
           onChange={i => setLightbox(prev => ({ ...prev, index: i }))}
           onClose={() => setLightbox(null)}
+        />
+      )}
+
+      {showReport && (
+        <ReportUserModal
+          reportedUserId={stylistId}
+          reportedUserName={stylist?.name}
+          onClose={() => setShowReport(false)}
         />
       )}
     </>
