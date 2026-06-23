@@ -4,6 +4,7 @@ import { collection, query, where, getDocs, addDoc, doc, getDoc } from "firebase
 import { db } from "../lib/firebase";
 import { useAuth } from "../lib/AuthContext";
 import Toast from "../components/Toast";
+import { notifyClientNewMessage } from "../lib/notifications";
 
 /**
  * StylistOutfitBuilder
@@ -80,12 +81,21 @@ export default function StylistOutfitBuilder() {
           id: i.id,
           name: i.name,
           category: i.category,
-          imageUrl: i.imageUrl || null,
+          imageUrl: i.imageUrl || i.fallbackUrl || null,
+          fallbackUrl: i.fallbackUrl || i.imageUrl || null,
           color: i.attributes?.primaryColor || null,
         })),
         createdAt: new Date().toISOString(),
         read: false,
       });
+
+      // Notify client — outfit suggestions need a notification just like text messages
+      notifyClientNewMessage(
+        clientId,
+        currentUser.uid,
+        userProfile?.name || "Your stylist",
+        `Sent you an outfit suggestion (${selectedItems.length} items)`
+      ).catch(() => {});
 
       setToast("Outfit suggestion sent!");
       setTimeout(() => nav(`/stylist/chat/${clientId}`), 1200);

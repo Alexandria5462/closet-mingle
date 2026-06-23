@@ -349,6 +349,33 @@ export default function Chat() {
                 <div style={{ background: "var(--bg)", border: "0.5px solid var(--border)", borderRadius: 12, padding: "10px 14px", fontSize: 13, color: "var(--text-secondary)" }}>
                   {m.content}
                 </div>
+              ) : m.type === "outfit_suggestion" ? (
+                <div style={{ background: "var(--bg-card)", border: "0.5px solid var(--border)", borderRadius: 14, padding: 10, maxWidth: 260 }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: "var(--pink-dark)", marginBottom: 8, letterSpacing: 0.3 }}>Outfit Suggestion</div>
+                  <div style={{ display: "grid", gridTemplateColumns: (m.outfitItems?.length || 0) <= 2 ? "1fr 1fr" : "1fr 1fr 1fr", gap: 4, marginBottom: 6 }}>
+                    {(m.outfitItems || []).map((item, i) => (
+                      (item.imageUrl || item.fallbackUrl)
+                        ? <img
+                            key={i}
+                            src={item.imageUrl || item.fallbackUrl}
+                            alt={item.name}
+                            onError={e => { if (item.fallbackUrl && e.target.src !== item.fallbackUrl) e.target.src = item.fallbackUrl; }}
+                            style={{ width: "100%", aspectRatio: "1", objectFit: "cover", borderRadius: 8 }}
+                          />
+                        : <div key={i} style={{ width: "100%", aspectRatio: "1", background: "var(--avatar-bg)", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <i className="ti ti-hanger" style={{ color: "var(--text-tertiary)", fontSize: 18 }} aria-hidden="true"></i>
+                          </div>
+                    ))}
+                  </div>
+                  {(m.outfitItems || []).length > 0 && (
+                    <div style={{ fontSize: 10, color: "var(--text-tertiary)", lineHeight: 1.5 }}>
+                      {m.outfitItems.map(i => i.name).join(" · ")}
+                    </div>
+                  )}
+                  {m.note && (
+                    <div style={{ fontSize: 11, color: "var(--text-secondary)", marginTop: 6, paddingTop: 6, borderTop: "0.5px solid var(--border)" }}>{m.note}</div>
+                  )}
+                </div>
               ) : (
                 <div className={`msg-bubble${m.senderId === currentUser?.uid ? " msg-me" : " msg-them"}`}>
                   {m.content}

@@ -432,8 +432,14 @@ export default function StylistChat() {
                   <div style={{ fontSize: 11, fontWeight: 600, color: "var(--pink-dark)", marginBottom: 8, letterSpacing: 0.3 }}>Outfit Suggestion</div>
                   <div style={{ display: "grid", gridTemplateColumns: (m.outfitItems?.length || 0) <= 2 ? "1fr 1fr" : "1fr 1fr 1fr", gap: 4, marginBottom: 6 }}>
                     {(m.outfitItems || []).map((item, i) => (
-                      item.imageUrl
-                        ? <img key={i} src={item.imageUrl} alt={item.name} style={{ width: "100%", aspectRatio: "1", objectFit: "cover", borderRadius: 8 }} />
+                      (item.imageUrl || item.fallbackUrl)
+                        ? <img
+                            key={i}
+                            src={item.imageUrl || item.fallbackUrl}
+                            alt={item.name}
+                            onError={e => { if (item.fallbackUrl && e.target.src !== item.fallbackUrl) e.target.src = item.fallbackUrl; }}
+                            style={{ width: "100%", aspectRatio: "1", objectFit: "cover", borderRadius: 8 }}
+                          />
                         : <div key={i} style={{ width: "100%", aspectRatio: "1", background: "var(--avatar-bg)", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>
                             <i className="ti ti-hanger" style={{ color: "var(--text-tertiary)", fontSize: 18 }} aria-hidden="true"></i>
                           </div>
