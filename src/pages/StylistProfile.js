@@ -112,6 +112,7 @@ export default function StylistProfile() {
   const [showBooking, setShowBooking] = useState(false);
   const [lightbox, setLightbox] = useState(null); // { images: [], index: 0 }
   const [isBlockedByMe, setIsBlockedByMe] = useState(false);
+  const [blockedByStylist, setBlockedByStylist] = useState(false);
   const [blockDocId, setBlockDocId] = useState(null);
   const [blockLoading, setBlockLoading] = useState(false);
 
@@ -141,8 +142,11 @@ export default function StylistProfile() {
               setIsBlockedByMe(true);
               setBlockDocId(blockDoc.id);
             } else {
-              // The stylist blocked this client — redirect away entirely, profile hidden
-              nav("/find-stylist", { replace: true });
+              // The stylist blocked this client — show a clear "unavailable" screen here,
+              // never a silent redirect. The client got here from an active conversation,
+              // so bouncing to an unrelated browse page reads as a broken link, not a block.
+              setBlockedByStylist(true);
+              setLoading(false);
               return;
             }
           }
@@ -244,6 +248,32 @@ export default function StylistProfile() {
         </div>
         <div className="screen"><div className="body"><SkeletonList count={3} /></div></div>
         <TabBar active={isStylist ? "clients" : "stylists"} type={isStylist ? "stylist" : "client"} />
+      </>
+    );
+  }
+
+  // Stylist blocked this client — show a clear, honest screen here.
+  // Never silently redirect: the client likely arrived from an active
+  // conversation, so bouncing to an unrelated page would look broken.
+  if (blockedByStylist) {
+    return (
+      <>
+        <div className="header">
+          <button onClick={() => nav(-1)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-secondary)" }}>
+            <i className="ti ti-arrow-left" style={{ fontSize: 20 }} aria-hidden="true"></i>
+          </button>
+          <div style={{ fontSize: 16, fontWeight: 600 }}>Unavailable</div>
+        </div>
+        <div className="screen">
+          <div style={{ textAlign: "center", padding: "60px 24px" }}>
+            <i className="ti ti-user-off" style={{ fontSize: 48, color: "var(--text-tertiary)", display: "block", marginBottom: 16 }} aria-hidden="true"></i>
+            <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>This stylist is unavailable</div>
+            <div style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.6, maxWidth: 280, margin: "0 auto" }}>
+              You no longer have access to this stylist's profile or messages.
+            </div>
+          </div>
+        </div>
+        <TabBar active="stylists" type="client" />
       </>
     );
   }
