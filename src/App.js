@@ -35,6 +35,7 @@ import Following from "./pages/Following";
 import ClientMessages from "./pages/ClientMessages";
 import Notifications from "./pages/Notifications";
 import BlockedUsers from "./pages/BlockedUsers";
+import BlockedStylists from "./pages/BlockedStylists";
 import StylistChat from "./pages/StylistChat";
 import StylistMessages from "./pages/StylistMessages";
 import StylistAnalytics from "./pages/StylistAnalytics";
@@ -102,6 +103,7 @@ function AppRoutes() {
       <Route path="/my-messages" element={<PrivateRoute><ClientMessages /></PrivateRoute>} />
       <Route path="/notifications" element={<PrivateRoute><Notifications /></PrivateRoute>} />
       <Route path="/blocked-users" element={<PrivateRoute accountType="stylist"><BlockedUsers /></PrivateRoute>} />
+      <Route path="/blocked-stylists" element={<PrivateRoute accountType="client"><BlockedStylists /></PrivateRoute>} />
 
       {/* Stylist */}
       <Route path="/stylist" element={<PrivateRoute accountType="stylist"><StylistHome /></PrivateRoute>} />

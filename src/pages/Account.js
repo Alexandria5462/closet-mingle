@@ -903,6 +903,14 @@ export default function Account() {
                   </div>
                 </div>
               )}
+              {!isStylist && (
+                <div className="card" style={{ cursor: "pointer", marginBottom: 10 }} onClick={() => nav("/blocked-stylists")}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <div style={{ fontSize: 14, fontWeight: 500 }}>Blocked Stylists</div>
+                    <i className="ti ti-shield-off" style={{ color: "var(--text-tertiary)" }} aria-hidden="true"></i>
+                  </div>
+                </div>
+              )}
               {/* Dark mode */}
               <div style={{ marginBottom: 10 }}>
                 <DarkModeToggle />
