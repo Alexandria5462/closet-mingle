@@ -70,7 +70,9 @@ export default function StylistOutfitBuilder() {
       );
       const items = closetSnap.docs
         .map(d => ({ id: d.id, ...d.data() }))
-        .filter(item => item.privacy !== "private");
+        // Respect the client's privacy setting — field is `isPrivate` (boolean),
+        // consistent with ClosetPrivacy, StylistChat, and ClientProfile.
+        .filter(item => !item.isPrivate);
 
       setCloset(items);
 
