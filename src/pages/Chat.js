@@ -72,10 +72,11 @@ export default function Chat() {
     loadSessionStatus();
 
     // ── Real-time messages listener ───────────────────────
-    // Use only where clause — no orderBy to avoid needing a composite index
-    // Sort client-side instead
+    // Must filter on participants (not just conversationId) so the Firestore
+    // security rule can prove the read is permitted. Sort client-side.
     const q = query(
       collection(db, "messages"),
+      where("participants", "array-contains", currentUser.uid),
       where("conversationId", "==", conversationId)
     );
     const unsub = onSnapshot(q, async (snap) => {
@@ -229,6 +230,7 @@ export default function Chat() {
           notifyStylistNewMessage(stylistId, userProfile?.name || "A client", msgContent);
           const existingMsgs = await getDocs(
             query(collection(db, "messages"),
+              where("participants", "array-contains", currentUser.uid),
               where("conversationId", "==", conversationId),
               where("senderId", "==", currentUser.uid)
             )

@@ -61,6 +61,7 @@ export default function StylistChat() {
     try {
       const unreadSnap = await getDocs(
         query(collection(db, "messages"),
+          where("participants", "array-contains", currentUser.uid),
           where("conversationId", "==", conversationId),
           where("read", "==", false)
         )
@@ -120,6 +121,7 @@ export default function StylistChat() {
     markAllRead();
     const q = query(
       collection(db, "messages"),
+      where("participants", "array-contains", currentUser.uid),
       where("conversationId", "==", conversationId)
     );
     const unsub = onSnapshot(q, (snap) => {
