@@ -27,6 +27,7 @@ export default function StylistClients() {
   const [blockedIds, setBlockedIds] = useState(new Set());
   const [blockingId, setBlockingId] = useState(null);
   const [toast, setToast] = useState("");
+  const [backfilling, setBackfilling] = useState(false);
 
   useEffect(() => {
     if (!currentUser?.uid) return;
@@ -69,20 +70,89 @@ export default function StylistClients() {
   async function loadBlocked() {
     try {
       const snap = await getDocs(query(collection(db, "blockedUsers"), where("stylistId", "==", currentUser.uid)));
-      setBlockedIds(new Set(snap.docs.map(d => d.data().clientId)));
+      // Only blocks this stylist placed themselves drive the Block/Unblock UI here.
+      // A client-initiated block is tracked separately and isn't this stylist's to manage.
+      const ownBlocks = snap.docs.filter(d => d.data().blockedBy === "stylist");
+      setBlockedIds(new Set(ownBlocks.map(d => d.data().clientId)));
     } catch(e) {}
+  }
+
+  // One-time scan — finds everyone who ever messaged this stylist
+  // and creates a chatSession for them if one doesn't exist yet
+  async function backfillOldClients() {
+    setBackfilling(true);
+    try {
+      // Get all messages that include this stylist's UID in the conversationId
+      const msgSnap = await getDocs(collection(db, "messages"));
+      const foundClientIds = new Set();
+      msgSnap.docs.forEach(d => {
+        const data = d.data();
+        const convId = data.conversationId || "";
+        if (!convId.includes(currentUser.uid)) return;
+        const parts = convId.split("_");
+        const clientId = parts.find(id => id !== currentUser.uid);
+        if (clientId) foundClientIds.add(clientId);
+      });
+
+      // For each found client, create a chatSession if one doesn't exist
+      let added = 0;
+      for (const clientId of foundClientIds) {
+        try {
+          const existing = await getDocs(
+            query(collection(db, "chatSessions"),
+              where("stylistId", "==", currentUser.uid),
+              where("clientId", "==", clientId)
+            )
+          );
+          if (existing.empty) {
+            const conversationId = [clientId, currentUser.uid].sort().join("_");
+            await addDoc(collection(db, "chatSessions"), {
+              conversationId,
+              clientId,
+              stylistId: currentUser.uid,
+              status: "active",
+              startedAt: new Date().toISOString(),
+              backfilled: true,
+            });
+            added++;
+          }
+        } catch(e) {}
+      }
+      setToast(added > 0 ? `Found ${added} past client${added !== 1 ? "s" : ""}` : "No new clients found");
+    } catch(e) {
+      setToast("Scan failed — check Firestore rules allow message reads");
+    }
+    setBackfilling(false);
   }
 
   async function toggleBlock(clientId, clientName) {
     setBlockingId(clientId);
     try {
       if (blockedIds.has(clientId)) {
-        const snap = await getDocs(query(collection(db, "blockedUsers"), where("stylistId", "==", currentUser.uid), where("clientId", "==", clientId)));
-        for (const d of snap.docs) await deleteDoc(doc(db, "blockedUsers", d.id));
+        // Only delete blocks this stylist actually placed themselves —
+        // a client-initiated block is not this stylist's to remove.
+        const snap = await getDocs(query(
+          collection(db, "blockedUsers"),
+          where("stylistId", "==", currentUser.uid),
+          where("clientId", "==", clientId)
+        ));
+        const ownBlocks = snap.docs.filter(d => d.data().blockedBy === "stylist");
+        if (ownBlocks.length === 0) {
+          setToast("This client blocked you — you can't unblock them.");
+          setBlockingId(null);
+          return;
+        }
+        for (const d of ownBlocks) await deleteDoc(doc(db, "blockedUsers", d.id));
         setBlockedIds(prev => { const n = new Set(prev); n.delete(clientId); return n; });
         setToast(`${clientName} unblocked`);
       } else {
-        await addDoc(collection(db, "blockedUsers"), { stylistId: currentUser.uid, clientId, clientName, createdAt: new Date().toISOString() });
+        await addDoc(collection(db, "blockedUsers"), {
+          stylistId: currentUser.uid,
+          clientId,
+          clientName,
+          blockedBy: "stylist",
+          createdAt: new Date().toISOString(),
+        });
         setBlockedIds(prev => new Set([...prev, clientId]));
         setToast(`${clientName} blocked`);
       }
@@ -111,6 +181,20 @@ export default function StylistClients() {
         <div style={{ position: "relative", marginBottom: 10 }}>
           <i className="ti ti-search" style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--text-tertiary)", fontSize: 16 }} aria-hidden="true"></i>
           <input className="input-field" placeholder="Search clients..." value={search} onChange={e => setSearch(e.target.value)} style={{ paddingLeft: 36, marginBottom: 0 }} />
+        </div>
+
+        {/* One-time backfill banner — import clients from before this update */}
+        <div style={{ background: "var(--bg-card)", border: "0.5px solid var(--border)", borderRadius: "var(--radius)", padding: "10px 14px", marginBottom: 14, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+          <div style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.4 }}>
+            Had clients before this update? Tap to import them.
+          </div>
+          <button
+            onClick={backfillOldClients}
+            disabled={backfilling}
+            style={{ padding: "6px 14px", fontSize: 12, fontFamily: "inherit", cursor: "pointer", borderRadius: 20, background: "var(--pink)", border: "none", color: "white", fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0 }}
+          >
+            {backfilling ? "Scanning..." : "Scan for past clients"}
+          </button>
         </div>
         <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
           {["all","active","past"].map(f => (

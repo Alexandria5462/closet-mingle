@@ -23,7 +23,10 @@ export default function BlockedUsers() {
       const snap = await getDocs(
         query(collection(db, "blockedUsers"), where("stylistId", "==", currentUser.uid))
       );
-      const items = await Promise.all(snap.docs.map(async d => {
+      // This page manages blocks the stylist placed themselves —
+      // a client-initiated block belongs to the client, never shown or editable here.
+      const ownBlocks = snap.docs.filter(d => d.data().blockedBy === "stylist");
+      const items = await Promise.all(ownBlocks.map(async d => {
         const data = d.data();
         let user = null;
         try {

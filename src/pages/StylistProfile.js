@@ -113,6 +113,7 @@ export default function StylistProfile() {
   const [lightbox, setLightbox] = useState(null); // { images: [], index: 0 }
   const [isBlockedByMe, setIsBlockedByMe] = useState(false);
   const [blockedByStylist, setBlockedByStylist] = useState(false);
+  const [isSuspendedProfile, setIsSuspendedProfile] = useState(false);
   const [blockDocId, setBlockDocId] = useState(null);
   const [blockLoading, setBlockLoading] = useState(false);
 
@@ -131,6 +132,15 @@ export default function StylistProfile() {
     try {
       const snap = await getDoc(doc(db, "users", stylistId));
       if (snap.exists()) setStylist(snap.data());
+
+      // Suspended accounts (3+ pending reports) are unreachable while under review,
+      // even via a direct link from an old conversation or bookmark.
+      if (snap.exists() && snap.data().accountSuspended && !isStylist) {
+        setIsSuspendedProfile(true);
+        setLoading(false);
+        return;
+      }
+
       if (currentUser?.uid && !isStylist) {
         try {
           const blockSnap = await getDocs(query(collection(db, "blockedUsers"), where("stylistId", "==", stylistId), where("clientId", "==", currentUser.uid)));
@@ -248,6 +258,31 @@ export default function StylistProfile() {
         </div>
         <div className="screen"><div className="body"><SkeletonList count={3} /></div></div>
         <TabBar active={isStylist ? "clients" : "stylists"} type={isStylist ? "stylist" : "client"} />
+      </>
+    );
+  }
+
+  // Suspended stylist — profile fully unreachable while under review,
+  // regardless of how the client got the link (search is already hidden separately).
+  if (isSuspendedProfile) {
+    return (
+      <>
+        <div className="header">
+          <button onClick={() => nav(-1)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-secondary)" }}>
+            <i className="ti ti-arrow-left" style={{ fontSize: 20 }} aria-hidden="true"></i>
+          </button>
+          <div style={{ fontSize: 16, fontWeight: 600 }}>Unavailable</div>
+        </div>
+        <div className="screen">
+          <div style={{ textAlign: "center", padding: "60px 24px" }}>
+            <i className="ti ti-user-off" style={{ fontSize: 48, color: "var(--text-tertiary)", display: "block", marginBottom: 16 }} aria-hidden="true"></i>
+            <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8 }}>This profile is temporarily unavailable</div>
+            <div style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.6, maxWidth: 280, margin: "0 auto" }}>
+              This stylist's profile is not accessible right now.
+            </div>
+          </div>
+        </div>
+        <TabBar active="stylists" type="client" />
       </>
     );
   }

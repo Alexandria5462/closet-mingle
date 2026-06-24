@@ -83,7 +83,8 @@ export default function FindStylist() {
         return { ...s, quizAnswers: sQuizAnswers, rating: liveRating, reviewCount: liveReviewCount };
       }));
 
-      let filteredData = withData;
+      // Suspended accounts (3+ pending reports) never appear in search while under review
+      let filteredData = withData.filter(s => !s.accountSuspended);
       if (userProfile?.uid) {
         try {
           // Hide stylists in either direction: stylist blocked this client, OR this client blocked the stylist
@@ -93,7 +94,7 @@ export default function FindStylist() {
           ]);
           const hiddenStylistIds = new Set(blockedByStylistSnap.docs.map(d => d.data().stylistId));
           blockedByMeSnap.docs.forEach(d => hiddenStylistIds.add(d.data().stylistId));
-          filteredData = withData.filter(s => !hiddenStylistIds.has(s.id));
+          filteredData = filteredData.filter(s => !hiddenStylistIds.has(s.id));
         } catch(e) {}
       }
       const specs = ["All", ...new Set(filteredData.map(s => s.specialty).filter(Boolean))];

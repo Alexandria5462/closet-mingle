@@ -50,6 +50,7 @@ export default function Chat() {
   const [showReviewPrompt, setShowReviewPrompt] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
   const [blockedByMe, setBlockedByMe] = useState(false);
+  const [suspendedStylist, setSuspendedStylist] = useState(false);
   const bottomRef = useRef(null);
 
   const isFreeClient = userProfile?.accountType === "client" &&
@@ -109,6 +110,15 @@ export default function Chat() {
     try {
       const s = await getDoc(doc(db, "users", stylistId));
       if (s.exists()) setStylist(s.data());
+
+      // A suspended stylist account locks messaging the same way a block does —
+      // reuses the existing isBlocked guard in sendMessage rather than a second path.
+      if (s.exists() && s.data().accountSuspended) {
+        setIsBlocked(true);
+        setSuspendedStylist(true);
+        return;
+      }
+
       // Check if either party has blocked the other — messaging is off either way
       const blockSnap = await getDocs(
         query(collection(db, "blockedUsers"),
@@ -260,11 +270,14 @@ export default function Chat() {
     <>
       {videoRoomUrl && <VideoCall roomUrl={videoRoomUrl} onEnd={() => setVideoRoomUrl(null)} />}
 
-      {/* Blocked banner — shown when stylist has blocked this client */}
+      {/* Blocked or suspended banner */}
       {isBlocked && (
-        <div style={{ background: "#fee2e2", borderBottom: "0.5px solid #fca5a5", padding: "12px 16px", textAlign: "center" }}>
-          <div style={{ fontSize: 13, color: "#991b1b", fontWeight: 500 }}>
-            You are unable to message this stylist.
+        <div style={{ background: suspendedStylist ? "var(--bg-card)" : "#fee2e2", borderBottom: `0.5px solid ${suspendedStylist ? "var(--border)" : "#fca5a5"}`, padding: "12px 16px", textAlign: "center" }}>
+          <div style={{ fontSize: 13, color: suspendedStylist ? "var(--text-secondary)" : "#991b1b", fontWeight: 500 }}>
+            {suspendedStylist
+              ? "This stylist is temporarily unavailable."
+              : "You are unable to message this stylist."
+            }
           </div>
         </div>
       )}
