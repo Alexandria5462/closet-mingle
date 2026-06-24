@@ -142,22 +142,16 @@ export default function StylistChat() {
     if (!clientId || isBlocked) return;
     setClosetLoading(true);
     try {
+      // Query all the client's items, then filter privacy client-side.
+      // A Firestore "!=" query silently excludes items missing the field,
+      // which would wrongly hide older public items — so we filter in code instead,
+      // matching how every other closet consumer in the app works.
       const snap = await getDocs(
-        query(
-          collection(db, "closetItems"),
-          where("userId", "==", clientId),
-          where("isPrivate", "!=", true)
-        )
+        query(collection(db, "closetItems"), where("userId", "==", clientId))
       );
-      setClientCloset(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      setClientCloset(snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(i => !i.isPrivate));
     } catch (e) {
-      // Fallback without privacy filter if index not set
-      try {
-        const snap = await getDocs(
-          query(collection(db, "closetItems"), where("userId", "==", clientId))
-        );
-        setClientCloset(snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(i => !i.isPrivate));
-      } catch (e2) { console.error(e2); }
+      console.error(e);
     }
     setClosetLoading(false);
   }
@@ -213,16 +207,24 @@ export default function StylistChat() {
     }
   }
 
+  const MESSAGE_MAX_LENGTH = 2000;
+  const [lengthWarning, setLengthWarning] = useState(false);
+
   async function sendMessage(content, type = "text") {
     if (!content?.trim() && type === "text") return;
     if (isBlocked) return; // hard guard — never write a message in a blocked relationship
+    if (type === "text" && content.length > MESSAGE_MAX_LENGTH) {
+      setLengthWarning(true);
+      return;
+    }
+    setLengthWarning(false);
     setSending(true);
     try {
       await addDoc(collection(db, "messages"), {
         conversationId,
         senderId: currentUser.uid,
         senderName: userProfile?.name || "",
-        content,
+        content: type === "text" ? content.trim().slice(0, MESSAGE_MAX_LENGTH) : content,
         type,
         createdAt: new Date().toISOString(),
         read: false,
@@ -588,6 +590,13 @@ export default function StylistChat() {
             </div>
           )}
 
+          {/* Length warning — shown only when a message exceeds the cap */}
+          {lengthWarning && (
+            <div style={{ padding: "0 14px 6px", fontSize: 11, color: "var(--danger)" }}>
+              Messages are limited to {MESSAGE_MAX_LENGTH} characters.
+            </div>
+          )}
+
           {/* Input bar — always at the very bottom */}
           <div style={{ display: "flex", gap: 8, alignItems: "center", padding: "10px 14px", paddingBottom: "max(10px, env(safe-area-inset-bottom))" }}>
             <button onClick={() => setShowCamera(true)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-secondary)" }}>
@@ -598,7 +607,7 @@ export default function StylistChat() {
               style={{ flex: 1, margin: 0, padding: "10px 14px" }}
               placeholder="Send a message..."
               value={text}
-              onChange={e => setText(e.target.value)}
+              onChange={e => { setText(e.target.value); if (lengthWarning) setLengthWarning(false); }}
               onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendMessage(text)}
             />
             <button

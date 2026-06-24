@@ -172,17 +172,23 @@ export default function Chat() {
     } catch (e) { console.error("Session load error:", e); }
   }
 
+  const MESSAGE_MAX_LENGTH = 2000;
+
   async function sendMessage(msgContent, type = "text") {
     if (!msgContent?.trim() && type === "text") return;
     if (sessionStatus === "ended") return;
     if (isBlocked) { setToast("You cannot message this stylist."); return; }
+    if (type === "text" && msgContent.length > MESSAGE_MAX_LENGTH) {
+      setToast(`Messages are limited to ${MESSAGE_MAX_LENGTH} characters.`);
+      return;
+    }
     setSending(true);
     try {
       await addDoc(collection(db, "messages"), {
         conversationId,
         senderId: currentUser.uid,
         senderName: userProfile?.name || "",
-        content: msgContent,
+        content: type === "text" ? msgContent.trim().slice(0, MESSAGE_MAX_LENGTH) : msgContent,
         type,
         createdAt: new Date().toISOString(),
         read: false,
