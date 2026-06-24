@@ -8,7 +8,7 @@ import Toast from "../components/Toast";
 
 export default function ClosetPrivacy() {
   const nav = useNavigate();
-  const { userProfile } = useAuth();
+  const { userProfile, currentUser } = useAuth();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -18,14 +18,14 @@ export default function ClosetPrivacy() {
   const CATEGORIES = ["All","Tops","Bottoms","Dresses","Shoes","Accessories","Outerwear"];
 
   useEffect(() => {
-    if (userProfile?.uid) loadItems();
-  }, [userProfile]);
+    if (currentUser?.uid) loadItems();
+  }, [currentUser]);
 
   async function loadItems() {
     setLoading(true);
     try {
       const snap = await getDocs(
-        query(collection(db, "closetItems"), where("userId", "==", userProfile.uid))
+        query(collection(db, "closetItems"), where("userId", "==", currentUser.uid))
       );
       setItems(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     } catch (e) { console.error(e); }
