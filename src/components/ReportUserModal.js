@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { addDoc, collection, query, where, getDocs, doc, updateDoc } from "firebase/firestore";
+import { addDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { useAuth } from "../lib/AuthContext";
 
@@ -69,26 +69,11 @@ export default function ReportUserModal({ reportedUserId, reportedUserName, conv
         createdAt: new Date().toISOString(),
       });
 
-      // Auto-suspend pending review once 3+ pending reports exist against this user.
-      // This does NOT permanently ban anyone — it pauses access while a human reviews.
-      try {
-        const pendingSnap = await getDocs(
-          query(collection(db, "reports"),
-            where("reportedUserId", "==", reportedUserId),
-            where("status", "==", "pending")
-          )
-        );
-        if (pendingSnap.size >= 3) {
-          await updateDoc(doc(db, "users", reportedUserId), {
-            accountSuspended: true,
-            suspendedAt: new Date().toISOString(),
-            suspendedReason: "Multiple user reports pending review",
-          });
-        }
-      } catch(e) {
-        console.error("Auto-suspend check failed:", e);
-        // Report itself still succeeded even if suspend check fails — don't block the user on this
-      }
+      // NOTE: Auto-suspension is handled server-side by the `autoSuspendOnReports`
+      // Cloud Function (functions/index.js), which runs with admin privileges and
+      // suspends an account once it has 3+ pending reports. The client intentionally
+      // does NOT write suspension fields here — doing so would require giving every
+      // user write access to other users' documents, which is a security hole.
 
       setSubmitted(true);
     } catch(e) {
