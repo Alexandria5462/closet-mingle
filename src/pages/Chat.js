@@ -186,6 +186,7 @@ export default function Chat() {
     try {
       await addDoc(collection(db, "messages"), {
         conversationId,
+        participants: conversationId.split("_"), // [uidA, uidB] — used by security rules + list queries
         senderId: currentUser.uid,
         senderName: userProfile?.name || "",
         content: type === "text" ? msgContent.trim().slice(0, MESSAGE_MAX_LENGTH) : msgContent,

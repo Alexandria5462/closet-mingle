@@ -169,6 +169,7 @@ export default function StylistChat() {
       // Send system message
       await addDoc(collection(db, "messages"), {
         conversationId,
+        participants: conversationId.split("_"),
         senderId: currentUser.uid,
         senderName: userProfile?.name || "",
         content: "This styling relationship has been closed by the stylist. You can still view your message history.",
@@ -222,6 +223,7 @@ export default function StylistChat() {
     try {
       await addDoc(collection(db, "messages"), {
         conversationId,
+        participants: conversationId.split("_"),
         senderId: currentUser.uid,
         senderName: userProfile?.name || "",
         content: type === "text" ? content.trim().slice(0, MESSAGE_MAX_LENGTH) : content,
@@ -290,11 +292,13 @@ export default function StylistChat() {
       // Send system message to client
       await addDoc(collection(db, "messages"), {
         conversationId,
+        participants: conversationId.split("_"),
         senderId: currentUser.uid,
         senderName: userProfile.name,
         content: "Your stylist has completed your session. Thank you for using ClosetMingle! 💗",
         type: "session_ended",
         createdAt: new Date().toISOString(),
+        read: false,
       });
 
       // Notify client

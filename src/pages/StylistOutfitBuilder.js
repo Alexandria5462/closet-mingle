@@ -100,6 +100,7 @@ export default function StylistOutfitBuilder() {
 
       await addDoc(collection(db, "messages"), {
         conversationId,
+        participants: conversationId.split("_"),
         senderId: currentUser.uid,
         senderName: userProfile?.name || "Stylist",
         content: "Outfit suggestion",

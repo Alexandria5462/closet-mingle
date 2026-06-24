@@ -51,10 +51,11 @@ export default function StylistMessages() {
   }, [currentUser]);
 
   function subscribeToConversations() {
-    // Use onSnapshot so the list stays live
-    // When StylistChat marks messages read: true, this updates automatically
+    // Use onSnapshot so the list stays live.
+    // Query only conversations this stylist participates in — required so the
+    // Firestore security rules permit the read.
     const unsub = onSnapshot(
-      collection(db, "messages"),
+      query(collection(db, "messages"), where("participants", "array-contains", currentUser.uid)),
       async (snap) => {
         try {
           // Group by conversationId
@@ -62,7 +63,7 @@ export default function StylistMessages() {
           snap.docs.forEach(d => {
             const data = d.data();
             const convId = data.conversationId || "";
-            if (!convId.includes(currentUser.uid)) return;
+            if (!convId) return;
             if (!convMap[convId]) {
               convMap[convId] = {
                 id: convId,

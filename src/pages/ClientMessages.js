@@ -19,15 +19,17 @@ export default function ClientMessages() {
     if (!currentUser?.uid) return;
     setLoading(true);
 
-    // Live listener — updates instantly when messages arrive or are read
+    // Live listener — only conversations this user is a participant in.
+    // Querying by `participants` (not the whole collection) is what lets the
+    // Firestore security rules allow the read.
     const unsub = onSnapshot(
-      collection(db, "messages"),
+      query(collection(db, "messages"), where("participants", "array-contains", currentUser.uid)),
       async (snap) => {
         const convMap = {};
         snap.docs.forEach(d => {
           const data = d.data();
           const convId = data.conversationId || "";
-          if (!convId.includes(currentUser.uid)) return;
+          if (!convId) return;
           if (!convMap[convId]) convMap[convId] = { id: convId, messages: [], unread: 0 };
           convMap[convId].messages.push(data);
           if (!data.read && data.senderId !== currentUser.uid) convMap[convId].unread++;
