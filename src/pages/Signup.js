@@ -156,7 +156,19 @@ export default function Signup() {
         nav("/onboarding", { replace: true });
       }
     } catch (e) {
-      setError(e.message.includes("email-already-in-use") ? "Email already in use." : "Sign up failed. Try again.");
+      const code = e.code || "";
+      const msg = e.message || "";
+      if (code === "auth/email-already-in-use" || msg.includes("email-already-in-use")) {
+        setError("That email is already registered. Try logging in instead.");
+      } else if (code === "auth/invalid-email" || msg.includes("invalid-email")) {
+        setError("That email address doesn't look valid. Please check it.");
+      } else if (code === "auth/weak-password" || msg.includes("weak-password")) {
+        setError("Password is too weak — please use at least 6 characters.");
+      } else if (code === "auth/network-request-failed" || msg.includes("network")) {
+        setError("Network error. Please check your connection and try again.");
+      } else {
+        setError("Sign up failed. Please try again.");
+      }
     }
     setLoading(false);
   }
