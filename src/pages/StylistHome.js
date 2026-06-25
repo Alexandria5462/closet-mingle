@@ -29,46 +29,47 @@ export default function StylistHome() {
     if (!currentUser?.uid) return;
 
     // ── Live unread messages ───────────────────────────────────
-    const unsubMsgs = onSnapshot(collection(db, "messages"), (snap) => {
-      const unread = snap.docs.filter(d => {
-        const data = d.data();
-        return (data.conversationId || "").includes(currentUser.uid) &&
-               data.senderId !== currentUser.uid && !data.read;
-      }).length;
-      setTodayStats(prev => ({ ...prev, unread }));
+    const unsubMsgs = onSnapshot(
+      query(collection(db, "messages"), where("participants", "array-contains", currentUser.uid)),
+      (snap) => {
+        const unread = snap.docs.filter(d => {
+          const data = d.data();
+          return data.senderId !== currentUser.uid && !data.read;
+        }).length;
+        setTodayStats(prev => ({ ...prev, unread }));
 
-      // Also update recent conversations
-      const convMap = {};
-      snap.docs.forEach(d => {
-        const data = d.data();
-        if (!(data.conversationId || "").includes(currentUser.uid)) return;
-        if (!convMap[data.conversationId] || new Date(data.createdAt) > new Date(convMap[data.conversationId].createdAt)) {
-          convMap[data.conversationId] = data;
-        }
-      });
-      const sorted = Object.values(convMap).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 3);
-      // Load client profiles async without blocking
-      Promise.all(sorted.map(async msg => {
-        const parts = (msg.conversationId || "").split("_");
-        const clientId = parts.find(id => id !== currentUser.uid) || "";
-        try {
-          const s = await getDocs(query(collection(db, "users"), where("__name__", "==", clientId)));
-          return { msg, client: !s.empty ? s.docs[0].data() : null, clientId };
-        } catch(e) { return { msg, client: null, clientId }; }
-      })).then(setRecentConvs);
-    });
+        // Also update recent conversations
+        const convMap = {};
+        snap.docs.forEach(d => {
+          const data = d.data();
+          if (!convMap[data.conversationId] || new Date(data.createdAt) > new Date(convMap[data.conversationId].createdAt)) {
+            convMap[data.conversationId] = data;
+          }
+        });
+        const sorted = Object.values(convMap).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 3);
+        // Load client profiles async without blocking
+        Promise.all(sorted.map(async msg => {
+          const parts = (msg.conversationId || "").split("_");
+          const clientId = parts.find(id => id !== currentUser.uid) || "";
+          try {
+            const s = await getDocs(query(collection(db, "users"), where("__name__", "==", clientId)));
+            return { msg, client: !s.empty ? s.docs[0].data() : null, clientId };
+          } catch(e) { return { msg, client: null, clientId }; }
+        })).then(setRecentConvs);
+      },
+      (err) => { console.error("Unread listener error:", err); }
+    );
 
     // ── Live today's active conversations ────────────────────
     // A "session" = unique client the stylist sent at least one message to today
     const todayStart = new Date(new Date().setHours(0, 0, 0, 0)).toISOString();
     const unsubSessions = onSnapshot(
-      collection(db, "messages"),
+      query(collection(db, "messages"), where("participants", "array-contains", currentUser.uid)),
       (snap) => {
         const clientsToday = new Set();
         snap.docs.forEach(d => {
           const data = d.data();
           const convId = data.conversationId || "";
-          if (!convId.includes(currentUser.uid)) return;
           if (data.senderId !== currentUser.uid) return; // only messages stylist sent
           if ((data.createdAt || "") < todayStart) return; // only today
           const parts = convId.split("_");
@@ -76,7 +77,8 @@ export default function StylistHome() {
           if (clientId) clientsToday.add(clientId);
         });
         setTodayStats(prev => ({ ...prev, sessions: clientsToday.size }));
-      }
+      },
+      (err) => { console.error("Sessions listener error:", err); }
     );
 
     // ── Live today's tips (100% goes to stylist) ──────────────

@@ -31,18 +31,14 @@ export default function TabBar({ active, type = "client" }) {
   useEffect(() => {
     if (!currentUser?.uid) return;
 
-    // Live unread messages badge
+    // Live unread messages badge — filter by participants so the rule permits the read
     const unsubMsgs = onSnapshot(
-      collection(db, "messages"),
+      query(collection(db, "messages"), where("participants", "array-contains", currentUser.uid)),
       (snap) => {
         let unread = 0;
         snap.docs.forEach(d => {
           const data = d.data();
-          if (
-            (data.conversationId || "").includes(currentUser.uid) &&
-            data.senderId !== currentUser.uid &&
-            !data.read
-          ) unread++;
+          if (data.senderId !== currentUser.uid && !data.read) unread++;
         });
         setBadges(prev => {
           const next = { ...prev };
@@ -53,7 +49,8 @@ export default function TabBar({ active, type = "client" }) {
           }
           return next;
         });
-      }
+      },
+      (err) => { console.error("TabBar unread listener error:", err); }
     );
 
     // Live unread notifications badge (home tab)

@@ -82,13 +82,14 @@ export default function StylistClients() {
   async function backfillOldClients() {
     setBackfilling(true);
     try {
-      // Get all messages that include this stylist's UID in the conversationId
-      const msgSnap = await getDocs(collection(db, "messages"));
+      // Get this stylist's messages (filtered by participants so the rule allows it)
+      const msgSnap = await getDocs(
+        query(collection(db, "messages"), where("participants", "array-contains", currentUser.uid))
+      );
       const foundClientIds = new Set();
       msgSnap.docs.forEach(d => {
         const data = d.data();
         const convId = data.conversationId || "";
-        if (!convId.includes(currentUser.uid)) return;
         const parts = convId.split("_");
         const clientId = parts.find(id => id !== currentUser.uid);
         if (clientId) foundClientIds.add(clientId);

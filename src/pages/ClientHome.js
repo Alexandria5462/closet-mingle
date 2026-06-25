@@ -14,7 +14,7 @@ function getTierInfo(tier) {
 
 export default function ClientHome() {
   const nav = useNavigate();
-  const { userProfile } = useAuth();
+  const { userProfile, currentUser } = useAuth();
   const [closetCount, setClosetCount] = useState(0);
   const [savedCount, setSavedCount] = useState(0);
   const [topsCount, setTopsCount] = useState(0);
@@ -27,7 +27,7 @@ export default function ClientHome() {
   const tier = getTierInfo(userProfile?.subscriptionTier);
 
   useEffect(() => {
-    if (!userProfile?.uid) return;
+    if (!userProfile?.uid || !currentUser?.uid) return;
     async function fetchStats() {
       try {
         const cSnap = await getDocs(query(collection(db, "closetItems"), where("userId", "==", userProfile.uid)));
@@ -43,19 +43,23 @@ export default function ClientHome() {
     }
     fetchStats();
 
-    // Live unread message count
-    const unsubMsgs = onSnapshot(collection(db, "messages"), (snap) => {
-      let unread = 0;
-      snap.docs.forEach(d => {
-        const data = d.data();
-        if ((data.conversationId || "").includes(userProfile.uid) &&
-            data.senderId !== userProfile.uid && !data.read) unread++;
-      });
-      setUnreadMsgCount(unread);
-    });
+    // Live unread message count — query only this user's conversations
+    // (filtering by participants is required so the security rule permits it).
+    const unsubMsgs = onSnapshot(
+      query(collection(db, "messages"), where("participants", "array-contains", currentUser.uid)),
+      (snap) => {
+        let unread = 0;
+        snap.docs.forEach(d => {
+          const data = d.data();
+          if (data.senderId !== currentUser.uid && !data.read) unread++;
+        });
+        setUnreadMsgCount(unread);
+      },
+      (err) => { console.error("Unread listener error:", err); }
+    );
 
     return () => { unsubMsgs(); };
-  }, [userProfile]);
+  }, [currentUser, userProfile]);
 
   // Progress milestones with specific item guidance
   const MILESTONES = [
