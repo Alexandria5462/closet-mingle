@@ -57,7 +57,9 @@ export default function StylistHome() {
           } catch(e) { return { msg, client: null, clientId }; }
         })).then(setRecentConvs);
       },
-      (err) => { console.error("Unread listener error:", err); }
+      (err) => {
+        if (err?.code !== "permission-denied") console.error("Unread listener error:", err);
+      }
     );
 
     // ── Live today's active conversations ────────────────────
@@ -78,7 +80,9 @@ export default function StylistHome() {
         });
         setTodayStats(prev => ({ ...prev, sessions: clientsToday.size }));
       },
-      (err) => { console.error("Sessions listener error:", err); }
+      (err) => {
+        if (err?.code !== "permission-denied") console.error("Sessions listener error:", err);
+      }
     );
 
     // ── Live today's tips (100% goes to stylist) ──────────────

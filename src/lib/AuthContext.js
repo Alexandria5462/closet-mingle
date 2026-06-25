@@ -77,7 +77,9 @@ export function AuthProvider({ children }) {
         }
       },
       (err) => {
-        console.error("Profile listener error:", err);
+        // permission-denied is expected briefly during sign-out as this
+        // listener unmounts — don't log it as a real error.
+        if (err?.code !== "permission-denied") console.error("Profile listener error:", err);
         if (firstLoad) { firstLoad = false; setLoading(false); }
       }
     );

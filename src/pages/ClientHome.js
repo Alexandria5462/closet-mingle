@@ -55,7 +55,9 @@ export default function ClientHome() {
         });
         setUnreadMsgCount(unread);
       },
-      (err) => { console.error("Unread listener error:", err); }
+      (err) => {
+        if (err?.code !== "permission-denied") console.error("Unread listener error:", err);
+      }
     );
 
     return () => { unsubMsgs(); };

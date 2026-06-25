@@ -50,7 +50,13 @@ export default function TabBar({ active, type = "client" }) {
           return next;
         });
       },
-      (err) => { console.error("TabBar unread listener error:", err); }
+      (err) => {
+        // permission-denied fires briefly during sign-out as the listener
+        // unmounts — that's expected and harmless, so don't log it.
+        if (err?.code !== "permission-denied") {
+          console.error("TabBar unread listener error:", err);
+        }
+      }
     );
 
     // Live unread notifications badge (home tab)
