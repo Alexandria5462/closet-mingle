@@ -4,7 +4,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { items, occasion } = req.body;
+    const { items, occasion, userId, recentOutfitIds = [] } = req.body;
     if (!items || items.length < 2) {
       return res.status(400).json({ error: "Need at least 2 items" });
     }
@@ -13,7 +13,14 @@ export default async function handler(req, res) {
     try {
       const aiResult = await generateWithAI(items, occasion);
       if (aiResult && aiResult.length > 0) {
-        return res.status(200).json({ outfits: aiResult, source: "ai" });
+        // Filter out outfits with same item combinations as recent ones (24hr dupe blocker)
+        const filteredOutfits = aiResult.filter(outfit => {
+          if (!outfit.selectedIds || !recentOutfitIds.length) return true;
+          const key = [...outfit.selectedIds].sort().join(",");
+          return !recentOutfitIds.includes(key);
+        });
+
+        return res.status(200).json({ outfits: filteredOutfits.length > 0 ? filteredOutfits : aiResult, source: "ai" });
       }
     } catch (aiError) {
       console.error("AI failed, using fallback:", aiError.message);
@@ -21,15 +28,29 @@ export default async function handler(req, res) {
 
     // ── Fallback: smart style rules ───────────────────────────
     const fallbackResult = generateWithRules(items, occasion);
-    return res.status(200).json({ outfits: fallbackResult, source: "rules" });
+    // Filter out outfits with same item combinations as recent ones (24hr dupe blocker)
+    const filteredFallback = fallbackResult.filter(outfit => {
+      if (!outfit.selectedIds || !recentOutfitIds.length) return true;
+      const key = [...outfit.selectedIds].sort().join(",");
+      return !recentOutfitIds.includes(key);
+    });
+
+    return res.status(200).json({ outfits: filteredFallback.length > 0 ? filteredFallback : fallbackResult, source: "rules" });
 
   } catch (err) {
     console.error("Handler error:", err.message);
     // Last resort fallback
     try {
-      const { items, occasion } = req.body;
+      const { items, occasion, recentOutfitIds = [] } = req.body;
       const fallback = generateWithRules(items, occasion);
-      return res.status(200).json({ outfits: fallback, source: "rules" });
+      // Filter out outfits with same item combinations as recent ones (24hr dupe blocker)
+      const filteredLast = fallback.filter(outfit => {
+        if (!outfit.selectedIds || !recentOutfitIds.length) return true;
+        const key = [...outfit.selectedIds].sort().join(",");
+        return !recentOutfitIds.includes(key);
+      });
+
+      return res.status(200).json({ outfits: filteredLast.length > 0 ? filteredLast : fallback, source: "rules" });
     } catch (e) {
       return res.status(500).json({ error: err.message });
     }
